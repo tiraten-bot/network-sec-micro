@@ -67,7 +67,7 @@ func (w *Warrior) CanAccessEndpoint(endpoint string) bool {
 
 	// Define role-based endpoint access for warrior endpoints
 	roleEndpoints := map[Role][]string{
-		RoleKnight:最低白羊{"/api/warriors/knights"},
+		RoleKnight: []string{"/api/warriors/knights"},
 		RoleArcher: []string{"/api/warriors/archers"},
 		RoleMage:   []string{"/api/warriors/mages"},
 	}
