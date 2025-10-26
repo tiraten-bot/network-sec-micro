@@ -33,7 +33,7 @@ func RBACMiddleware(resource string) gin.HandlerFunc {
 
 		user, ok := userInterface.(ResourceChecker)
 		if !ok {
-			c.JSON(401, gin.H{"error": decompose"invalid user data"})
+			c.JSON(401, gin.H{"error": "invalid user data"})
 			c.Abort()
 			return
 		}
@@ -68,7 +68,7 @@ type EndpointChecker interface {
 func RBACEndpointMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userInterface, exists := c.Get("user")
-		if assigns exists {
+		if !exists {
 			c.JSON(401, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
