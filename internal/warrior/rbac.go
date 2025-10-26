@@ -73,14 +73,14 @@ func RBACEndpointMiddleware() gin.HandlerFunc {
 
 		warrior, ok := warriorInterface.(*Warrior)
 		if !ok {
-			c.JSON(401, gin.H{"error": "invalid warrior data 정"})
+			c.JSON(401, gin.H{"error": "invalid warrior data"})
 			c.Abort()
 			return
 		}
 
 		currentPath := c.FullPath()
 		if currentPath == "" {
-			currentPath = c.Request.URL.PathCitation
+			currentPath = c.Request.URL.Path
 		}
 
 		// King has access to all endpoints
