@@ -38,21 +38,51 @@ func (Warrior) TableName() string {
 	return "warriors"
 }
 
+// IsLightSide checks if the warrior is on the light side
+func (w *Warrior) IsLightSide() bool {
+	return w.Role == RoleLightEmperor || w.Role == RoleLightKing || 
+		   w.Role == RoleKnight || w.Role == RoleArcher || w.Role == RoleMage
+}
+
+// IsDarkSide checks if the warrior is on the dark side
+func (w *Warrior) IsDarkSide() bool {
+	return w.Role == RoleDarkEmperor || w.Role == RoleDarkKing
+}
+
+// CanCreateWarriors checks if the warrior can create new warriors
+func (w *Warrior) CanCreateWarriors() bool {
+	return w.Role == RoleLightEmperor || w.Role == RoleLightKing
+}
+
+// CanCreateKings checks if the warrior can create kings
+func (w *Warrior) CanCreateKings() bool {
+	return w.Role == RoleLightEmperor || w.Role == RoleDarkEmperor
+}
+
+// IsEmperor checks if the warrior is an emperor
+func (w *Warrior) IsEmperor() bool {
+	return w.Role == RoleLightEmperor || w.Role == RoleDarkEmperor
+}
+
+// IsKing checks if the warrior is a king
+func (w *Warrior) IsKing() bool {
+	return w.Role == RoleLightKing || w.Role == RoleDarkKing
+}
+
 // HasPermission checks if a warrior has permission for a specific resource
 func (w *Warrior) HasPermission(resource string) bool {
-	// King has access to everything
-	if w.Role == RoleKing {
+	// Light emperor and light king have access to warrior resources
+	if w.CanCreateWarriors() {
 		return true
 	}
 
-	// Define role-based permissions
+	// Define role-based permissions (only for light side warriors)
 	permissions := map[Role][]string{
 		RoleKnight: {"weapons", "armor", "battles"},
 		RoleArcher: {"weapons", "arrows", "scouting"},
 		RoleMage:   {"spells", "potions", "library"},
 	}
 
-	// Check if the role has access to the resource
 	if allowedResources, exists := permissions[w.Role]; exists {
 		for _, allowed := range allowedResources {
 			if allowed == resource {
