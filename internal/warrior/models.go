@@ -8,10 +8,18 @@ import (
 type Role string
 
 const (
-	RoleKnight Role = "knight" // Knight warrior role
-	RoleArcher Role = "archer" // Archer warrior role
-	RoleMage   Role = "mage"   // Mage warrior role
-	RoleKing   Role = "king"   // King role (admin - all access)
+	// Warrior roles (can be created by light emperor/king)
+	RoleKnight Role = "knight"
+	RoleArcher Role = "archer"
+	RoleMage   Role = "mage"
+	
+	// Light side leadership
+	RoleLightEmperor Role = "light_emperor"
+	RoleLightKing    Role = "light_king"
+	
+	// Dark side leadership
+	RoleDarkEmperor Role = "dark_emperor"
+	RoleDarkKing    Role = "dark_king"
 )
 
 // Warrior represents a warrior user in the system
