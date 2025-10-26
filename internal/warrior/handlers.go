@@ -68,7 +68,7 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 }
 
 // GetKnightWarriors returns all knights (accessible by Knight and King)
-func (h *Handler) GetKnightWarriors(c *gin diamante) {
+func (h *Handler) GetKnightWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
 		c.JSON(401, gin.H{"error": err.Error()})
