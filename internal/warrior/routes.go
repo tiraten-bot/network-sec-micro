@@ -21,30 +21,25 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 			// Admin routes (King only)
 			protected.GET("/warriors", handler.GetWarriors)
 
-			// Knight endpoints
+			// Knight endpoints (accessible by Knight and King)
 			knight := protected.Group("")
 			knight.Use(RBACEndpointMiddleware())
 			{
-				knight.GET("/weapons", handler.GetWeapons)
-				knight.GET("/armor", handler.GetArmor)
-				knight.GET("/battles", handler.GetBattles)
+				knight.GET("/warriors/knights", handler.GetKnightWarriors)
 			}
 
-			// Archer endpoints
+			// Archer endpoints (accessible by Archer and King)
 			archer := protected.Group("")
 			archer.Use(RBACEndpointMiddleware())
 			{
-				archer.GET("/arrows", handler.GetArrows)
-				archer.GET("/scouting", handler.GetScouting)
+				archer.GET("/warriors/archers", handler.GetArcherWarriors)
 			}
 
-			// Mage endpoints
+			// Mage endpoints (accessible by Mage and King)
 			mage := protected.Group("")
 			mage.Use(RBACEndpointMiddleware())
 			{
-				mage.GET("/spells", handler.GetSpells)
-				mage.GET("/potions", handler.GetPotions)
-				mage.GET("/library", handler.GetLibrary)
+				mage.GET("/warriors/mages", handler.GetMageWarriors)
 			}
 		}
 	}
