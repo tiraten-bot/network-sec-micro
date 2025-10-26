@@ -2,8 +2,6 @@ package warrior
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 // Role represents the role of a warrior
