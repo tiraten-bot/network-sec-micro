@@ -16,13 +16,10 @@ func main() {
 	}
 
 	// Initialize dependencies using Wire
-	service, handler, err := InitializeApp()
+	_, handler, err := InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize app: %v", err)
 	}
-	
-	// Inject service into handler manually
-	handler.service = service
 
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
