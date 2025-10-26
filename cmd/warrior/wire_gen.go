@@ -13,6 +13,6 @@ import (
 
 func InitializeApp() (*warrior.Service, *warrior.Handler, error) {
 	service := warrior.NewService()
-	handler := warrior.NewHandler()
+	handler := warrior.NewHandler(service)
 	return service, handler, nil
 }
