@@ -25,8 +25,8 @@ func RBACMiddleware(resource string) gin.HandlerFunc {
 			return
 		}
 
-		// King has access to everything
-		if warrior.IsKing() {
+		// Light emperor and light king have access to warrior resources
+		if warrior.CanCreateWarriors() {
 			c.Next()
 			return
 		}
@@ -83,8 +83,19 @@ func RBACEndpointMiddleware() gin.HandlerFunc {
 			currentPath = c.Request.URL.Path
 		}
 
-		// King has access to all endpoints
-		if warrior.IsKing() {
+		// Dark side cannot access warrior endpoints
+		if warrior.IsDarkSide() {
+			c.JSON(403, gin.H{
+				"error": "forbidden",
+				"message": "dark side cannot access warrior endpoints",
+				"your_role": warrior.Role,
+			})
+			c.Abort()
+			return
+		}
+
+		// Light emperor and light king have access to all warrior endpoints
+		if warrior.CanCreateWarriors() {
 			c.Next()
 			return
 		}
