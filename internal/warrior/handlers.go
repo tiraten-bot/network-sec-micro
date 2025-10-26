@@ -90,10 +90,10 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 		return
 	}
 
-	if !warrior.IsKing() {
+	if !warrior.CanCreateWarriors() {
 		c.JSON(http.StatusForbidden, dto.ErrorResponse{
 			Error:   "forbidden",
-			Message: "only king can access this resource",
+			Message: "only light emperor or light king can access this resource",
 		})
 		return
 	}
