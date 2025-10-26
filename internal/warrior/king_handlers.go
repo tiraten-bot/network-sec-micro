@@ -58,8 +58,15 @@ func (h *Handler) CreateKing(c *gin.Context) {
 		CreatedBy: warrior.ID,
 	}
 
-	// Execute command
-	newKing, err := h.service.CreateWarrior(cmd)
+	// Execute command (convert CreateKingCommand to CreateWarriorCommand)
+	warriorCmd := dto.CreateWarriorCommand{
+		Username:  cmd.Username,
+		Email:     cmd.Email,
+		Password:  cmd.Password,
+		Role:      cmd.Role,
+		CreatedBy: cmd.CreatedBy,
+	}
+	newKing, err := h.service.CreateWarrior(warriorCmd)
 	if err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "creation_failed",
@@ -102,7 +109,7 @@ func (h *Handler) GetKings(c *gin.Context) {
 		Offset: 0,
 	}
 
-	warriors, count, err := h.service.GetAllWarriors(query)
+	warriors, _, err := h.service.GetAllWarriors(query)
 	if err != nil {
 		c.JSON(500, dto.ErrorResponse{
 			Error:   "internal_error",
