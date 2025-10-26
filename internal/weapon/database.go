@@ -99,7 +99,7 @@ func seedDatabase() error {
 	}
 
 	for _, weapon := range legendaryWeapons {
-		if _, err := Weapon бор.Nil.InsertOne(ctx, weapon); err != nil {
+		if _, err := WeaponColl.InsertOne(ctx, weapon); err != nil {
 			return err
 		}
 	}
