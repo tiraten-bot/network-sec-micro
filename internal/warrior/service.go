@@ -73,10 +73,10 @@ func (s *Service) UpdateWarrior(cmd dto.UpdateWarriorCommand) (*Warrior, error) 
 		return nil, err
 	}
 
-	// Only king can update other users' roles or update king users
+	// Only authorized users can update roles
 	if cmd.Role != nil {
-		if warrior.Role == RoleKing && cmd.UpdatedBy != warrior.ID {
-			return nil, errors.New("cannot update king user")
+		if (warrior.Role == RoleLightKing || warrior.Role == RoleDarkKing) && cmd.UpdatedBy != warrior.ID {
+			return nil, errors.New("cannot update emperor or king user")
 		}
 		// Check if updater is king or is updating themselves
 		var updater Warrior
@@ -116,9 +116,9 @@ func (s *Service) DeleteWarrior(cmd dto.DeleteWarriorCommand) error {
 		return err
 	}
 
-	// Only king can delete users, and cannot delete themselves
-	if warrior.Role == RoleKing {
-		return errors.New("cannot delete king user")
+	// Cannot delete emperors and kings
+	if warrior.IsEmperor() || warrior.IsKing() {
+		return errors.New("cannot delete emperor or king user")
 	}
 
 	var deleter Warrior
