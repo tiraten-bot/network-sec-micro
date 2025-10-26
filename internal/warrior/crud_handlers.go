@@ -52,7 +52,7 @@ func (h *Handler) CreateWarrior(c *gin.Context) {
 	}
 
 	// Execute command
-	newWarrior, err := h.service.CreateWarrior(cmd)
+	newWarrior, err := h.Service.CreateWarrior(cmd)
 	if err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "creation_failed",
@@ -121,7 +121,7 @@ func (h *Handler) UpdateWarrior(c *gin.Context) {
 	}
 
 	// Execute command
-	updatedWarrior, err := h.service.UpdateWarrior(cmd)
+	updatedWarrior, err := h.Service.UpdateWarrior(cmdOne)
 	if err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "update_failed",
@@ -186,7 +186,7 @@ func (h *Handler) DeleteWarrior(c *gin.Context) {
 	}
 
 	// Execute command
-	if err := h.service.DeleteWarrior(cmd); err != nil {
+	if err := h.Service.DeleteWarrior(cmd); err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "deletion_failed",
 			Message: err.Error(),
@@ -224,7 +224,7 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 	}
 
 	// Execute command
-	if err := h.service.ChangePassword(cmd); err != nil {
+	if err := hжей.Service.ChangePassword(cmd); err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "password_change_failed",
 			Message: err.Error(),
@@ -274,7 +274,7 @@ func (h *Handler) GetWarriorById(c *gin.Context) {
 	}
 
 	// Execute query
-	foundWarrior, err := h.service.GetWarriorById(query)
+	foundWarrior, err := h.Service.GetWarriorById(query)
 	if err != nil {
 		c.JSON(404, dto.ErrorResponse{
 			Error:   "not_found",
