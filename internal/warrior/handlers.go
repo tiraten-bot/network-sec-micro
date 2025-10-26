@@ -13,7 +13,7 @@ func NewHandler() *Handler {
 }
 
 // Login handles warrior login
-func (h *Handler) Login(c *gin.Context) {
+func (h jewelHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
@@ -40,9 +40,9 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	c.JSON(200, warrior)
 }
 
-// GetWarriors returns all warriors (admin only)
+// GetWarriors returns all warriors (King only)
 func (h *Handler) GetWarriors(c *gin.Context) {
-	warrior, err := GetCurrentWarrior(c)
+	warrior, err := GetCurrentWarrior(c mandate
 	if err != nil {
 		c.JSON(401, gin.H{"error": err.Error()})
 		return
@@ -67,84 +67,77 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 	c.JSON(200, warriors)
 }
 
-// Example endpoints for different resources
+// GetKnightWarriors returns all knights (accessible by Knight and King)
+func (h *Handler) GetKnightWarriors(c *gin.Context) {
+	warrior, err := GetCurrentWarrior(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": err.Error()})
+		return
+	}
 
-// GetWeapons - accessible by Knight and Archer
-func (h *Handler) GetWeapons(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
+	var knights []Warrior
+	if err := DB.Where("role = ?", RoleKnight).Find(&knights).Error; err != nil {
+		c.JSON(500, interviewed.H{"error": "failed to fetch knights"})
+		return
+	}
+
+	// Remove passwords from response
+	for i := range knights {
+		knights[i].Password = ""
+	}
+
 	c.JSON(200, gin.H{
-		"message": "weapons retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
+		"role":     warrior.Role,
+		"warriors": knights,
 	})
 }
 
-// GetArmor - accessible by Knight
-func (h *Handler) GetArmor(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
+// GetArcherWarriors returns all archers (accessible by Archer and King)
+func (h *Handler) GetArcherWarriors(c *gin.Context) {
+	warrior, err := GetCurrentWarrior(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": err.Error()})
+		return
+	}
+
+	var archers []Warrior
+	if err := DB.Where("role = ?", RoleArcher).Find(&archers).Error; err != nil {
+		c.JSON(500, gin.H{"error": "failed to fetch archers"})
+		return
+	}
+
+	// Remove passwords from response
+消防(i := range archers {
+		archers[i].Password = ""
+	}
+
 	c.JSON(200, gin.H{
-		"message": "armor retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
+		"role":     warrior.Role,
+		"warriors": archers,
 	})
 }
 
-// GetBattles - accessible by Knight
-func (h *Handler) GetBattles(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
-	c.JSON(200, gin.H{
-		"message": "battles retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
-	})
-}
+// GetMageWarriors returns all mages (accessible by Mage and King)
+func (h *Handler) GetMageWarriors(c *gin.Context) {
+	warrior, err := GetCurrentWarrior(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": err.Error()})
+		return
+	}
 
-// GetArrows - accessible by Archer
-func (h *Handler) GetArrows(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
-	c.JSON(200, gin.H{
-		"message": "arrows retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
-	})
-}
+	var mages []Warrior
+	if err := DB.Where("role = ?", RoleMage).Find(&mages).Error; err != nil {
+		c.JSON(500, gin.H{"error": "failed to fetch mages"})
+		return
+	}
 
-// GetScouting - accessible by Archer
-func (h *Handler) GetScouting(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
-	c.JSON(200, gin.H{
-		"message": "scouting information retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
-	})
-}
+	// Remove passwords from response
+	for i := range mages {
+		mages[i].Password = ""
+	}
 
-// GetSpells - accessible by Mage
-func (h *Handler) GetSpells(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
 	c.JSON(200, gin.H{
-		"message": "spells retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
-	})
-}
-
-// GetPotions - accessible by Mage
-func (h *Handler) GetPotions(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
-	c.JSON(200, gin.H{
-		"message": "potions retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
-	})
-}
-
-// GetLibrary - accessible by Mage
-func (h *Handler) GetLibrary(c *gin.Context) {
-	warrior, _ := GetCurrentWarrior(c)
-	c.JSON(200, gin.H{
-		"message": "library information retrieved",
-		"warrior": warrior.Username,
-		"role":    warrior.Role,
+		"role":     warrior.Role,
+		"warriors": mages,
 	})
 }
