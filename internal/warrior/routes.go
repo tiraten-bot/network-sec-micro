@@ -18,10 +18,19 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 			// Profile route (accessible by all authenticated users)
 			protected.GET("/profile", handler.GetProfile)
 
+			// Password management
+			protected.PUT("/profile/password", handler.ChangePassword)
+
 			// Admin routes (King only)
+			protected.POST("/warriors", handler.CreateWarrior)
 			protected.GET("/warriors", handler.GetWarriors)
 
-			// Knight endpoints (accessible by Knight and King)
+			// Individual warrior routes
+			protected.GET("/warriors/:id", handler.GetWarriorById)
+			protected.PUT("/warriors/:id", handler.UpdateWarrior)
+			protected.DELETE("/warriors/:id", handler.DeleteWarrior)
+
+			// Role-based warrior endpoints
 			knight := protected.Group("")
 			knight.Use(RBACEndpointMiddleware())
 			{
