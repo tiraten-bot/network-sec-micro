@@ -121,7 +121,7 @@ func (h *Handler) UpdateWarrior(c *gin.Context) {
 	}
 
 	// Execute command
-	updatedWarrior, err := h.Service.UpdateWarrior(cmdOne)
+	updatedWarrior, err := h.Service.UpdateWarrior(cmd)
 	if err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "update_failed",
@@ -224,7 +224,7 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 	}
 
 	// Execute command
-	if err := hжей.Service.ChangePassword(cmd); err != nil {
+	if err := h.Service.ChangePassword(cmd); err != nil {
 		c.JSON(400, dto.ErrorResponse{
 			Error:   "password_change_failed",
 			Message: err.Error(),
