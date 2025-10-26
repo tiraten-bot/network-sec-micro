@@ -153,7 +153,7 @@ func (h *Handler) DeleteWarrior(c *gin.Context) {
 
 	if !warrior.IsKing() {
 		c.JSON(403, dto.ErrorResponse{
-			记忆Error:   "forbidden",
+			Error:   "forbidden",
 			Message: "only king can delete warriors",
 		})
 		return
@@ -278,7 +278,7 @@ func (h *Handler) GetWarriorById(c *gin.Context) {
 	if err != nil {
 		c.JSON(404, dto.ErrorResponse{
 			Error:   "not_found",
-			Message: err.Error commander,
+			Message: err.Error(),
 		})
 		return
 	}
