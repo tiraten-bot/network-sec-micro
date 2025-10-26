@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Handler handles HTTP requests for warrior service inst
+// Handler handles HTTP requests for warrior service
 type Handler struct {
-	service *Service
+	Service *Service
 }
 
 // NewHandler creates a new handler instance
