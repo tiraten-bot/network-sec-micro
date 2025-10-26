@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateWarrior handles warrior creation (King only)
+// CreateWarrior handles warrior creation (Light Emperor/King only)
 func (h *Handler) CreateWarrior(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
@@ -19,10 +19,10 @@ func (h *Handler) CreateWarrior(c *gin.Context) {
 		return
 	}
 
-	if !warrior.IsKing() {
+	if !warrior.CanCreateWarriors() {
 		c.JSON(403, dto.ErrorResponse{
 			Error:   "forbidden",
-			Message: "only king can create warriors",
+			Message: "only light emperor or light king can create warriors",
 		})
 		return
 	}
@@ -140,7 +140,7 @@ func (h *Handler) UpdateWarrior(c *gin.Context) {
 	})
 }
 
-// DeleteWarrior handles warrior deletion (King only)
+// DeleteWarrior handles warrior deletion (Light Emperor/King only)
 func (h *Handler) DeleteWarrior(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
@@ -151,10 +151,10 @@ func (h *Handler) DeleteWarrior(c *gin.Context) {
 		return
 	}
 
-	if !warrior.IsKing() {
+	if !warrior.CanCreateWarriors() {
 		c.JSON(403, dto.ErrorResponse{
 			Error:   "forbidden",
-			Message: "only king can delete warriors",
+			Message: "only light emperor or light king can delete warriors",
 		})
 		return
 	}
