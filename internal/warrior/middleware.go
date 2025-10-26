@@ -65,16 +65,25 @@ func ValidateRequest(ctx *gin.Context, req interface{}) bool {
 // ValidateQuery validates query parameters
 func ValidateQuery(ctx *gin.Context, req interface{}) bool {
 	if err := ctx.ShouldBindQuery(req); err != nil {
-		var errors []ErrorMsg
-		for _, err := range err.(validator.ValidationErrors) {
-			errors = append(errors, ErrorMsg{
-				Field:   err.Field(),
-				Message: getErrorMsg(err),
+		// Check if it's a validation error
+		if ve, ok := err.(validator.ValidationErrors); ok {
+			var errors []ErrorMsg
+			for _, err := range ve {
+				errors = append(errors, ErrorMsg{
+					Field:   err.Field(),
+					Message: getErrorMsg(err),
+				})
+			}
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error":   "validation_failed",
+				"details": errors,
 			})
+			return false
 		}
+		// Other binding errors
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error":   "validation_failed",
-			"details": errors,
+			"error":   "binding_failed",
+			"message": err.Error(),
 		})
 		return false
 	}
