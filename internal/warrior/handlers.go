@@ -188,7 +188,7 @@ func (h *Handler) GetArcherWarriors(c *gin.Context) {
 		Role: string(RoleArcher),
 	}
 
-	archers, err := h.service.GetWarriorsByRole(query)
+	archers, err := h.Service.GetWarriorsByRole(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
@@ -231,7 +231,7 @@ func (h *Handler) GetMageWarriors(c *gin.Context) {
 		Role: string(RoleMage),
 	}
 
-	mages, err := h.service.GetWarriorsByRole(query)
+	mages, err := h.Service.GetWarriorsByRole(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
