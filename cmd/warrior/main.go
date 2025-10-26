@@ -10,10 +10,19 @@ import (
 )
 
 func main() {
-	// Initialize database
+	// Initialize database first (before Wire)
 	if err := warrior.InitDatabase(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+
+	// Initialize dependencies using Wire
+	service, handler, err := InitializeApp()
+	if err != nil {
+		log.Fatalf("Failed to initialize app: %v", err)
+	}
+	
+	// Inject service into handler manually
+	handler.service = service
 
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
@@ -41,13 +50,12 @@ func main() {
 	// Setup health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"status": "healthy",
+			"status":  "healthy",
 			"service": "warrior",
 		})
 	})
 
-	// Setup routes
-	handler := warrior.NewHandler()
+	// Setup routes with Wire-injected handler
 	warrior.SetupRoutes(r, handler)
 
 	// Start server
