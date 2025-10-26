@@ -1,8 +1,6 @@
 package warrior
 
 import (
-	"strconv"
-
 	"network-sec-micro/internal/warrior/dto"
 
 	"github.com/gin-gonic/gin"
