@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (resmi image kullanıyoruz)
+  postgres:
+    image: postgres:15-alpine
+    container_name: warrior-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: warrior_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - warrior-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Warrior Service
+  warrior:
+    build:
+      context: .
+      dockerfile: dockerfiles/warrior.dockerfile
+    container_name: warrior-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: warrior_db
+      DB_SSLMODE: disable
+      PORT: 8080
+      GIN_MODE: release
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
+networks:
+  warrior-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
