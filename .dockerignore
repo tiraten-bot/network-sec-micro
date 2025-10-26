@@ -1,20 +1,27 @@
 # Git
-.git
+.git/
 .gitignore
 
-# Build outputs
+# Documentation
+*.md
+README.md
+
+# Docker
+dockerfiles/
+Dockerfile
+docker-compose.yml
+
+# Build artifacts
 bin/
 *.exe
+*.exe~
 *.dll
 *.so
 *.dylib
 
-# Test files
+# Test
 *_test.go
-
-# Documentation
-*.md
-!README.md
+test/
 
 # IDE
 .vscode/
@@ -27,18 +34,13 @@ bin/
 .DS_Store
 Thumbs.db
 
-# Docker
-Dockerfile*
-docker-compose*.yml
-.dockerignore
+# Go
+*.mod.sum
+go.sum
 
-# Dependencies
-vendor/
-node_modules/
+# Wire generated files
+wire_gen.go
 
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
+# Environment files
+.env
+.env.local
