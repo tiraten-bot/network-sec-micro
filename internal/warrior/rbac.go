@@ -50,13 +50,13 @@ func RBACMiddleware(resource string) gin.HandlerFunc {
 // DEFINE ENDPOINT ACCESS RULES
 var (
 	// Knight endpoints
-	KnightEndpoints = []string{"/api/weapons", "/api/armor", "/api/battles"}
+	KnightEndpoints = []string{"/api/warriors/knights"}
 	
 	// Archer endpoints
-	ArcherEndpoints = []string{"/api/weapons", "/api/arrows", "/api/scouting"}
+	ArcherEndpoints = []string{"/api/warriors/archers"}
 	
 	// Mage endpoints
-	MageEndpoints = []string{"/api/spells", "/api/potions", "/api/library"}
+	MageEndpoints = []string{"/api/warriors/mages"}
 	
 	// King has access to all endpoints
 )
