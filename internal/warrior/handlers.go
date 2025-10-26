@@ -32,7 +32,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	// Use existing Login function from auth.go
-	loginReq := ran.LoginRequest{
+	loginReq := LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
 	}
