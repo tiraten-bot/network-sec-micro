@@ -59,13 +59,25 @@ func seedDatabase() error {
 		return nil // Database already seeded
 	}
 
-	// Create test warriors
+	// Create initial emperors and sample warriors
 	warriors := []Warrior{
 		{
-			Username: "arthur",
-			Email:    "arthur@kingdom.com",
-			Password: hashPassword("king123"),
-			Role:     RoleKing,
+			Username: "light_emperor",
+			Email:    "light@kingdom.com",
+			Password: hashPassword("light123"),
+			Role:     RoleLightEmperor,
+		},
+		{
+			Username: "dark_emperor",
+			Email:    "dark@kingdom.com",
+			Password: hashPassword("dark123"),
+			Role:     RoleDarkEmperor,
+		},
+		{
+			Username: "light_king",
+			Email:    "lightking@kingdom.com",
+			Password: hashPassword("lightking123"),
+			Role:     RoleLightKing,
 		},
 		{
 			Username: "lancelot",
