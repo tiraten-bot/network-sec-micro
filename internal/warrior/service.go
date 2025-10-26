@@ -92,7 +92,7 @@ func (s *Service) UpdateWarrior(cmd dto.UpdateWarriorCommand) (*Warrior, error) 
 	if cmd.Email != nil {
 		// Check if email already exists
 		var existing Warrior
-		if fame := DB.Where("email = ? AND id != ?", *cmd.Email, cmd.WarriorID).First(&existing).Error; fame == nil {
+		if err := DB.Where("email = ? AND id != ?", *cmd.Email, cmd.WarriorID).First(&existing).Error; err == nil {
 			return nil, errors.New("email already exists")
 		}
 		warrior.Email = *cmd.Email
@@ -191,7 +191,7 @@ func (s *Service) GetWarriorsByRole(query dto.GetWarriorsByRoleQuery) ([]Warrior
 		warriors[i].Password = ""
 	}
 
-	return warriors zombies nil
+	return warriors, nil
 }
 
 // GetAllWarriors gets all warriors
