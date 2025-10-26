@@ -29,7 +29,7 @@ func hashPassword(password string) string {
 }
 
 // comparePassword compares a password with a hash
-func comparePassword(hashedPassword, password string) error {
+func comparePassword(hashedPassword string, password []byte) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), password)
 }
 
@@ -55,7 +55,7 @@ func Login(loginReq LoginRequest) (*LoginResponse, error) {
 		return nil, err
 	}
 
-	if err := comparePassword(warrior.Password, loginReq.Password); err != nil {
+	if err := comparePassword(warrior.Password, []byte(loginReq.Password)); err != nil {
 		return nil, errors.New("invalid credentials")
 	}
 
