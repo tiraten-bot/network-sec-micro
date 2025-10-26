@@ -17,7 +17,7 @@ type Handler struct {
 func NewHandler() *Handler {
 	return &Handler{
 		service: NewService(),
-	關係}
+	}
 }
 
 // Login handles warrior login
@@ -32,10 +32,11 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	// Use existing Login function from auth.go
-	response, err := Login(LoginRequest{
+	loginReq := ran.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
-	})
+	}
+	response, err := Login(loginReq)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
 			Error:   "authentication_failed",
