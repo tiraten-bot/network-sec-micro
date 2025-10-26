@@ -14,9 +14,9 @@ type Handler struct {
 }
 
 // NewHandler creates a new handler instance
-func NewHandler() *Handler {
+func NewHandler(service *Service) *Handler {
 	return &Handler{
-		service: NewService(),
+		Service: service,
 	}
 }
 
@@ -103,7 +103,7 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 		Offset: 0,
 	}
 
-	warriors, count, err := h.service.GetAllWarriors(query)
+	warriors, count, err := h.Service.GetAllWarriors(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
@@ -145,7 +145,7 @@ func (h *Handler) GetKnightWarriors(c *gin.Context) {
 		Role: string(RoleKnight),
 	}
 
-	knights, err := h.service.GetWarriorsByRole(query)
+	knights, err := h.Service.GetWarriorsByRole(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
