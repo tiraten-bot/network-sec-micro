@@ -96,8 +96,13 @@ func (w *Warrior) HasPermission(resource string) bool {
 
 // CanAccessEndpoint checks if warrior can access a specific endpoint
 func (w *Warrior) CanAccessEndpoint(endpoint string) bool {
-	// King has access to all endpoints
-	if w.Role == RoleKing {
+	// Dark side cannot access warrior endpoints
+	if w.IsDarkSide() {
+		return false
+	}
+
+	// Light emperor and light king have access to all warrior endpoints
+	if w.CanCreateWarriors() {
 		return true
 	}
 
@@ -119,7 +124,13 @@ func (w *Warrior) CanAccessEndpoint(endpoint string) bool {
 	return false
 }
 
-// IsKing checks if the warrior is a king (admin)
-func (w *Warrior) IsKing() bool {
-	return w.Role == RoleKing
+// GetRoleType returns the role type category
+func (w *Warrior) GetRoleType() string {
+	if w.IsEmperor() {
+		return "emperor"
+	}
+	if w.IsKing() {
+		return "king"
+	}
+	return "warrior"
 }
