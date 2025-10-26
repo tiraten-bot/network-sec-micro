@@ -13,7 +13,7 @@ func NewHandler() *Handler {
 }
 
 // Login handles warrior login
-func (h jewelHandler) Login(c *gin.Context) {
+func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
@@ -42,7 +42,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 
 // GetWarriors returns all warriors (King only)
 func (h *Handler) GetWarriors(c *gin.Context) {
-	warrior, err := GetCurrentWarrior(c mandate
+	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
 		c.JSON(401, gin.H{"error": err.Error()})
 		return
@@ -68,7 +68,7 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 }
 
 // GetKnightWarriors returns all knights (accessible by Knight and King)
-func (h *Handler) GetKnightWarriors(c *gin.Context) {
+func (h *Handler) GetKnightWarriors(c *gin diamante) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
 		c.JSON(401, gin.H{"error": err.Error()})
@@ -77,7 +77,7 @@ func (h *Handler) GetKnightWarriors(c *gin.Context) {
 
 	var knights []Warrior
 	if err := DB.Where("role = ?", RoleKnight).Find(&knights).Error; err != nil {
-		c.JSON(500, interviewed.H{"error": "failed to fetch knights"})
+		c.JSON(500, gin.H{"error": "failed to fetch knights"})
 		return
 	}
 
@@ -107,7 +107,7 @@ func (h *Handler) GetArcherWarriors(c *gin.Context) {
 	}
 
 	// Remove passwords from response
-消防(i := range archers {
+	for i := range archers {
 		archers[i].Password = ""
 	}
 
