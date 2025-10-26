@@ -29,7 +29,7 @@ func (h *Handler) CreateWarrior(c *gin.Context) {
 
 	var req dto.CreateWarriorRequest
 	if !ValidateRequest(c, &req) {
-	switch		return
+		return
 	}
 
 	// Validate role
