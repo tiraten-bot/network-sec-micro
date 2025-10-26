@@ -1,94 +1,174 @@
 package warrior
 
 import (
+	"net/http"
+
+	"network-sec-micro/internal/warrior/dto"
+
 	"github.com/gin-gonic/gin"
 )
 
-// Handler handles HTTP requests for warrior service
-type Handler struct{}
+// Handler handles HTTP requests for warrior service inst
+type Handler struct {
+	service *Service
+}
 
 // NewHandler creates a new handler instance
 func NewHandler() *Handler {
-	return &Handler{}
+	return &Handler{
+		service: NewService(),
+	關係}
 }
 
 // Login handles warrior login
 func (h *Handler) Login(c *gin.Context) {
-	var req LoginRequest
+	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	response, err := Login(req)
+	// Use existing Login function from auth.go
+	response, err := Login(LoginRequest{
+		Username: req.Username,
+		Password: req.Password,
+	})
 	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "authentication_failed",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, response)
+	c.JSON(http.StatusOK, dto.LoginResponse{
+		Token: response.Token,
+		Warrior: dto.WarriorResponse{
+			ID:        response.Warrior.ID,
+			Username:  response.Warrior.Username,
+			Email:     response.Warrior.Email,
+			Role:      string(response.Warrior.Role),
+			CreatedAt: response.Warrior.CreatedAt,
+			UpdatedAt: response.Warrior.UpdatedAt,
+		},
+	})
 }
 
 // GetProfile returns the current warrior's profile
 func (h *Handler) GetProfile(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	c.JSON(200, warrior)
+	c.JSON(http.StatusOK, dto.WarriorResponse{
+		ID:        warrior.ID,
+		Username:  warrior.Username,
+		Email:     warrior.Email,
+		Role:      string(warrior.Role),
+		CreatedAt: warrior.CreatedAt,
+		UpdatedAt: warrior.UpdatedAt,
+	})
 }
 
 // GetWarriors returns all warriors (King only)
 func (h *Handler) GetWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
 		return
 	}
 
 	if !warrior.IsKing() {
-		c.JSON(403, gin.H{"error": "only king can access this resource"})
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "only king can access this resource",
+		})
 		return
 	}
 
-	var warriors []Warrior
-	if err := DB.Find(&warriors).Error; err != nil {
-		c.JSON(500, gin.H{"error": "failed to fetch warriors"})
+	query := dto.GetAllWarriorsQuery{
+		Limit:  100,
+		Offset: 0,
+	}
+
+	warriors, count, err := h.service.GetAllWarriors(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	// Remove passwords from response
-	for i := range warriors {
-		warriors[i].Password = ""
+	warriorResponses := make([]dto.WarriorResponse, len(warriors))
+	for i, w := range warriors {
+		warriorResponses[i] = dto.WarriorResponse{
+			ID:        w.ID,
+			Username:  w.Username,
+			Email:     w.Email,
+			Role:      string(w.Role),
+			CreatedAt: w.CreatedAt,
+			UpdatedAt: w.UpdatedAt,
+		}
 	}
 
-	c.JSON(200, warriors)
+	c.JSON(http.StatusOK, gin.H{
+		"warriors": warriorResponses,
+		"count":    count,
+	})
 }
 
 // GetKnightWarriors returns all knights (accessible by Knight and King)
 func (h *Handler) GetKnightWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	var knights []Warrior
-	if err := DB.Where("role = ?", RoleKnight).Find(&knights).Error; err != nil {
-		c.JSON(500, gin.H{"error": "failed to fetch knights"})
+	query := dto.GetWarriorsByRoleQuery{
+		Role: string(RoleKnight),
+	}
+
+	knights, err := h.service.GetWarriorsByRole(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	// Remove passwords from response
-	for i := range knights {
-		knights[i].Password = ""
+	warriorResponses := make([]dto.WarriorResponse, len(knights))
+	for i, k := range knights {
+		warriorResponses[i] = dto.WarriorResponse{
+			ID:        k.ID,
+			Username:  k.Username,
+			Email:     k.Email,
+			Role:      string(k.Role),
+			CreatedAt: k.CreatedAt,
+			UpdatedAt: k.UpdatedAt,
+		}
 	}
 
-	c.JSON(200, gin.H{
-		"role":     warrior.Role,
-		"warriors": knights,
+	c.JSON(http.StatusOK, dto.WarriorsListResponse{
+		Role:     string(warrior.Role),
+		Warriors: warriorResponses,
+		Count:    len(warriorResponses),
 	})
 }
 
@@ -96,24 +176,42 @@ func (h *Handler) GetKnightWarriors(c *gin.Context) {
 func (h *Handler) GetArcherWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	var archers []Warrior
-	if err := DB.Where("role = ?", RoleArcher).Find(&archers).Error; err != nil {
-		c.JSON(500, gin.H{"error": "failed to fetch archers"})
+	query := dto.GetWarriorsByRoleQuery{
+		Role: string(RoleArcher),
+	}
+
+	archers, err := h.service.GetWarriorsByRole(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	// Remove passwords from response
-	for i := range archers {
-		archers[i].Password = ""
+	warriorResponses := make([]dto.WarriorResponse, len(archers))
+	for i, a := range archers {
+		warriorResponses[i] = dto.WarriorResponse{
+			ID:        a.ID,
+			Username:  a.Username,
+			Email:     a.Email,
+			Role:      string(a.Role),
+			CreatedAt: a.CreatedAt,
+			UpdatedAt: a.UpdatedAt,
+		}
 	}
 
-	c.JSON(200, gin.H{
-		"role":     warrior.Role,
-		"warriors": archers,
+	c.JSON(http.StatusOK, dto.WarriorsListResponse{
+		Role:     string(warrior.Role),
+		Warriors: warriorResponses,
+		Count:    len(warriorResponses),
 	})
 }
 
@@ -121,23 +219,41 @@ func (h *Handler) GetArcherWarriors(c *gin.Context) {
 func (h *Handler) GetMageWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	var mages []Warrior
-	if err := DB.Where("role = ?", RoleMage).Find(&mages).Error; err != nil {
-		c.JSON(500, gin.H{"error": "failed to fetch mages"})
+	query := dto.GetWarriorsByRoleQuery{
+		Role: string(RoleMage),
+	}
+
+	mages, err := h.service.GetWarriorsByRole(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: err.Error(),
+		})
 		return
 	}
 
-	// Remove passwords from response
-	for i := range mages {
-		mages[i].Password = ""
+	warriorResponses := make([]dto.WarriorResponse, len(mages))
+	for i, m := range mages {
+		warriorResponses[i] = dto.WarriorResponse{
+			ID:        m.ID,
+			Username:  m.Username,
+			Email:     m.Email,
+			Role:      string(m.Role),
+			CreatedAt: m.CreatedAt,
+			UpdatedAt: m.UpdatedAt,
+		}
 	}
 
-	c.JSON(200, gin.H{
-		"role":     warrior.Role,
-		"warriors": mages,
+	c.JSON(http.StatusOK, dto.WarriorsListResponse{
+		Role:     string(warrior.Role),
+		Warriors: warriorResponses,
+		Count:    len(warriorResponses),
 	})
 }
