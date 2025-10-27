@@ -21,6 +21,24 @@ services:
       timeout: 5s
       retries: 5
 
+  # MongoDB Database (resmi image kullanıyoruz)
+  mongodb:
+    image: mongo:7.0
+    container_name: weapon-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: weapon_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - warrior-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Warrior Service
   warrior:
     build:
@@ -45,10 +63,32 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # Weapon Service
+  weapon:
+    build:
+      context: .
+      dockerfile: dockerfiles/weapon.dockerfile
+    container_name: weapon-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: weapon_db
+      PORT: 8081
+      GIN_MODE: release
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
 networks:
   warrior-network:
     driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
+  mongodb_data:
     driver: local
