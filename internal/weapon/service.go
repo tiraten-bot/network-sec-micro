@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"network-sec-micro/internal/weapon/dto"
@@ -84,9 +85,7 @@ func (s *Service) BuyWeapon(ctx context.Context, cmd dto.BuyWeaponCommand) error
 	}
 
 	// Publish weapon purchase event to Kafka
-	// TODO: Get warriorID from username - need to add this to command
-	warriorID := uint(1) // Temporary - should get from warrior service
-	if err := PublishWeaponPurchase(ctx, &weapon, warriorID, cmd.BuyerID); err != nil {
+	if err := PublishWeaponPurchase(ctx, &weapon, cmd.BuyerUserID, cmd.BuyerUsername); err != nil {
 		log.Printf("Failed to publish weapon purchase event: %v", err)
 		// Don't fail the transaction if event publishing fails
 	}
