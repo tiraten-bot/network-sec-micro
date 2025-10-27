@@ -83,6 +83,14 @@ func (s *Service) BuyWeapon(ctx context.Context, cmd dto.BuyWeaponCommand) error
 		return fmt.Errorf("failed to update weapon: %w", err)
 	}
 
+	// Publish weapon purchase event to Kafka
+	// TODO: Get warriorID from username - need to add this to command
+	warriorID := uint(1) // Temporary - should get from warrior service
+	if err := PublishWeaponPurchase(ctx, &weapon, warriorID, cmd.BuyerID); err != nil {
+		log.Printf("Failed to publish weapon purchase event: %v", err)
+		// Don't fail the transaction if event publishing fails
+	}
+
 	return nil
 }
 
