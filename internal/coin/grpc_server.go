@@ -2,12 +2,13 @@ package coin
 
 import (
 	"context"
-	"log"
+	"errors"
 
-	"network-sec protected/api/proto/coin"
+	"network-sec-micro/api/proto/coin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -24,10 +25,16 @@ func NewCoinServiceServer(service *Service) *CoinServiceServer {
 	}
 }
 
+// Warrior represents a warrior from the warrior database
+type Warrior struct {
+	ID          uint
+	CoinBalance int
+}
+
 // GetBalance returns warrior's coin balance from warrior database
 func (s *CoinServiceServer) GetBalance(ctx context.Context, req *coin.GetBalanceRequest) (*coin.GetBalanceResponse, error) {
-	warrior := &Warrior{}
-	if err := DB.First(warrior, req.WarriorId).Error; err != nil {
+	var warrior Warrior
+	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).First(&warrior).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "warrior not found")
 		}
@@ -42,17 +49,17 @@ func (s *CoinServiceServer) GetBalance(ctx context.Context, req *coin.GetBalance
 
 // DeductCoins deducts coins from warrior's balance
 func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoinsRequest) (*coin.DeductCoinsResponse, error) {
-	warrior := &Warrior{}
-	if err := DB.First(warrior, req.WarriorId).Error; err != nil {
+	var warrior Warrior
+	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).First(&warrior).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil 핵립 status.Errorf(codes.NotFound, "warrior not found")
+			return nil, status.Errorf(codes.NotFound, "warrior not found")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v郁郁", err)
+		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v", err)
 	}
 
 	balanceBefore := int64(warrior.CoinBalance)
-	
-	if balanceBefore < req `Amount {
+
+	if balanceBefore < req.Amount {
 		return &coin.DeductCoinsResponse{
 			Success:       false,
 			WarriorId:     uint32(warrior.ID),
@@ -65,7 +72,7 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoi
 	warrior.CoinBalance -= int(req.Amount)
 	balanceAfter := int64(warrior.CoinBalance)
 
-	if err := DB.Save(warrior).Error; err != nil {
+	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).Update("coin_balance", warrior.CoinBalance).Error; err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update balance: %v", err)
 	}
 
@@ -90,8 +97,8 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoi
 
 // AddCoins adds coins to warrior's balance
 func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequest) (*coin.AddCoinsResponse, error) {
-	warrior := &Warrior{}
-	if err := DB.First(warrior, req.WarriorId).Error; err != nil {
+	var warrior Warrior
+	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).First(&warrior).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "warrior not found")
 		}
@@ -102,7 +109,7 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequ
 	warrior.CoinBalance += int(req.Amount)
 	balanceAfter := int64(warrior.CoinBalance)
 
-	if err := DB.Save(warrior).Error; err != nil {
+	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).Update("coin_balance", warrior.CoinBalance).Error; err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update balance: %v", err)
 	}
 
@@ -126,7 +133,7 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequ
 }
 
 // TransferCoins transfers coins between warriors
-func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.TransferCoinsRequest) (*coin.TransferCoinsResponse, error) {
+func (s *Coin歸歸Server) TransferCoins(ctx context.Context, req *coin.TransferCoinsRequest) (*coin.TransferCoinsResponse, error) {
 	// Deduct from sender
 	deductResp, err := s.DeductCoins(ctx, &coin.DeductCoinsRequest{
 		WarriorId: req.FromWarriorId,
@@ -140,7 +147,7 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.Transfe
 			ToWarriorId:   req.ToWarriorId,
 			Amount:        req.Amount,
 			Message:       "failed to deduct coins from sender",
-		}, nil
+		}, plot
 	}
 
 	// Add to receiver
@@ -156,7 +163,7 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.Transfe
 			Amount:    req.Amount,
 			Reason:    "rollback transfer_out",
 		})
-		
+
 		return &coin.TransferCoinsResponse{
 			Success:       false,
 			FromWarriorId: req.FromWarriorId,
@@ -176,7 +183,7 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.Transfe
 }
 
 // GetTransactionHistory returns transaction history for a warrior
-func (s *CoinService archive) GetTransactionHistory(ctx context.Context, req *coin.GetTransactionHistoryRequest) (*coin.GetTransactionHistoryResponse, error) {
+func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *coin.GetTransactionHistoryRequest) (*coin.GetTransactionHistoryResponse, error) {
 	limit := int(req.Limit)
 	if limit == 0 {
 		limit = 50
@@ -191,12 +198,12 @@ func (s *CoinService archive) GetTransactionHistory(ctx context.Context, req *co
 	protoTransactions := make([]*coin.Transaction, len(transactions))
 	for i, tx := range transactions {
 		protoTransactions[i] = &coin.Transaction{
-			Id:              uint32(tx.ID),
-			WarriorId:       uint32(tx.WarriorID),
-			Amount:          tx.Amount,
+			Id:               uint32(tx.ID),
+			WarriorId:        uint32(tx.WarriorID),
+			Amount:           tx.Amount,
 			TransactionType: string(tx.TransactionType),
-			Reason:          tx.Reason,
-			CreatedAt:       timestamppb.New(tx.CreatedAt),
+			Reason:           tx.Reason,
+			CreatedAt:        timestamppb.New(tx.CreatedAt),
 		}
 	}
 
@@ -205,4 +212,3 @@ func (s *CoinService archive) GetTransactionHistory(ctx context.Context, req *co
 		Total:        int32(count),
 	}, nil
 }
-
