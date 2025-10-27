@@ -41,14 +41,14 @@ func (s *CoinServiceServer) GetBalance(ctx context.Context, req *pb.GetBalanceRe
 		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v", err)
 	}
 
-	return &coin.GetBalanceResponse{
+	return &coin.pb.GetBalanceResponse{
 		WarriorId: uint32(warrior.ID),
 		Balance:   int64(warrior.CoinBalance),
 	}, nil
 }
 
 // DeductCoins deducts coins from warrior's balance
-func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoinsRequest) (*coin.DeductCoinsResponse, error) {
+func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *pb.DeductCoinsRequest) (*pb.DeductCoinsResponse, error) {
 	var warrior Warrior
 	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).First(&warrior).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -60,7 +60,7 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoi
 	balanceBefore := int64(warrior.CoinBalance)
 
 	if balanceBefore < req.Amount {
-		return &coin.DeductCoinsResponse{
+		return &coin.pb.DeductCoinsResponse{
 			Success:       false,
 			WarriorId:     uint32(warrior.ID),
 			BalanceBefore: balanceBefore,
@@ -86,7 +86,7 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoi
 		balanceAfter,
 	)
 
-	return &coin.DeductCoinsResponse{
+	return &coin.pb.DeductCoinsResponse{
 		Success:       true,
 		WarriorId:     uint32(warrior.ID),
 		BalanceBefore: balanceBefore,
@@ -96,7 +96,7 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoi
 }
 
 // AddCoins adds coins to warrior's balance
-func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequest) (*coin.AddCoinsResponse, error) {
+func (s *CoinServiceServer) AddCoins(ctx context.Context, req *pb.AddCoinsRequest) (*pb.AddCoinsResponse, error) {
 	var warrior Warrior
 	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).First(&warrior).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -123,7 +123,7 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequ
 		balanceAfter,
 	)
 
-	return &coin.AddCoinsResponse{
+	return &coin.pb.AddCoinsResponse{
 		Success:       true,
 		WarriorId:     uint32(warrior.ID),
 		BalanceBefore: balanceBefore,
@@ -133,15 +133,15 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequ
 }
 
 // TransferCoins transfers coins between warriors
-func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.TransferCoinsRequest) (*coin.TransferCoinsResponse, error) {
+func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *pb.TransferCoinsRequest) (*pb.TransferCoinsResponse, error) {
 	// Deduct from sender
-	deductResp, err := s.DeductCoins(ctx, &coin.DeductCoinsRequest{
+	deductResp, err := s.DeductCoins(ctx, &coin.pb.DeductCoinsRequest{
 		WarriorId: req.FromWarriorId,
 		Amount:    req.Amount,
 		Reason:    "transfer_out: " + req.Reason,
 	})
 	if err != nil || !deductResp.Success {
-		return &coin.TransferCoinsResponse{
+		return &coin.pb.TransferCoinsResponse{
 			Success:       false,
 			FromWarriorId: req.FromWarriorId,
 			ToWarriorId:   req.ToWarriorId,
@@ -151,20 +151,20 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.Transfe
 	}
 
 	// Add to receiver
-	addResp, err := s.AddCoins(ctx, &coin.AddCoinsRequest{
+	addResp, err := s.AddCoins(ctx, &coin.pb.AddCoinsRequest{
 		WarriorId: req.ToWarriorId,
 		Amount:    req.Amount,
 		Reason:    "transfer_in: " + req.Reason,
 	})
 	if err != nil || !addResp.Success {
 		// Rollback: add coins back to sender
-		s.AddCoins(ctx, &coin.AddCoinsRequest{
+		s.AddCoins(ctx, &coin.pb.AddCoinsRequest{
 			WarriorId: req.FromWarriorId,
 			Amount:    req.Amount,
 			Reason:    "rollback transfer_out",
 		})
 
-		return &coin.TransferCoinsResponse{
+		return &coin.pb.TransferCoinsResponse{
 			Success:       false,
 			FromWarriorId: req.FromWarriorId,
 			ToWarriorId:   req.ToWarriorId,
@@ -173,7 +173,7 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.Transfe
 		}, nil
 	}
 
-	return &coin.TransferCoinsResponse{
+	return &coin.pb.TransferCoinsResponse{
 		Success:       true,
 		FromWarriorId: req.FromWarriorId,
 		ToWarriorId:   req.ToWarriorId,
@@ -183,7 +183,7 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.Transfe
 }
 
 // GetTransactionHistory returns transaction history for a warrior
-func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *coin.GetTransactionHistoryRequest) (*coin.GetTransactionHistoryResponse, error) {
+func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *pb.GetTransactionHistoryRequest) (*pb.GetTransactionHistoryResponse, error) {
 	limit := int(req.Limit)
 	if limit == 0 {
 		limit = 50
@@ -195,9 +195,9 @@ func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *coin
 		return nil, status.Errorf(codes.Internal, "failed to get transactions: %v", err)
 	}
 
-	protoTransactions := make([]*coin.Transaction, len(transactions))
+	protoTransactions := make([]*pb.Transaction, len(transactions))
 	for i, tx := range transactions {
-		protoTransactions[i] = &coin.Transaction{
+		protoTransactions[i] = &coin.pb.Transaction{
 			Id:               uint32(tx.ID),
 			WarriorId:        uint32(tx.WarriorID),
 			Amount:           tx.Amount,
@@ -207,7 +207,7 @@ func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *coin
 		}
 	}
 
-	return &coin.GetTransactionHistoryResponse{
+	return &coin.pb.GetTransactionHistoryResponse{
 		Transactions: protoTransactions,
 		Total:        int32(count),
 	}, nil
