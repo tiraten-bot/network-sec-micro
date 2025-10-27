@@ -24,13 +24,16 @@ const (
 
 // Warrior represents a warrior user in the system
 type Warrior struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Username  string    `gorm:"uniqueIndex;not null" json:"username"`
-	Email     string    `gorm:"uniqueIndex;not null" json:"email"`
-	Password  string    `gorm:"not null" json:"-"`
-	Role      Role      `gorm:"type:varchar(20);not null" json:"role"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	Username    string    `gorm:"uniqueIndex;not null" json:"username"`
+	Email       string    `gorm:"uniqueIndex;not null" json:"email"`
+	Password    string    `gorm:"not null" json:"-"`
+	Role        Role      `gorm:"type:varchar(20);not null" json:"role"`
+	CoinBalance int       `gorm:"default:1000" json:"coin_balance"`     // Starting coin balance
+	TotalPower  int       `gorm:"default:100" json:"total_power"`       // Total attack power
+	WeaponCount int       `gorm:"default:0" json:"weapon_count"`        // Number of owned weapons
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // TableName specifies the table name for Warrior
