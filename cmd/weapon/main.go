@@ -19,6 +19,12 @@ func main() {
 	service := weapon.NewService()
 	handler := weapon.NewHandler(service)
 
+	// Setup graceful shutdown
+	defer func() {
+		log.Println("Shutting down...")
+		weapon.CloseKafkaPublisher()
+	}()
+
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
