@@ -2,7 +2,6 @@ package weapon
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"network-sec-micro/pkg/kafka"
@@ -19,19 +18,23 @@ func PublishWeaponPurchase(ctx context.Context, weapon *Weapon, warriorID uint, 
 		weapon.Price,
 	)
 
-	// Marshal to JSON
-	jsonData, err := json.Marshal(event)
+	log.Printf("Publishing weapon purchase event: Warrior %d purchased weapon %s for %d coins", 
+		warriorID, weapon.Name, weapon.Price)
+
+	// Get singleton Kafka publisher
+	publisher, err := GetKafkaPublisher()
 	if err != nil {
+		log.Printf("Failed to get Kafka publisher: %v", err)
 		return err
 	}
 
-	log.Printf("Publishing weapon purchase event: %s", string(jsonData))
+	// Publish event to Kafka
+	if err := publisher.Publish(kafka.TopicWeaponPurchase, event); err != nil {
+		log.Printf("Failed to publish weapon purchase event to Kafka: %v", err)
+		return err
+	}
 
-	// TODO: Get kafka publisher instance (need to add to service)
-	// For now, just log
-	log.Printf("Event published: Warrior %d purchased weapon %s for %d coins", 
-		warriorID, weapon.Name, weapon.Price)
-
+	log.Printf("Successfully published weapon purchase event to Kafka")
 	return nil
 }
 
