@@ -41,7 +41,7 @@ func (s *CoinServiceServer) GetBalance(ctx context.Context, req *pb.GetBalanceRe
 		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v", err)
 	}
 
-	return &coin.pb.GetBalanceResponse{
+	return &pb.GetBalanceResponse{
 		WarriorId: uint32(warrior.ID),
 		Balance:   int64(warrior.CoinBalance),
 	}, nil
@@ -60,7 +60,7 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *pb.DeductCoins
 	balanceBefore := int64(warrior.CoinBalance)
 
 	if balanceBefore < req.Amount {
-		return &coin.pb.DeductCoinsResponse{
+		return &pb.DeductCoinsResponse{
 			Success:       false,
 			WarriorId:     uint32(warrior.ID),
 			BalanceBefore: balanceBefore,
@@ -86,7 +86,7 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *pb.DeductCoins
 		balanceAfter,
 	)
 
-	return &coin.pb.DeductCoinsResponse{
+	return &pb.DeductCoinsResponse{
 		Success:       true,
 		WarriorId:     uint32(warrior.ID),
 		BalanceBefore: balanceBefore,
@@ -123,7 +123,7 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *pb.AddCoinsReques
 		balanceAfter,
 	)
 
-	return &coin.pb.AddCoinsResponse{
+	return &pb.AddCoinsResponse{
 		Success:       true,
 		WarriorId:     uint32(warrior.ID),
 		BalanceBefore: balanceBefore,
@@ -135,13 +135,13 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *pb.AddCoinsReques
 // TransferCoins transfers coins between warriors
 func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *pb.TransferCoinsRequest) (*pb.TransferCoinsResponse, error) {
 	// Deduct from sender
-	deductResp, err := s.DeductCoins(ctx, &coin.pb.DeductCoinsRequest{
+	deductResp, err := s.DeductCoins(ctx, &pb.DeductCoinsRequest{
 		WarriorId: req.FromWarriorId,
 		Amount:    req.Amount,
 		Reason:    "transfer_out: " + req.Reason,
 	})
 	if err != nil || !deductResp.Success {
-		return &coin.pb.TransferCoinsResponse{
+		return &pb.TransferCoinsResponse{
 			Success:       false,
 			FromWarriorId: req.FromWarriorId,
 			ToWarriorId:   req.ToWarriorId,
@@ -151,20 +151,20 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *pb.TransferC
 	}
 
 	// Add to receiver
-	addResp, err := s.AddCoins(ctx, &coin.pb.AddCoinsRequest{
+	addResp, err := s.AddCoins(ctx, &pb.AddCoinsRequest{
 		WarriorId: req.ToWarriorId,
 		Amount:    req.Amount,
 		Reason:    "transfer_in: " + req.Reason,
 	})
 	if err != nil || !addResp.Success {
 		// Rollback: add coins back to sender
-		s.AddCoins(ctx, &coin.pb.AddCoinsRequest{
+		s.AddCoins(ctx, &pb.AddCoinsRequest{
 			WarriorId: req.FromWarriorId,
 			Amount:    req.Amount,
 			Reason:    "rollback transfer_out",
 		})
 
-		return &coin.pb.TransferCoinsResponse{
+		return &pb.TransferCoinsResponse{
 			Success:       false,
 			FromWarriorId: req.FromWarriorId,
 			ToWarriorId:   req.ToWarriorId,
@@ -173,7 +173,7 @@ func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *pb.TransferC
 		}, nil
 	}
 
-	return &coin.pb.TransferCoinsResponse{
+	return &pb.TransferCoinsResponse{
 		Success:       true,
 		FromWarriorId: req.FromWarriorId,
 		ToWarriorId:   req.ToWarriorId,
@@ -197,7 +197,7 @@ func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *pb.G
 
 	protoTransactions := make([]*pb.Transaction, len(transactions))
 	for i, tx := range transactions {
-		protoTransactions[i] = &coin.pb.Transaction{
+		protoTransactions[i] = &pb.Transaction{
 			Id:               uint32(tx.ID),
 			WarriorId:        uint32(tx.WarriorID),
 			Amount:           tx.Amount,
@@ -207,7 +207,7 @@ func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *pb.G
 		}
 	}
 
-	return &coin.pb.GetTransactionHistoryResponse{
+	return &pb.GetTransactionHistoryResponse{
 		Transactions: protoTransactions,
 		Total:        int32(count),
 	}, nil
