@@ -133,7 +133,7 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequ
 }
 
 // TransferCoins transfers coins between warriors
-func (s *Coin歸歸Server) TransferCoins(ctx context.Context, req *coin.TransferCoinsRequest) (*coin.TransferCoinsResponse, error) {
+func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.TransferCoinsRequest) (*coin.TransferCoinsResponse, error) {
 	// Deduct from sender
 	deductResp, err := s.DeductCoins(ctx, &coin.DeductCoinsRequest{
 		WarriorId: req.FromWarriorId,
@@ -147,7 +147,7 @@ func (s *Coin歸歸Server) TransferCoins(ctx context.Context, req *coin.Transfer
 			ToWarriorId:   req.ToWarriorId,
 			Amount:        req.Amount,
 			Message:       "failed to deduct coins from sender",
-		}, plot
+		}, nil
 	}
 
 	// Add to receiver
