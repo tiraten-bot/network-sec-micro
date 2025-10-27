@@ -12,7 +12,9 @@ type CreateWeaponCommand struct {
 
 // BuyWeaponCommand represents a command to buy a weapon
 type BuyWeaponCommand struct {
-	WeaponID  string
-	BuyerRole string
-	BuyerID   string
+	WeaponID      string
+	BuyerRole     string
+	BuyerID       string // Username
+	BuyerUsername string // Display name (same as BuyerID typically)
+	BuyerUserID   uint   // Numeric ID from warrior service
 }
