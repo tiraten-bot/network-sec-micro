@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package weapon;
+
+option go_package = "network-sec-micro/api/proto/weapon";
+
+import "google/protobuf/timestamp.proto";
+
+// Weapon Service (gRPC methods for service-to-service communication)
+service WeaponService {
+  // Get weapon details (for other services)
+  rpc GetWeapon(GetWeaponRequest) returns (GetWeaponResponse);
+  
+  // Calculate warrior's total power based on owned weapons
+  rpc CalculateWarriorPower(CalculateWarriorPowerRequest) returns (CalculateWarriorPowerResponse);
+}
+
+// Request to get weapon
+message GetWeaponRequest {
+  string weapon_id = 1;
+}
+
+// Response with weapon details
+message GetWeaponResponse {
+  Weapon weapon = 1;
+}
+
+// Request to calculate power
+message CalculateWarriorPowerRequest {
+  string warrior_username = 1;
+}
+
+// Response with calculated power
+message CalculateWarriorPowerResponse {
+  string warrior_username = 1;
+  int32 base_power = 2;
+  int32 weapon_bonus = 3;
+  int32 total_power = 4;
+  int32 weapon_count = 5;
+}
+
+// Weapon model
+message Weapon {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4; // "common", "rare", "legendary"
+  int32 damage = 5;
+  int32 price = 6;
+  string created_by = 7;
+  repeated string owned_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
