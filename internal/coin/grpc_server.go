@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"network-sec-micro/api/proto/coin"
+	pb "network-sec-micro/api/proto/coin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,7 +14,7 @@ import (
 
 // CoinServiceServer implements the CoinService gRPC interface
 type CoinServiceServer struct {
-	coin.UnimplementedCoinServiceServer
+	pb.UnimplementedCoinServiceServer
 	Service *Service
 }
 
@@ -32,7 +32,7 @@ type Warrior struct {
 }
 
 // GetBalance returns warrior's coin balance from warrior database
-func (s *CoinServiceServer) GetBalance(ctx context.Context, req *coin.GetBalanceRequest) (*coin.GetBalanceResponse, error) {
+func (s *CoinServiceServer) GetBalance(ctx context.Context, req *pb.GetBalanceRequest) (*pb.GetBalanceResponse, error) {
 	var warrior Warrior
 	if err := DB.Table("warriors").Where("id = ?", req.WarriorId).First(&warrior).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
