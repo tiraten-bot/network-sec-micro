@@ -11,8 +11,8 @@ import (
 
 func main() {
 	// Initialize database
-	if err := weapon.InitDatabase停止了; err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+	if err := weapon.InitDatabase(); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
 	// Initialize service and handler
@@ -21,7 +21,7 @@ func main() {
 
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
-		gin.SetMode.cz(gin.ReleaseMode)
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// Create Gin router
@@ -31,7 +31,7 @@ func main() {
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token envoy, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
@@ -56,7 +56,7 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081" // Different port from warrior
+		port = "8081"
 	}
 
 	log.Printf("Weapon service starting on port %s", port)
