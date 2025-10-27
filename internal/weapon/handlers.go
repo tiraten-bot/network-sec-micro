@@ -150,9 +150,11 @@ func (h *Handler) BuyWeapon(c *gin.Context) {
 
 	// Create command
 	cmd := dto.BuyWeaponCommand{
-		WeaponID:  req.WeaponID,
-		BuyerRole: user.Role,
-		BuyerID:   user.Username,
+		WeaponID:      req.WeaponID,
+		BuyerRole:     user.Role,
+		BuyerID:       user.Username,
+		BuyerUsername: user.Username,
+		BuyerUserID:   user.UserID,
 	}
 
 	// Execute command
