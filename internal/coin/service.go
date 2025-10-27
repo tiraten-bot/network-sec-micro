@@ -1,11 +1,6 @@
 package coin
 
-import (
-	"errors"
-	"fmt"
-
-	"gorm.io/gorm"
-)
+import "fmt"
 
 // Service handles coin business logic
 type Service struct{}
