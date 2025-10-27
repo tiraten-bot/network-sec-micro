@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package warrior;
+
+option go_package = "network-sec-micro/api/proto/warrior";
+
+import "google/protobuf/timestamp.proto";
+
+// Warrior Service (gRPC methods for service-to-service communication)
+service WarriorService {
+  // Get warrior by username (for other services)
+  rpc GetWarriorByUsername(GetWarriorByUsernameRequest) returns (GetWarriorByUsernameResponse);
+  
+  // Get warrior by ID (for other services)
+  rpc GetWarriorByID(GetWarriorByIDRequest) returns (GetWarriorByIDResponse);
+  
+  // Update warrior's power/stats
+  rpc UpdateWarriorPower(UpdateWarriorPowerRequest) returns (UpdateWarriorPowerResponse);
+}
+
+// Request to get warrior by username
+message GetWarriorByUsernameRequest {
+  string username = 1;
+}
+
+// Response with warrior
+message GetWarriorByUsernameResponse {
+  Warrior warrior = 1;
+}
+
+// Request to get warrior by ID
+message GetWarriorByIDRequest {
+  uint32 warrior_id = 1;
+}
+
+// Response with warrior
+message GetWarriorByIDResponse {
+  Warrior warrior = 1;
+}
+
+// Request to update power
+message UpdateWarriorPowerRequest {
+  uint32 warrior_id = 1;
+  int32 total_power = 2;
+  int32 weapon_count = 3;
+}
+
+// Response after updating power
+message UpdateWarriorPowerResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Warrior model
+message Warrior {
+  uint32 id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  int32 coin_balance = 5;
+  int32 total_power = 6;
+  int32 weapon_count = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
