@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package coin;
+
+option go_package = "network-sec-micro/api/proto/coin";
+
+import "google/protobuf/timestamp.proto";
+
+// Coin Service
+service CoinService {
+  // Get warrior's coin balance
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  
+  // Deduct coins from warrior's balance
+  rpc DeductCoins(DeductCoinsRequest) returns (DeductCoinsResponse);
+  
+  // Add coins to warrior's balance
+  rpc AddCoins(AddCoinsRequest) returns (AddCoinsResponse);
+  
+  // Transfer coins between warriors
+  rpc TransferCoins(TransferCoinsRequest) returns (TransferCoinsResponse);
+  
+  // Get transaction history
+  rpc GetTransactionHistory(GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse);
+}
+
+// Request to get balance
+message GetBalanceRequest {
+  uint32 warrior_id = 1;
+}
+
+// Response with balance
+message GetBalanceResponse {
+  uint32 warrior_id = 1;
+  int64 balance = 2;
+}
+
+// Request to deduct coins
+message DeductCoinsRequest {
+  uint32 warrior_id = 1;
+  int64 amount = 2;
+  string reason = 3; // e.g., "weapon_purchase", "item_buy", etc.
+}
+
+// Response after deduction
+message DeductCoinsResponse {
+  bool success = 1;
+  uint32 warrior_id = 2;
+  int64 balance_before = 3;
+  int64 balance_after = 4;
+  string message = 5;
+}
+
+// Request to add coins
+message AddCoinsRequest {
+  uint32 warrior_id = 1;
+  int64 amount = 2;
+  string reason = 3; // e.g., "quest_reward", "login_bonus", etc.
+}
+
+// Response after adding coins
+message AddCoinsResponse {
+  bool success = 1;
+  uint32 warrior_id = 2;
+  int64 balance_before = 3;
+  int64 balance_after = 4;
+  string message = 5;
+}
+
+// Request to transfer coins
+message TransferCoinsRequest {
+  uint32 from_warrior_id = 1;
+  uint32 to_warrior_id = 2;
+  int64 amount = 3;
+  string reason = 4;
+}
+
+// Response after transfer
+message TransferCoinsResponse {
+  bool success = 1;
+  uint32 from_warrior_id = 2;
+  uint32 to_warrior_id = 3;
+  int64 amount = 4;
+  string message = 5;
+}
+
+// Request to get transaction history
+message GetTransactionHistoryRequest {
+  uint32 warrior_id = 1;
+  int32 limit = 2; // optional, default 50
+  int32 offset = 3; // optional, default 0
+}
+
+// Response with transaction history
+message GetTransactionHistoryResponse {
+  repeated Transaction transactions = 1;
+  int32 total = 2;
+}
+
+// Transaction record
+message Transaction {
+  uint32 id = 1;
+  uint32 warrior_id = 2;
+  int64 amount = 3; // positive for add, negative for deduct
+  string transaction_type = 4; // "add", "deduct", "transfer_in", "transfer_out"
+  string reason = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
