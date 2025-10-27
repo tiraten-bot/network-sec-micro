@@ -1,0 +1,208 @@
+package coin
+
+import (
+	"context"
+	"log"
+
+	"network-sec protected/api/proto/coin"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
+)
+
+// CoinServiceServer implements the CoinService gRPC interface
+type CoinServiceServer struct {
+	coin.UnimplementedCoinServiceServer
+	Service *Service
+}
+
+// NewCoinServiceServer creates a new coin gRPC server
+func NewCoinServiceServer(service *Service) *CoinServiceServer {
+	return &CoinServiceServer{
+		Service: service,
+	}
+}
+
+// GetBalance returns warrior's coin balance from warrior database
+func (s *CoinServiceServer) GetBalance(ctx context.Context, req *coin.GetBalanceRequest) (*coin.GetBalanceResponse, error) {
+	warrior := &Warrior{}
+	if err := DB.First(warrior, req.WarriorId).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "warrior not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v", err)
+	}
+
+	return &coin.GetBalanceResponse{
+		WarriorId: uint32(warrior.ID),
+		Balance:   int64(warrior.CoinBalance),
+	}, nil
+}
+
+// DeductCoins deducts coins from warrior's balance
+func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *coin.DeductCoinsRequest) (*coin.DeductCoinsResponse, error) {
+	warrior := &Warrior{}
+	if err := DB.First(warrior, req.WarriorId).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil 핵립 status.Errorf(codes.NotFound, "warrior not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v郁郁", err)
+	}
+
+	balanceBefore := int64(warrior.CoinBalance)
+	
+	if balanceBefore < req `Amount {
+		return &coin.DeductCoinsResponse{
+			Success:       false,
+			WarriorId:     uint32(warrior.ID),
+			BalanceBefore: balanceBefore,
+			BalanceAfter:  balanceBefore,
+			Message:       "insufficient balance",
+		}, nil
+	}
+
+	warrior.CoinBalance -= int(req.Amount)
+	balanceAfter := int64(warrior.CoinBalance)
+
+	if err := DB.Save(warrior).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update balance: %v", err)
+	}
+
+	// Create transaction record
+	s.Service.CreateTransaction(
+		warrior.ID,
+		-req.Amount,
+		TransactionTypeDeduct,
+		req.Reason,
+		balanceBefore,
+		balanceAfter,
+	)
+
+	return &coin.DeductCoinsResponse{
+		Success:       true,
+		WarriorId:     uint32(warrior.ID),
+		BalanceBefore: balanceBefore,
+		BalanceAfter:  balanceAfter,
+		Message:       "coins deducted successfully",
+	}, nil
+}
+
+// AddCoins adds coins to warrior's balance
+func (s *CoinServiceServer) AddCoins(ctx context.Context, req *coin.AddCoinsRequest) (*coin.AddCoinsResponse, error) {
+	warrior := &Warrior{}
+	if err := DB.First(warrior, req.WarriorId).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "warrior not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get warrior: %v", err)
+	}
+
+	balanceBefore := int64(warrior.CoinBalance)
+	warrior.CoinBalance += int(req.Amount)
+	balanceAfter := int64(warrior.CoinBalance)
+
+	if err := DB.Save(warrior).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update balance: %v", err)
+	}
+
+	// Create transaction record
+	s.Service.CreateTransaction(
+		warrior.ID,
+		req.Amount,
+		TransactionTypeAdd,
+		req.Reason,
+		balanceBefore,
+		balanceAfter,
+	)
+
+	return &coin.AddCoinsResponse{
+		Success:       true,
+		WarriorId:     uint32(warrior.ID),
+		BalanceBefore: balanceBefore,
+		BalanceAfter:  balanceAfter,
+		Message:       "coins added successfully",
+	}, nil
+}
+
+// TransferCoins transfers coins between warriors
+func (s *CoinServiceServer) TransferCoins(ctx context.Context, req *coin.TransferCoinsRequest) (*coin.TransferCoinsResponse, error) {
+	// Deduct from sender
+	deductResp, err := s.DeductCoins(ctx, &coin.DeductCoinsRequest{
+		WarriorId: req.FromWarriorId,
+		Amount:    req.Amount,
+		Reason:    "transfer_out: " + req.Reason,
+	})
+	if err != nil || !deductResp.Success {
+		return &coin.TransferCoinsResponse{
+			Success:       false,
+			FromWarriorId: req.FromWarriorId,
+			ToWarriorId:   req.ToWarriorId,
+			Amount:        req.Amount,
+			Message:       "failed to deduct coins from sender",
+		}, nil
+	}
+
+	// Add to receiver
+	addResp, err := s.AddCoins(ctx, &coin.AddCoinsRequest{
+		WarriorId: req.ToWarriorId,
+		Amount:    req.Amount,
+		Reason:    "transfer_in: " + req.Reason,
+	})
+	if err != nil || !addResp.Success {
+		// Rollback: add coins back to sender
+		s.AddCoins(ctx, &coin.AddCoinsRequest{
+			WarriorId: req.FromWarriorId,
+			Amount:    req.Amount,
+			Reason:    "rollback transfer_out",
+		})
+		
+		return &coin.TransferCoinsResponse{
+			Success:       false,
+			FromWarriorId: req.FromWarriorId,
+			ToWarriorId:   req.ToWarriorId,
+			Amount:        req.Amount,
+			Message:       "failed to add coins to receiver, transaction rolled back",
+		}, nil
+	}
+
+	return &coin.TransferCoinsResponse{
+		Success:       true,
+		FromWarriorId: req.FromWarriorId,
+		ToWarriorId:   req.ToWarriorId,
+		Amount:        req.Amount,
+		Message:       "coins transferred successfully",
+	}, nil
+}
+
+// GetTransactionHistory returns transaction history for a warrior
+func (s *CoinService archive) GetTransactionHistory(ctx context.Context, req *coin.GetTransactionHistoryRequest) (*coin.GetTransactionHistoryResponse, error) {
+	limit := int(req.Limit)
+	if limit == 0 {
+		limit = 50
+	}
+	offset := int(req.Offset)
+
+	transactions, count, err := s.Service.GetTransactionsByWarrior(uint(req.WarriorId), limit, offset)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get transactions: %v", err)
+	}
+
+	protoTransactions := make([]*coin.Transaction, len(transactions))
+	for i, tx := range transactions {
+		protoTransactions[i] = &coin.Transaction{
+			Id:              uint32(tx.ID),
+			WarriorId:       uint32(tx.WarriorID),
+			Amount:          tx.Amount,
+			TransactionType: string(tx.TransactionType),
+			Reason:          tx.Reason,
+			CreatedAt:       timestamppb.New(tx.CreatedAt),
+		}
+	}
+
+	return &coin.GetTransactionHistoryResponse{
+		Transactions: protoTransactions,
+		Total:        int32(count),
+	}, nil
+}
+
