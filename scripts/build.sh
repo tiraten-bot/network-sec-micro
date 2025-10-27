@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# Build script for warrior service
+# Build script for all services
 
 set -e
 
-echo "🔨 Building warrior service..."
+echo "🔨 Building all services..."
 
-# Run wire generation
-echo "📦 Running Wire..."
-cd cmd/warrior && wire
-
-# Build the application
-echo "🔨 Building application..."
-cd ../..
+# Build warrior service
+echo "📦 Building warrior service..."
+cd cmd/warrior && wire && cd ../..
 go build -o bin/warrior cmd/warrior/main.go
 
-echo "✅ Build completed successfully!"
-echo "📦 Binary location: ./bin/warrior"
+# Build weapon service
+echo "🔨 Building weapon service..."
+go build -o bin/weapon cmd/weapon/main.go
+
+echo "✅ All services built successfully!"
+echo "📦 Binaries location: ./bin/"
