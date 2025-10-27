@@ -1,14 +1,20 @@
 #!/bin/bash
 
-# Docker build script
+# Docker build script for all services
 
 set -e
 
-echo "🐳 Building warrior Docker image..."
+echo "🐳 Building Docker images..."
 
+# Build warrior service
+echo "🐳 Building warrior service..."
 docker build -f dockerfiles/warrior.dockerfile -t warrior:latest .
 
-echo "✅ Docker image built successfully!"
-echo "📦 Image: warrior:latest"
+# Build weapon service
+echo "🐳 Building weapon service..."
+docker build -f dockerfiles/weapon.dockerfile -t weapon:latest .
+
+echo "✅ All Docker images built successfully!"
+echo "📦 Images: warrior:latest, weapon:latest"
 echo ""
-echo "🚀 To run: docker run -p 8080:8080 warrior:latest"
+echo "🚀 To run with Docker Compose: docker-compose up -d"
