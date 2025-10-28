@@ -39,7 +39,6 @@ func ProcessEnemyAttackMessage(message []byte) error {
 
 	// Deduct coins from warrior
 	service := NewService()
-	ctx := context.Background()
 
 	if err := service.DeductCoins(dto.DeductCoinsCommand{
 		WarriorID: event.WarriorID,
