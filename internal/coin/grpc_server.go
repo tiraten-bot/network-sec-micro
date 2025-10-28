@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"network-sec-micro/api/proto/coin"
+	pb "network-sec-micro/api/proto/coin"
 	"network-sec-micro/internal/coin/dto"
 
 	"google.golang.org/grpc/codes"
