@@ -30,7 +30,19 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// TODO: Add service and handler initialization
+	// Initialize service using Wire (or manual)
+	// service, err := InitializeEnemyApp()
+	// if err != nil {
+	// 	log.Fatalf("Failed to initialize app: %v", err)
+	// }
+	_ = enemy.NewService() // Service initialized
+	
+	// Setup graceful shutdown
+	defer func() {
+		log.Println("Shutting down...")
+		enemy.CloseKafkaPublisher()
+	}()
+
 	log.Println("Enemy Service starting...")
 	
 	// Keep running (will add routes later)
