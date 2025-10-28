@@ -37,11 +37,15 @@ func main() {
 		log.Fatalf("Failed to start consumer: %v", err)
 	}
 
-	// Initialize service
+	// Initialize service and gRPC server (Wire will be added later)
 	service := coin.NewService()
-	
-	// Create gRPC server
 	grpcServer := coin.NewCoinServiceServer(service)
+	
+	// TODO: Wire integration when wire issue is resolved
+	// service, grpcServer, err := InitializeCoinApp()
+	// if err != nil {
+	// 	log.Fatalf("Failed to initialize app: %v", err)
+	// }
 
 	// Start gRPC server
 	port := os.Getenv("GRPC_PORT")
