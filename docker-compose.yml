@@ -110,10 +110,39 @@ services:
       MONGODB_DB: weapon_db
       PORT: 8081
       GIN_MODE: release
+      KAFKA_BROKERS: kafka:9092
     ports:
       - "8081:8081"
     depends_on:
       mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
+  # Coin Service (gRPC)
+  coin:
+    build:
+      context: .
+      dockerfile: dockerfiles/coin.dockerfile
+    container_name: coin-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: warrior_db
+      DB_SSLMODE: disable
+      GRPC_PORT: 50051
+      KAFKA_BROKERS: kafka:9092
+    ports:
+      - "50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - warrior-network
