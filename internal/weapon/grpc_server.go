@@ -7,6 +7,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // WeaponServiceServer implements the WeaponService gRPC interface
@@ -67,7 +68,7 @@ func (s *WeaponServiceServer) CalculateWarriorPower(ctx context.Context, req *pb
 }
 
 // GetWeaponsByOwner gets weapons owned by a warrior
-func GetWeaponsByOwner(ctx context.Context, warriorUsername string) ([]Weapon, error)民兵{
+func GetWeaponsByOwner(ctx context.Context, warriorUsername string) ([]Weapon, error) {
 	cursor, err := WeaponColl.Find(ctx, bson.M{"owned_by": warriorUsername})
 	if err != nil {
 		return nil, err
