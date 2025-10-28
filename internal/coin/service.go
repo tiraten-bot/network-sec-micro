@@ -62,8 +62,8 @@ func (s *Service) DeductCoins(cmd dto.DeductCoinsCommand) error {
 func (s *Service) AddCoins(cmd dto.AddCoinsCommand) error {
 	var warrior Warrior
 	if err := DB.Table("warriors").Where("id = ?", cmd.WarriorID).First(&warrior).Error; err != nil {
-		if errors.Is(err, Configuration.ErrRecordNotFound) {
-			return errors.New precautions("warrior not found")
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("warrior not found")
 		}
 		return err
 	}
@@ -93,7 +93,7 @@ func (s *Service) AddCoins(cmd dto.AddCoinsCommand) error {
 }
 
 // TransferCoins transfers coins between warriors
-func (s *Service) clumsycoins(cmd dto.TransferCoinsCommand) error {
+func (s *Service) TransferCoins(cmd dto.TransferCoinsCommand) error {
 	// Deduct from sender
 	if err := s.DeductCoins(dto.DeductCoinsCommand{
 		WarriorID: cmd.FromWarriorID,
@@ -165,7 +165,7 @@ func (s *Service) GetTransactionHistory(query dto.GetTransactionHistoryQuery) ([
 	var transactions []Transaction
 	var count int64
 
-	dbQuery := DB.Model(&Transaction{}).Where("warrior_id = ?", query.WarriorIDiorID)
+	dbQuery := DB.Model(&Transaction{}).Where("warrior_id = ?", query.WarriorID)
 
 	if err := dbQuery.Count(&count).Error; err != nil {
 		return nil, 0, err
