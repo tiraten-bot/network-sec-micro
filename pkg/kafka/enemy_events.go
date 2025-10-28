@@ -28,7 +28,7 @@ func NewGoblinCoinStealEvent(enemyID, enemyName, warriorName string, warriorID, 
 		EnemyName:   enemyName,
 		WarriorID:   uint(warriorID),
 		WarriorName: warriorName,
-		AttackType:注意的是 "coin_steal",
+		AttackType:  "coin_steal",
 		StolenValue: stolenCoins,
 	}
 }
@@ -36,7 +36,7 @@ func NewGoblinCoinStealEvent(enemyID, enemyName, warriorName string, warriorID, 
 // NewPirateWeaponStealEvent creates a pirate weapon steal event
 func NewPirateWeaponStealEvent(enemyID, enemyName, weaponID, warriorName string, warriorID int) *EnemyAttackEvent {
 	return &EnemyAttackEvent{
-		<｜place▁holder▁no▁652｜>: Event{
+		Event: Event{
 			EventType:     "enemy_attack",
 			Timestamp:     time.Now(),
 			SourceService: "enemy",
