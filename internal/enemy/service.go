@@ -14,14 +14,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Service handles enemy business logic with CQRS pattern
 type Service struct{}
 
 func NewService() *Service {
 	return &Service{}
 }
 
+// ==================== COMMANDS (WRITE OPERATIONS) ====================
+
 // CreateEnemy creates a new enemy
-func (s *Service) CreateEnemy(ctx context.Context, cmd dto.CreateEnemyCommand) (*Enemy, error) {
+func (s *Service) CreateEnemy(cmd dto.CreateEnemyCommand) (*Enemy, error) {
 	enemy := Enemy{
 		Name:        cmd.Name,
 		Type:        EnemyType(cmd.Type),
@@ -33,6 +36,7 @@ func (s *Service) CreateEnemy(ctx context.Context, cmd dto.CreateEnemyCommand) (
 		UpdatedAt:   time.Now(),
 	}
 
+	ctx := context.Background()
 	result, err := EnemyColl.InsertOne(ctx, enemy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create enemy: %w", err)
@@ -42,14 +46,16 @@ func (s *Service) CreateEnemy(ctx context.Context, cmd dto.CreateEnemyCommand) (
 	return &enemy, nil
 }
 
-// AttackWarrior handles goblin coin steal or pirate weapon steal
-func (s *Service) AttackWarrior(ctx context.Context, cmd dto.AttackWarriorCommand) error {
-	var enemy Enemy
+// AttackWarrior handles enemy attacks (goblin coin steal or pirate weapon steal)
+func (s *Service) AttackWarrior(cmd dto.AttackWarriorCommand) error {
+	ctx := context.Background()
+
 	enemyID, err := primitive.ObjectIDFromHex(cmd.EnemyID)
 	if err != nil {
 		return errors.New("invalid enemy ID")
 	}
 
+	var enemy Enemy
 	if err := EnemyColl.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return errors.New("enemy not found")
@@ -89,6 +95,76 @@ func (s *Service) AttackWarrior(ctx context.Context, cmd dto.AttackWarriorComman
 	return nil
 }
 
+// ==================== QUERIES (READ OPERATIONS) ====================
+
+// GetEnemy gets an enemy by ID
+func (s *Service) GetEnemy(query dto.GetEnemyQuery) (*Enemy, error) {
+	enemyID, err := primitive.ObjectIDFromHex(query.EnemyID)
+	if err != nil {
+		return nil, errors.New("invalid enemy ID")
+	}
+
+	var enemy Enemy
+	ctx := context.Background()
+	if err := EnemyColl.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("enemy not found")
+		}
+		return nil, err
+	}
+
+	return &enemy, nil
+}
+
+// GetEnemiesByType gets enemies by type
+func (s *Service) GetEnemiesByType(query dto.GetEnemiesByTypeQuery) ([]Enemy, int64, error) {
+	ctx := context.Background()
+	filter := bson.M{"type": query.Type}
+
+	count, err := EnemyColl.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	cursor, err := EnemyColl.Find(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var enemies []Enemy
+	if err := cursor.All(ctx, &enemies); err != nil {
+		return nil, 0, err
+	}
+
+	return enemies, count, nil
+}
+
+// GetEnemiesByCreator gets enemies created by a specific user
+func (s *Service) GetEnemiesByCreator(query dto.GetEnemiesByCreatorQuery) ([]Enemy, int64, error) {
+	ctx := context.Background()
+	filter := bson.M{"created_by": query.CreatedBy}
+
+	count, err := EnemyColl.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	cursor, err := EnemyColl.Find(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var enemies []Enemy
+	if err := cursor.All(ctx, &enemies); err != nil {
+		return nil, 0, err
+	}
+
+	return enemies, count, nil
+}
+
+// Helper function
 func publishEnemyAttackEvent(event *kafka.EnemyAttackEvent) error {
 	publisher, err := GetKafkaPublisher()
 	if err != nil {
