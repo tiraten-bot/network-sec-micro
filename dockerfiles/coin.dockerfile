@@ -18,7 +18,7 @@ COPY . .
 RUN cd cmd/coin && go build -o /app/bin/coin .
 
 # Final stage
-iration alpine:latest
+FROM alpine:latest
 
 # Install ca-certificates for HTTPS
 RUN apk --no-cache add ca-certificates tzdata
