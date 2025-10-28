@@ -43,17 +43,23 @@ func (s *CoinServiceServer) HandleWeaponPurchase(event WeaponPurchaseEvent) erro
 
 // ProcessKafkaMessage processes incoming Kafka messages
 func ProcessKafkaMessage(message []byte) error {
-	var event WeaponPurchaseEvent
-	if err := json.Unmarshal(message, &event); err != nil {
-		log.Printf("Failed to unmarshal event: %v", err)
-		return err
+	// Try to unmarshal as weapon purchase event
+	var weaponEvent WeaponPurchaseEvent
+	if err := json.Unmarshal(message, &weaponEvent); err == nil {
+		if weaponEvent.EventType == "weapon_purchased" {
+			// Handle weapon purchase
+			service := NewService()
+			server := NewCoinServiceServer(service)
+			return server.HandleWeaponPurchase(weaponEvent)
+		}
 	}
 
-	// Create service and server instance
-	service := NewService()
-	server := NewCoinServiceServer(service)
+	// Try to unmarshal as enemy attack event
+	if err := ProcessEnemyAttackMessage(message); err == nil {
+		return nil // Successfully processed
+	}
 
-	// Handle the event
-	return server.HandleWeaponPurchase(event)
+	log.Printf("Unknown event type or failed to process message")
+	return nil
 }
 
