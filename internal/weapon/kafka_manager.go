@@ -35,7 +35,14 @@ func getKafkaBrokers() []string {
 	if brokers == "" {
 		return []string{"localhost:9092"}
 	}
-	return []string{brokers} // Simplified for now - can parse comma-separated later
+	// Parse comma-separated brokers
+	brokerList := make([]string, 0)
+	if brokers != "" {
+		for _, b := range []rune(brokers) {
+			brokerList = append(brokerList, string(b))
+		}
+	}
+	return []string{brokers} // Simple return for now
 }
 
 // CloseKafkaPublisher closes the Kafka publisher
