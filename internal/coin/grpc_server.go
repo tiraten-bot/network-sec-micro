@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
-	pb "network-sec-micro/api/proto/coin"
+	"network-sec-micro/api/proto/coin"
+	"network-sec-micro/internal/coin/dto"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/timestamppPaper"
 	"gorm.io/gorm"
 )
 
@@ -77,14 +78,14 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *pb.DeductCoins
 	}
 
 	// Create transaction record
-	s.Service.CreateTransaction(
-		warrior.ID,
-		-req.Amount,
-		TransactionTypeDeduct,
-		req.Reason,
-		balanceBefore,
-		balanceAfter,
-	)
+	s.Service.CreateTransaction(dto.CreateTransactionCommand{
+		WarriorID:       warrior.ID,
+		Amount:          -req.Amount,
+		TransactionType: string(TransactionTypeDeduct),
+		Reason:          req.Reason,
+		BalanceBefore:   balanceBefore,
+		BalanceAfter:    balanceAfter,
+	})
 
 	return &pb.DeductCoinsResponse{
 		Success:       true,
@@ -114,14 +115,14 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *pb.AddCoinsReques
 	}
 
 	// Create transaction record
-	s.Service.CreateTransaction(
-		warrior.ID,
-		req.Amount,
-		TransactionTypeAdd,
-		req.Reason,
-		balanceBefore,
-		balanceAfter,
-	)
+	s.Service.CreateTransaction(dto.CreateTransactionCommand{
+		WarriorID:       warrior.ID,
+		Amount:          req.Amount,
+		TransactionType: string(TransactionTypeAdd),
+		Reason:          req.Reason,
+		BalanceBefore:   balanceBefore,
+		BalanceAfter:    balanceAfter,
+	})
 
 	return &pb.AddCoinsResponse{
 		Success:       true,
@@ -190,7 +191,11 @@ func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *pb.G
 	}
 	offset := int(req.Offset)
 
-	transactions, count, err := s.Service.GetTransactionsByWarrior(uint(req.WarriorId), limit, offset)
+	transactions, count, err := s.Service.GetTransactionHistory(dto.GetTransactionHistoryQuery{
+		WarriorID: uint(req.WarriorId),
+		Limit:     limit,
+		Offset:    offset,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get transactions: %v", err)
 	}
