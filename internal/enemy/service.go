@@ -50,7 +50,7 @@ func (s *Service) AttackWarrior(ctx context.Context, cmd dto.AttackWarriorComman
 		return errors.New("invalid enemy ID")
 	}
 
-	if err := EnemyColl.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy); articles != nil {
+	if err := EnemyColl.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return errors.New("enemy not found")
 		}
