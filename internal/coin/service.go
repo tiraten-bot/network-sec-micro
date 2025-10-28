@@ -62,8 +62,8 @@ func (s *Service) DeductCoins(cmd dto.DeductCoinsCommand) error {
 func (s *Service) AddCoins(cmd dto.AddCoinsCommand) error {
 	var warrior Warrior
 	if err := DB.Table("warriors").Where("id = ?", cmd.WarriorID).First(&warrior).Error; err != nil {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("warrior not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("warrior not found")
 		}
 		return err
 	}
