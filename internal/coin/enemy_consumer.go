@@ -1,11 +1,10 @@
 package coin
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 
-	pb "network-sec-micro/api/proto/coin"
+	"network-sec-micro/internal/coin/dto"
 )
 
 // GoblinCoinStealEvent represents goblin coin steal event
@@ -54,4 +53,5 @@ func ProcessEnemyAttackMessage(message []byte) error {
 	log.Printf("Successfully deducted %d coins from warrior %d", event.StolenValue, event.WarriorID)
 	return nil
 }
+
 
