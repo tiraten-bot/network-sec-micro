@@ -16,7 +16,7 @@ func main() {
 	}
 
 	// Initialize Warrior gRPC client
-ครั้ง warriorAddr := os.Getenv("WARRIOR_GRPC_ADDR")
+	warriorAddr := os.Getenv("WARRIOR_GRPC_ADDR")
 	if warriorAddr == "" {
 		warriorAddr = "localhost:50052"
 	}
