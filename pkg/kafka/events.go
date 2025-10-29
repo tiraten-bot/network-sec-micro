@@ -44,6 +44,9 @@ type DragonDeathEvent struct {
 	DragonName      string `json:"dragon_name"`
 	DragonType      string `json:"dragon_type"`
 	DragonLevel     int    `json:"dragon_level"`
+    DragonMaxHealth int    `json:"dragon_max_health"`
+    DragonAttack    int    `json:"dragon_attack_power"`
+    DragonDefense   int    `json:"dragon_defense"`
 	KillerUsername  string `json:"killer_username"`
 	LootWeaponType  string `json:"loot_weapon_type"`
 	LootWeaponName  string `json:"loot_weapon_name"`
@@ -55,12 +58,15 @@ type EnemyDestroyedEvent struct {
     EnemyID        string `json:"enemy_id"`
     EnemyType      string `json:"enemy_type"`
     EnemyName      string `json:"enemy_name"`
+    EnemyLevel     int    `json:"enemy_level"`
+    EnemyHealth    int    `json:"enemy_health"`
+    EnemyAttack    int    `json:"enemy_attack_power"`
     KillerWarriorID   uint   `json:"killer_warrior_id"`
     KillerWarriorName string `json:"killer_warrior_name"`
 }
 
 // NewEnemyDestroyedEvent creates a new enemy destroyed event
-func NewEnemyDestroyedEvent(enemyID, enemyType, enemyName, killerWarriorName string, killerWarriorID uint) *EnemyDestroyedEvent {
+func NewEnemyDestroyedEvent(enemyID, enemyType, enemyName string, enemyLevel, enemyHealth, enemyAttack int, killerWarriorName string, killerWarriorID uint) *EnemyDestroyedEvent {
     return &EnemyDestroyedEvent{
         Event: Event{
             EventType:     "enemy_destroyed",
@@ -70,6 +76,9 @@ func NewEnemyDestroyedEvent(enemyID, enemyType, enemyName, killerWarriorName str
         EnemyID:            enemyID,
         EnemyType:          enemyType,
         EnemyName:          enemyName,
+        EnemyLevel:         enemyLevel,
+        EnemyHealth:        enemyHealth,
+        EnemyAttack:        enemyAttack,
         KillerWarriorID:    killerWarriorID,
         KillerWarriorName:  killerWarriorName,
     }
