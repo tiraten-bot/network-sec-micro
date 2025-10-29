@@ -2,10 +2,7 @@ package dragon
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
-	"os"
 
 	"network-sec-micro/api/proto/warrior"
 	pb "network-sec-micro/api/proto/warrior"
