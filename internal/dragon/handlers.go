@@ -235,10 +235,35 @@ func (h *Handler) GetDragonsByType(c *gin.Context) {
 		return
 	}
 
+	// Convert Dragons to dto.Dragons
+	var dtoDragons []dto.Dragon
+	for _, dragon := range dragons {
+		dtoDragon := dto.Dragon{
+			ID:          dragon.ID,
+			Name:        dragon.Name,
+			Type:        string(dragon.Type),
+			Level:       dragon.Level,
+			Health:      dragon.Health,
+			MaxHealth:   dragon.MaxHealth,
+			AttackPower: dragon.AttackPower,
+			Defense:     dragon.Defense,
+			CreatedBy:   dragon.CreatedBy,
+			IsAlive:     dragon.IsAlive,
+			KilledBy:    dragon.KilledBy,
+			CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		if dragon.KilledAt != nil {
+			killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
+			dtoDragon.KilledAt = &killedAtStr
+		}
+		dtoDragons = append(dtoDragons, dtoDragon)
+	}
+
 	c.JSON(200, dto.GetDragonsByTypeResponse{
 		Success: true,
-		Dragons: dragons,
-		Count:   len(dragons),
+		Dragons: dtoDragons,
+		Count:   len(dtoDragons),
 	})
 }
 
@@ -269,9 +294,34 @@ func (h *Handler) GetDragonsByCreator(c *gin.Context) {
 		return
 	}
 
+	// Convert Dragons to dto.Dragons
+	var dtoDragons []dto.Dragon
+	for _, dragon := range dragons {
+		dtoDragon := dto.Dragon{
+			ID:          dragon.ID,
+			Name:        dragon.Name,
+			Type:        string(dragon.Type),
+			Level:       dragon.Level,
+			Health:      dragon.Health,
+			MaxHealth:   dragon.MaxHealth,
+			AttackPower: dragon.AttackPower,
+			Defense:     dragon.Defense,
+			CreatedBy:   dragon.CreatedBy,
+			IsAlive:     dragon.IsAlive,
+			KilledBy:    dragon.KilledBy,
+			CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		if dragon.KilledAt != nil {
+			killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
+			dtoDragon.KilledAt = &killedAtStr
+		}
+		dtoDragons = append(dtoDragons, dtoDragon)
+	}
+
 	c.JSON(200, dto.GetDragonsByCreatorResponse{
 		Success: true,
-		Dragons: dragons,
-		Count:   len(dragons),
+		Dragons: dtoDragons,
+		Count:   len(dtoDragons),
 	})
 }
