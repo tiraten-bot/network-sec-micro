@@ -27,6 +27,7 @@ build:
 	go build -o bin/weapon cmd/weapon/main.go
 	go build -o bin/coin cmd/coin/main.go
 	go build -o bin/enemy cmd/enemy/main.go
+	go build -o bin/dragon cmd/dragon/main.go
 
 run:
 	go run cmd/warrior/main.go
