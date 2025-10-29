@@ -1,31 +1,34 @@
 package coin
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
 
-// InitDatabase initializes the database connection
+// InitDatabase initializes the MySQL database connection
 func InitDatabase() error {
 	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "postgres")
-	dbname := getEnv("DB_NAME", "warrior_db") // Same database as warrior service
-	sslmode := getEnv("DB_SSLMODE", "disable")
+	port := getEnv("DB_PORT", "3306")
+	user := getEnv("DB_USER", "root")
+	password := getEnv("DB_PASSWORD", "password")
+	dbname := getEnv("DB_NAME", "coin_db")
+	charset := getEnv("DB_CHARSET", "utf8mb4")
+	parseTime := getEnv("DB_PARSE_TIME", "true")
+	loc := getEnv("DB_LOC", "Local")
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslmode)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=%s&loc=%s",
+		user, password, host, port, dbname, charset, parseTime, loc)
 
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 
@@ -33,7 +36,7 @@ func InitDatabase() error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	log.Println("Coin service database connection established")
+	log.Println("Coin service MySQL database connection established")
 
 	// Auto migrate the schema
 	if err := DB.AutoMigrate(&Transaction{}); err != nil {
@@ -52,4 +55,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
