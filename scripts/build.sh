@@ -10,11 +10,6 @@ echo "🔨 Building all services..."
 echo "📦 Generating protobuf code..."
 make proto
 
-# Build warrior service (skip wire for now due to dependency issues)
-echo "📦 Building warrior service..."
-# cd cmd/warrior && wire && cd ../..
-go build -o bin/warrior cmd/warrior/main.go
-
 # Build weapon service
 echo "🔨 Building weapon service..."
 go build -o bin/weapon cmd/weapon/main.go
@@ -27,9 +22,11 @@ go build -o bin/coin cmd/coin/main.go
 echo "👹 Building enemy service..."
 go build -o bin/enemy cmd/enemy/main.go
 
-echo "✅ All services built successfully!"
+echo "✅ Services built successfully!"
 echo "📦 Binaries location: ./bin/"
-echo "   - warrior (HTTP API)"
 echo "   - weapon (HTTP API)" 
 echo "   - coin (gRPC API)"
 echo "   - enemy (HTTP API)"
+echo ""
+echo "⚠️  Warrior service skipped due to Wire dependency issues"
+echo "   To build warrior: cd cmd/warrior && go build -o ../../bin/warrior main.go"
