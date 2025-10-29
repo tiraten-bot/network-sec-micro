@@ -1,0 +1,9 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fiber-gateway
+spec:
+  rules:
+    - host: api.network.prod
+
+
