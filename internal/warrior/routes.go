@@ -17,6 +17,8 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 		{
 			// Profile route (accessible by all authenticated users)
 			protected.GET("/profile", handler.GetProfile)
+			protected.GET("/profile/kills", handler.GetMyKilledMonsters)
+			protected.GET("/profile/strongest-kill", handler.GetMyStrongestKill)
 
 			// Password management
 			protected.PUT("/profile/password", handler.ChangePassword)
