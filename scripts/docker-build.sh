@@ -14,7 +14,11 @@ docker build -f dockerfiles/warrior.dockerfile -t warrior:latest .
 echo "🐳 Building weapon service..."
 docker build -f dockerfiles/weapon.dockerfile -t weapon:latest .
 
+# Build coin service
+echo "🐳 Building coin service..."
+docker build -f dockerfiles/coin.dockerfile -t coin:latest .
+
 echo "✅ All Docker images built successfully!"
-echo "📦 Images: warrior:latest, weapon:latest"
+echo "📦 Images: warrior:latest, weapon:latest, coin:latest"
 echo ""
 echo "🚀 To run with Docker Compose: docker-compose up -d"
