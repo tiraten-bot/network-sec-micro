@@ -56,9 +56,30 @@ func (h *Handler) CreateDragon(c *gin.Context) {
 		return
 	}
 
+	// Convert Dragon to dto.Dragon
+	dtoDragon := &dto.Dragon{
+		ID:          dragon.ID,
+		Name:        dragon.Name,
+		Type:        string(dragon.Type),
+		Level:       dragon.Level,
+		Health:      dragon.Health,
+		MaxHealth:   dragon.MaxHealth,
+		AttackPower: dragon.AttackPower,
+		Defense:     dragon.Defense,
+		CreatedBy:   dragon.CreatedBy,
+		IsAlive:     dragon.IsAlive,
+		KilledBy:    dragon.KilledBy,
+		CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if dragon.KilledAt != nil {
+		killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
+		dtoDragon.KilledAt = &killedAtStr
+	}
+
 	c.JSON(201, dto.CreateDragonResponse{
 		Success: true,
-		Dragon:  dragon,
+		Dragon:  dtoDragon,
 		Message: "Dragon created successfully",
 	})
 }
@@ -91,9 +112,30 @@ func (h *Handler) AttackDragon(c *gin.Context) {
 		return
 	}
 
+	// Convert Dragon to dto.Dragon
+	dtoDragon := &dto.Dragon{
+		ID:          dragon.ID,
+		Name:        dragon.Name,
+		Type:        string(dragon.Type),
+		Level:       dragon.Level,
+		Health:      dragon.Health,
+		MaxHealth:   dragon.MaxHealth,
+		AttackPower: dragon.AttackPower,
+		Defense:     dragon.Defense,
+		CreatedBy:   dragon.CreatedBy,
+		IsAlive:     dragon.IsAlive,
+		KilledBy:    dragon.KilledBy,
+		CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if dragon.KilledAt != nil {
+		killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
+		dtoDragon.KilledAt = &killedAtStr
+	}
+
 	c.JSON(200, dto.AttackDragonResponse{
 		Success: true,
-		Dragon:  dragon,
+		Dragon:  dtoDragon,
 		Message: "Dragon attacked successfully",
 	})
 }
