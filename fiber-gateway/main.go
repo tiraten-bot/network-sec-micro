@@ -320,59 +320,15 @@ func main() {
         }
     }
 
-    // Fallback static upstreams (if no config provided)
-    warriorUp := getEnv("UPSTREAM_WARRIOR", "http://localhost:8080")
-    warriorCanaryUp := os.Getenv("UPSTREAM_WARRIOR_CANARY")
-    warriorCanaryPct := os.Getenv("UPSTREAM_WARRIOR_CANARY_PERCENT")
-    enemyUp := getEnv("UPSTREAM_ENEMY", "http://localhost:8083")
-    dragonUp := getEnv("UPSTREAM_DRAGON", "http://localhost:8084")
-    weaponUp := getEnv("UPSTREAM_WEAPON", "http://localhost:8081")
-
     // Health
     app.Get("/health", func(c *fiber.Ctx) error {
         return c.JSON(fiber.Map{"status": "ok", "service": "fiber-gateway"})
     })
 
-    // L7 routing: path-based proxy groups
-    // Warrior service
-    app.All("/api/warrior/*", func(c *fiber.Ctx) error {
-        targetBase := warriorUp
-        if warriorCanaryUp != "" && warriorCanaryPct != "" {
-            // coarse canary selection using request-id hash last digit
-            rid := c.Get("X-Request-ID")
-            if len(rid) > 0 {
-                last := rid[len(rid)-1]
-                // default 10% if parse fails
-                pct := 10
-                if p, err := parsePercent(warriorCanaryPct); err == nil {
-                    pct = p
-                }
-                if int(last)%100 < pct {
-                    targetBase = warriorCanaryUp
-                }
-            }
-        }
-        target := targetBase + c.OriginalURL()[len("/api/warrior"):]
-        return proxy.Do(c, target)
-    })
-
-    // Enemy service
-    app.All("/api/enemy/*", func(c *fiber.Ctx) error {
-        target := enemyUp + c.OriginalURL()[len("/api/enemy"):]
-        return proxy.Do(c, target)
-    })
-
-    // Dragon service
-    app.All("/api/dragon/*", func(c *fiber.Ctx) error {
-        target := dragonUp + c.OriginalURL()[len("/api/dragon"):]
-        return proxy.Do(c, target)
-    })
-
-    // Weapon service
-    app.All("/api/weapon/*", func(c *fiber.Ctx) error {
-        target := weaponUp + c.OriginalURL()[len("/api/weapon"):]
-        return proxy.Do(c, target)
-    })
+    // Fallback routes when no config is provided
+    if os.Getenv("GW_CONFIG") == "" {
+        attachDefaultRoutes(app)
+    }
 
     // Regex route example (future use):
     // app.All("/api/(?i)public/.*", someHandler)
