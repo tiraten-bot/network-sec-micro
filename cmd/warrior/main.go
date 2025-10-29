@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	// Initialize dependencies manually (bypass Wire due to dependency issues)
+	// Initialize dependencies manually (Wire has dependency issues with puddle/v2)
 	service := warrior.NewService()
 	handler := warrior.NewHandler(service)
 
