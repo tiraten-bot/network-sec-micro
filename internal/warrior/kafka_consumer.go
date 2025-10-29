@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "log"
     "strings"
+    "time"
 )
 
 // ProcessKafkaMessage handles incoming Kafka messages for warrior achievements
