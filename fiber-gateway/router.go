@@ -297,6 +297,73 @@ func MakeRouteHandler(croutes []compiledRoute, rdb *redis.Client) fiber.Handler 
     }
 }
 
+// executeAggregate performs fan-out calls and merges JSON responses
+func executeAggregate(c *fiber.Ctx, cr compiledRoute) (map[string]interface{}, int, map[string]string, error) {
+    policy := cr.cfg.AggregatePolicy
+    overallTimeout := 5 * time.Second
+    if policy != nil && policy.TimeoutS > 0 { overallTimeout = time.Duration(policy.TimeoutS) * time.Second }
+    ctx, cancel := context.WithTimeout(c.Context(), overallTimeout)
+    defer cancel()
+
+    type result struct {
+        name string
+        body map[string]interface{}
+        err  error
+    }
+    resCh := make(chan result, len(cr.cfg.Aggregates))
+    for _, call := range cr.cfg.Aggregates {
+        call := call
+        go func() {
+            method := call.Method
+            if method == "" { method = http.MethodGet }
+            req, _ := http.NewRequestWithContext(ctx, method, call.URL, nil)
+            for hk, hv := range call.Headers { req.Header.Set(hk, hv) }
+            httpClient := &http.Client{ Timeout: time.Duration(call.TimeoutS) * time.Second }
+            if call.TimeoutS == 0 { httpClient.Timeout = overallTimeout }
+            resp, err := httpClient.Do(req)
+            if err != nil { resCh <- result{name: call.Name, err: err}; return }
+            defer resp.Body.Close()
+            var m map[string]interface{}
+            if err := json.NewDecoder(resp.Body).Decode(&m); err != nil { resCh <- result{name: call.Name, err: err}; return }
+            resCh <- result{name: call.Name, body: m, err: nil}
+        }()
+    }
+
+    merged := map[string]interface{}{}
+    successes := 0
+    for i := 0; i < len(cr.cfg.Aggregates); i++ {
+        select {
+        case r := <-resCh:
+            if r.err != nil {
+                if policy != nil && policy.Partial != "ignore" { return nil, fiber.StatusBadGateway, nil, r.err }
+                continue
+            }
+            merged[r.name] = r.body
+            successes++
+        case <-ctx.Done():
+            if policy != nil && policy.Partial != "ignore" { return nil, fiber.StatusGatewayTimeout, nil, ctx.Err() }
+        }
+    }
+
+    // Simple mapping on merged root
+    if policy != nil {
+        for oldk, newk := range policy.Rename {
+            if v, ok := merged[oldk]; ok {
+                merged[newk] = v
+                delete(merged, oldk)
+            }
+        }
+        for _, k := range policy.Omit { delete(merged, k) }
+        if policy.ResponseRoot != "" {
+            merged = map[string]interface{}{ policy.ResponseRoot: merged }
+        }
+    }
+
+    headers := map[string]string{"Content-Type": "application/json"}
+    if successes == 0 { return merged, fiber.StatusBadGateway, headers, nil }
+    return merged, fiber.StatusOK, headers, nil
+}
+
 // attachDefaultRoutes installs simple path-based static proxy rules when no config is provided.
 func attachDefaultRoutes(app *fiber.App) {
     app.All("/api/warrior/*", MakeDefaultHandler())
