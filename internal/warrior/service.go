@@ -222,3 +222,38 @@ func (s *Service) GetAllWarriors(query dto.GetAllWarriorsQuery) ([]Warrior, int6
 
 	return warriors, count, nil
 }
+
+// GetKilledMonsters returns all killed monsters for a warrior
+func (s *Service) GetKilledMonsters(warriorID uint, limit, offset int) ([]KilledMonster, int64, error) {
+    var kills []KilledMonster
+    var count int64
+    qb := DB.Model(&KilledMonster{}).Where("warrior_id = ?", warriorID)
+    if err := qb.Count(&count).Error; err != nil {
+        return nil, 0, err
+    }
+    if limit > 0 {
+        qb = qb.Limit(limit)
+    }
+    if offset > 0 {
+        qb = qb.Offset(offset)
+    }
+    if err := qb.Order("killed_at DESC").Find(&kills).Error; err != nil {
+        return nil, 0, err
+    }
+    return kills, count, nil
+}
+
+// GetStrongestKilledMonster returns the strongest killed monster for a warrior
+// Strength heuristic: highest attack_power, tie-breaker by level, then defense
+func (s *Service) GetStrongestKilledMonster(warriorID uint) (*KilledMonster, error) {
+    var km KilledMonster
+    if err := DB.Where("warrior_id = ?", warriorID).
+        Order("attack_power DESC, level DESC, defense DESC").
+        First(&km).Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil
+        }
+        return nil, err
+    }
+    return &km, nil
+}
