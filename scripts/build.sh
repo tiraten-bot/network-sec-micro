@@ -10,9 +10,9 @@ echo "🔨 Building all services..."
 echo "📦 Generating protobuf code..."
 make proto
 
-# Build warrior service
+# Build warrior service (skip wire for now due to dependency issues)
 echo "📦 Building warrior service..."
-cd cmd/warrior && wire && cd ../..
+# cd cmd/warrior && wire && cd ../..
 go build -o bin/warrior cmd/warrior/main.go
 
 # Build weapon service
