@@ -223,6 +223,45 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # Fiber API Gateway
+  fiber-gateway:
+    build:
+      context: .
+      dockerfile: dockerfiles/fibergateway.dockerfile
+    container_name: fiber-gateway
+    environment:
+      GW_PORT: 8090
+      # Example: use static upstreams inside compose network
+      UPSTREAM_WARRIOR: http://warrior:8080
+      UPSTREAM_ENEMY: http://enemy:8083
+      UPSTREAM_DRAGON: http://dragon:8084
+      UPSTREAM_WEAPON: http://weapon:8081
+      # Kafka/Redis optional if used by config rules
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8090:8090"
+    depends_on:
+      warrior:
+        condition: service_started
+      enemy:
+        condition: service_started
+      dragon:
+        condition: service_started
+      weapon:
+        condition: service_started
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
+  # Redis for gateway rate limit/quota (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - warrior-network
+
 volumes:
   postgres_data:
     driver: local
