@@ -284,18 +284,30 @@ graph LR
 ## Gateway Routing and Resilience
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#0b3d91',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#001a4d',
+    'lineColor': '#001a4d',
+    'tertiaryColor': '#0d56b3',
+    'clusterBkg': '#0b3d91',
+    'clusterBorder': '#001a4d'
+  }
+}}%%
 flowchart LR
     subgraph GW["Fiber API Gateway"]
-        RL[Rate Limiter<br/>(Token Bucket/Redis)]
+        RL[Rate Limiter - Token Bucket/Redis]
         CB[Circuit Breaker]
-        LB[Load Balancer<br/>(RR/Least-Conn)]
+        LB[Load Balancer - RR/Least-Conn]
         OD[Outlier Detection]
-        TR[Transforms<br/>(headers/query/rewrite)]
-        AGG[Aggregates<br/>(fan-out/fan-in)]
-        CACHE[Response Cache<br/>(ETag/TTL)]
+        TR[Transforms - headers/query/rewrite]
+        AGG[Aggregates - fan-out/fan-in]
+        CACHE[Response Cache - ETag/TTL]
     end
 
-    C[(Client)] --> RL --> CB --> TR --> LB --> OD -->|HTTP/WS/gRPC(h2c)| UP[(Upstreams)]
+    C[(Client)] --> RL --> CB --> TR --> LB --> OD -->|HTTP/WS/gRPC h2c| UP[(Upstreams)]
     TR --> AGG --> CACHE
 
     style GW fill:#0b3d91,stroke:#001a4d,stroke-width:2px,color:#ffffff
@@ -313,6 +325,18 @@ flowchart LR
 ## Docker vs Kubernetes Topology
 
 ```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#0b3d91',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#001a4d',
+    'lineColor': '#001a4d',
+    'tertiaryColor': '#0d56b3',
+    'clusterBkg': '#0b3d91',
+    'clusterBorder': '#001a4d'
+  }
+}}%%
 graph TB
     subgraph "Docker Compose"
         DCGW[Gateway:8090]
