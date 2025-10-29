@@ -561,27 +561,27 @@ graph TB
         D4[GET /api/v1/dragons/type/:type]
     end
     
-    style W1 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style W2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style W3 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style W4 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style WP1 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style WP2 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style WP3 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style WP4 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style C1 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style C2 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style C3 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style C4 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style C5 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style E1 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style E2 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style E3 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style E4 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style D1 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style D2 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style D3 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style D4 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style W1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style W2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style W3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style W4 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style WP1 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style WP2 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style WP3 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style WP4 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C1 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C3 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C4 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C5 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style E1 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style E2 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style E3 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style E4 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style D1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style D2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style D3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style D4 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Game Flow Examples
