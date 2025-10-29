@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enemy
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicas.enemy }}
+  selector:
+    matchLabels:
+      app: enemy
+  template:
+    metadata:
+      labels:
+        app: enemy
+    spec:
+      containers:
+        - name: enemy
+          image: {{ .Values.images.enemy.repository }}:{{ .Values.images.enemy.tag }}
+          imagePullPolicy: {{ .Values.images.enemy.pullPolicy }}
+          env:
+            - { name: MONGODB_URI, value: {{ .Values.env.mongo.uri | quote }} }
+            - { name: MONGODB_DATABASE, value: {{ .Values.env.mongo.enemyDB | quote }} }
+            - { name: WARRIOR_GRPC_HOST, value: "warrior:50052" }
+            - { name: KAFKA_BROKERS, value: {{ .Values.env.kafkaBrokers | quote }} }
+            - { name: GIN_MODE, value: "release" }
+            - { name: PORT, value: "8083" }
+          ports:
+            - containerPort: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enemy
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: enemy
+  ports:
+    - port: 8083
+      targetPort: 8083
+
