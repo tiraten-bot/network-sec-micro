@@ -14,6 +14,10 @@ import (
     "github.com/gofiber/fiber/v2/middleware/proxy"
     adaptor "github.com/gofiber/adaptor/v2"
     "golang.org/x/net/http2"
+    "golang.org/x/time/rate"
+    "github.com/sony/gobreaker"
+    "crypto/tls"
+    "sync"
 )
 
 func getEnv(key, def string) string {
@@ -70,12 +74,47 @@ func main() {
         if cfg, err := loadConfig(cfgPath); err == nil {
             if croutes, err := compileRoutes(cfg); err == nil {
                 // Single catch-all; apply first-match policy per config order
+                // per-route state
+                type routeState struct {
+                    rlMu sync.Mutex
+                    rlMap map[string]*rate.Limiter
+                    cb    *gobreaker.CircuitBreaker
+                    lbMu  sync.Mutex
+                    lbIdx int
+                }
+                states := make([]routeState, len(croutes))
+
+                // init circuit breakers
+                for i := range croutes {
+                    rc := croutes[i].cfg
+                    if rc.CircuitBreaker != nil && rc.CircuitBreaker.Enabled {
+                        st := &states[i]
+                        st.cb = gobreaker.NewCircuitBreaker(gobreaker.Settings{
+                            Name:        rc.Name,
+                            Interval:    time.Duration(rc.CircuitBreaker.IntervalSec) * time.Second,
+                            Timeout:     time.Duration(rc.CircuitBreaker.TimeoutSec) * time.Second,
+                            ReadyToTrip: func(counts gobreaker.Counts) bool {
+                                if counts.Requests < rc.CircuitBreaker.MinRequests {
+                                    return false
+                                }
+                                failRatio := 0.0
+                                if counts.Requests > 0 {
+                                    failRatio = float64(counts.TotalFailures) / float64(counts.Requests)
+                                }
+                                return failRatio >= rc.CircuitBreaker.FailureRatio
+                            },
+                        })
+                    }
+                    states[i].rlMap = make(map[string]*rate.Limiter)
+                }
+
                 app.All("/*", func(c *fiber.Ctx) error {
                     host := c.Hostname()
                     path := c.OriginalURL()
                     method := c.Method()
 
-                    for _, cr := range croutes {
+                    for idx, cr := range croutes {
+                        st := &states[idx]
                         // host match (if provided)
                         if len(cr.cfg.Hosts) > 0 {
                             matched := false
@@ -98,6 +137,28 @@ func main() {
                             if _, allow := cr.allowSet[method]; !allow { return c.SendStatus(fiber.StatusMethodNotAllowed) }
                         }
 
+                        // rate limit per key
+                        if cr.cfg.RateLimit != nil && cr.cfg.RateLimit.Enabled {
+                            key := c.IP()
+                            if kh := cr.cfg.RateLimit.KeyHeader; kh != "" {
+                                if v := c.Get(kh); v != "" { key = v }
+                            }
+                            st.rlMu.Lock()
+                            lim, ok := st.rlMap[key]
+                            if !ok {
+                                rps := cr.cfg.RateLimit.RPS
+                                if rps <= 0 { rps = 10 }
+                                burst := cr.cfg.RateLimit.Burst
+                                if burst <= 0 { burst = int(rps) }
+                                lim = rate.NewLimiter(rate.Limit(rps), burst)
+                                st.rlMap[key] = lim
+                            }
+                            st.rlMu.Unlock()
+                            if !lim.Allow() {
+                                return c.Status(fiber.StatusTooManyRequests).SendString("rate limit exceeded")
+                            }
+                        }
+
                         // apply transforms
                         // headers set
                         for k, v := range cr.cfg.HeadersSet { c.Request().Header.Set(k, v) }
@@ -109,8 +170,15 @@ func main() {
                             for k, v := range cr.cfg.QueryInject { q.Set(k, v) }
                         }
 
-                        // canary selection
+                        // load balancing pick
                         base := cr.cfg.Upstream
+                        if len(cr.cfg.Upstreams) > 0 {
+                            st.lbMu.Lock()
+                            base = cr.cfg.Upstreams[st.lbIdx%len(cr.cfg.Upstreams)]
+                            st.lbIdx++
+                            st.lbMu.Unlock()
+                        }
+                        // canary selection
                         if cr.cfg.CanaryUp != "" && cr.cfg.CanaryPct != "" {
                             rid := c.Get("X-Request-ID")
                             if len(rid) > 0 {
@@ -130,19 +198,41 @@ func main() {
 
                         // websocket passthrough: upgrade to ws(s) if needed
                         if cr.cfg.WebSocketPassthrough && isWebSocket(c) {
+                            if st.cb != nil {
+                                // short-circuit if breaker open
+                                if st.cb.State() == gobreaker.StateOpen {
+                                    return c.Status(fiber.StatusServiceUnavailable).SendString("circuit open")
+                                }
+                            }
                             target := toWS(base) + targetPath
                             return proxy.Do(c, target)
                         }
 
                         // gRPC proxy via h2c reverse proxy (net/http) mounted in Fiber
                         if cr.cfg.GrpcProxy {
+                            if st.cb != nil && st.cb.State() == gobreaker.StateOpen {
+                                return c.Status(fiber.StatusServiceUnavailable).SendString("circuit open")
+                            }
                             h := newH2cReverseProxy(base, cr.cfg.RewritePrefix)
-                            return adaptor.HTTPHandler(h)(c)
+                            if st.cb == nil {
+                                return adaptor.HTTPHandler(h)(c)
+                            }
+                            // run via breaker
+                            _, err := st.cb.Execute(func() (interface{}, error) {
+                                return nil, adaptor.HTTPHandler(h)(c)
+                            })
+                            return err
                         }
 
                         // default http proxy
                         target := base + targetPath
-                        return proxy.Do(c, target)
+                        if st.cb == nil {
+                            return proxy.Do(c, target)
+                        }
+                        _, err := st.cb.Execute(func() (interface{}, error) {
+                            return nil, proxy.Do(c, target)
+                        })
+                        return err
                     }
                     return c.SendStatus(fiber.StatusNotFound)
                 })
