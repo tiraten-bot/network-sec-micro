@@ -1,6 +1,7 @@
 package coin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -9,127 +10,171 @@ import (
 	"gorm.io/gorm"
 )
 
-// Service handles coin business logic with CQRS pattern
-type Service struct{}
+// Service handles coin business logic with CQRS pattern and transaction safety
+type Service struct {
+	repo *Repository
+}
 
 // NewService creates a new coin service
 func NewService() *Service {
-	return &Service{}
+	return &Service{
+		repo: NewRepository(DB),
+	}
 }
 
 // ==================== COMMANDS (WRITE OPERATIONS) ====================
 
-// DeductCoins deducts coins from warrior's balance
-func (s *Service) DeductCoins(cmd dto.DeductCoinsCommand) error {
-	var warrior Warrior
-	if err := DB.Table("warriors").Where("id = ?", cmd.WarriorID).First(&warrior).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("warrior not found")
+// DeductCoins deducts coins from warrior's balance with transaction safety
+func (s *Service) DeductCoins(ctx context.Context, cmd dto.DeductCoinsCommand) error {
+	if cmd.Amount <= 0 {
+		return errors.New("amount must be positive")
+	}
+
+	var balanceBefore, balanceAfter int64
+	var transaction *Transaction
+
+	err := s.repo.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		// Get current balance with row lock
+		balance, err := s.repo.GetWarriorBalance(ctx, cmd.WarriorID)
+		if err != nil {
+			return fmt.Errorf("failed to get warrior balance: %w", err)
 		}
-		return err
-	}
 
-	balanceBefore := int64(warrior.CoinBalance)
+		balanceBefore = balance
 
-	if balanceBefore < cmd.Amount {
-		return errors.New("insufficient balance")
-	}
+		// Check sufficient balance
+		if balanceBefore < cmd.Amount {
+			return errors.New("insufficient balance")
+		}
 
-	warrior.CoinBalance -= int(cmd.Amount)
-	balanceAfter := int64(warrior.CoinBalance)
+		// Calculate new balance
+		balanceAfter = balanceBefore - cmd.Amount
 
-	if err := DB.Table("warriors").Where("id = ?", cmd.WarriorID).Update("coin_balance", warrior.CoinBalance).Error; err != nil {
-		return fmt.Errorf("failed to update balance: %w", err)
-	}
+		// Update warrior balance
+		if err := s.repo.UpdateWarriorBalance(ctx, cmd.WarriorID, balanceAfter); err != nil {
+			return fmt.Errorf("failed to update balance: %w", err)
+		}
 
-	// Create transaction record
-	if _, err := s.CreateTransaction(dto.CreateTransactionCommand{
-		WarriorID:       cmd.WarriorID,
-		Amount:          -cmd.Amount,
-		TransactionType: string(TransactionTypeDeduct),
-		Reason:          cmd.Reason,
-		BalanceBefore:   balanceBefore,
-		BalanceAfter:    balanceAfter,
-	}); err != nil {
-		// Log error but don't fail the deduction
-		fmt.Printf("Failed to create transaction record: %v", err)
+		// Create transaction record
+		transaction = &Transaction{
+			WarriorID:       cmd.WarriorID,
+			Amount:          -cmd.Amount,
+			TransactionType: TransactionTypeDeduct,
+			Reason:          cmd.Reason,
+			BalanceBefore:   balanceBefore,
+			BalanceAfter:    balanceAfter,
+		}
+
+		if err := s.repo.CreateTransaction(ctx, transaction); err != nil {
+			return fmt.Errorf("failed to create transaction record: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("deduct coins failed: %w", err)
 	}
 
 	return nil
 }
 
-// AddCoins adds coins to warrior's balance
-func (s *Service) AddCoins(cmd dto.AddCoinsCommand) error {
-	var warrior Warrior
-	if err := DB.Table("warriors").Where("id = ?", cmd.WarriorID).First(&warrior).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("warrior not found")
+// AddCoins adds coins to warrior's balance with transaction safety
+func (s *Service) AddCoins(ctx context.Context, cmd dto.AddCoinsCommand) error {
+	if cmd.Amount <= 0 {
+		return errors.New("amount must be positive")
+	}
+
+	var balanceBefore, balanceAfter int64
+	var transaction *Transaction
+
+	err := s.repo.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		// Get current balance
+		balance, err := s.repo.GetWarriorBalance(ctx, cmd.WarriorID)
+		if err != nil {
+			return fmt.Errorf("failed to get warrior balance: %w", err)
 		}
-		return err
-	}
 
-	balanceBefore := int64(warrior.CoinBalance)
-	warrior.CoinBalance += int(cmd.Amount)
-	balanceAfter := int64(warrior.CoinBalance)
+		balanceBefore = balance
+		balanceAfter = balanceBefore + cmd.Amount
 
-	if err := DB.Table("warriors").Where("id = ?", cmd.WarriorID).Update("coin_balance", warrior.CoinBalance).Error; err != nil {
-		return fmt.Errorf("failed to update balance: %w", err)
-	}
+		// Update warrior balance
+		if err := s.repo.UpdateWarriorBalance(ctx, cmd.WarriorID, balanceAfter); err != nil {
+			return fmt.Errorf("failed to update balance: %w", err)
+		}
 
-	// Create transaction record
-	if _, err := s.CreateTransaction(dto.CreateTransactionCommand{
-		WarriorID:       cmd.WarriorID,
-		Amount:          cmd.Amount,
-		TransactionType: string(TransactionTypeAdd),
-		Reason:          cmd.Reason,
-		BalanceBefore:   balanceBefore,
-		BalanceAfter:    balanceAfter,
-	}); err != nil {
-		// Log error but don't fail the addition
-		fmt.Printf("Failed to create transaction record: %v", err)
+		// Create transaction record
+		transaction = &Transaction{
+			WarriorID:       cmd.WarriorID,
+			Amount:          cmd.Amount,
+			TransactionType: TransactionTypeAdd,
+			Reason:          cmd.Reason,
+			BalanceBefore:   balanceBefore,
+			BalanceAfter:    balanceAfter,
+		}
+
+		if err := s.repo.CreateTransaction(ctx, transaction); err != nil {
+			return fmt.Errorf("failed to create transaction record: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("add coins failed: %w", err)
 	}
 
 	return nil
 }
 
-// TransferCoins transfers coins between warriors
-func (s *Service) TransferCoins(cmd dto.TransferCoinsCommand) error {
-	// Deduct from sender
-	if err := s.DeductCoins(dto.DeductCoinsCommand{
-		WarriorID: cmd.FromWarriorID,
-		Amount:    cmd.Amount,
-		Reason:    "transfer_out: " + cmd.Reason,
-	}); err != nil {
-		return fmt.Errorf("failed to deduct from sender: %w", err)
+// TransferCoins transfers coins between warriors with atomic transaction
+func (s *Service) TransferCoins(ctx context.Context, cmd dto.TransferCoinsCommand) error {
+	if cmd.Amount <= 0 {
+		return errors.New("amount must be positive")
 	}
 
-	// Add to receiver
-	if err := s.AddCoins(dto.AddCoinsCommand{
-		WarriorID: cmd.ToWarriorID,
-		Amount:    cmd.Amount,
-		Reason:    "transfer_in: " + cmd.Reason,
-	}); err != nil {
-		// Rollback: add coins back to sender
-		s.AddCoins(dto.AddCoinsCommand{
+	if cmd.FromWarriorID == cmd.ToWarriorID {
+		return errors.New("cannot transfer to self")
+	}
+
+	err := s.repo.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		// Deduct from sender
+		if err := s.DeductCoins(ctx, dto.DeductCoinsCommand{
 			WarriorID: cmd.FromWarriorID,
 			Amount:    cmd.Amount,
-			Reason:    "rollback transfer_out",
-		})
-		return fmt.Errorf("failed to add to receiver: %w", err)
+			Reason:    "transfer_out: " + cmd.Reason,
+		}); err != nil {
+			return fmt.Errorf("failed to deduct from sender: %w", err)
+		}
+
+		// Add to receiver
+		if err := s.AddCoins(ctx, dto.AddCoinsCommand{
+			WarriorID: cmd.ToWarriorID,
+			Amount:    cmd.Amount,
+			Reason:    "transfer_in: " + cmd.Reason,
+		}); err != nil {
+			return fmt.Errorf("failed to add to receiver: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("transfer coins failed: %w", err)
 	}
 
 	return nil
 }
 
 // CreateTransaction creates a new coin transaction record
-func (s *Service) CreateTransaction(cmd dto.CreateTransactionCommand) (*Transaction, error) {
+func (s *Service) CreateTransaction(ctx context.Context, cmd dto.CreateTransactionCommand) (*Transaction, error) {
 	txType := TransactionType(cmd.TransactionType)
 	if txType != TransactionTypeAdd && txType != TransactionTypeDeduct &&
 		txType != TransactionTypeTransferIn && txType != TransactionTypeTransferOut {
 		return nil, errors.New("invalid transaction type")
 	}
 
-	transaction := Transaction{
+	transaction := &Transaction{
 		WarriorID:       cmd.WarriorID,
 		Amount:          cmd.Amount,
 		TransactionType: txType,
@@ -138,49 +183,29 @@ func (s *Service) CreateTransaction(cmd dto.CreateTransactionCommand) (*Transact
 		BalanceAfter:    cmd.BalanceAfter,
 	}
 
-	if err := DB.Create(&transaction).Error; err != nil {
-		return nil, fmt.Errorf("failed to create transaction: %w", err)
+	if err := s.repo.CreateTransaction(ctx, transaction); err != nil {
+		return nil, fmt.Errorf("create transaction failed: %w", err)
 	}
 
-	return &transaction, nil
+	return transaction, nil
 }
 
 // ==================== QUERIES (READ OPERATIONS) ====================
 
 // GetBalance gets warrior's coin balance
-func (s *Service) GetBalance(query dto.GetBalanceQuery) (int64, error) {
-	var warrior Warrior
-	if err := DB.Table("warriors").Where("id = ?", query.WarriorID).First(&warrior).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return 0, errors.New("warrior not found")
-		}
-		return 0, err
+func (s *Service) GetBalance(ctx context.Context, query dto.GetBalanceQuery) (int64, error) {
+	balance, err := s.repo.GetWarriorBalance(ctx, query.WarriorID)
+	if err != nil {
+		return 0, fmt.Errorf("get balance failed: %w", err)
 	}
-
-	return int64(warrior.CoinBalance), nil
+	return balance, nil
 }
 
 // GetTransactionHistory gets transaction history for a warrior
-func (s *Service) GetTransactionHistory(query dto.GetTransactionHistoryQuery) ([]Transaction, int64, error) {
-	var transactions []Transaction
-	var count int64
-
-	dbQuery := DB.Model(&Transaction{}).Where("warrior_id = ?", query.WarriorID)
-
-	if err := dbQuery.Count(&count).Error; err != nil {
-		return nil, 0, err
+func (s *Service) GetTransactionHistory(ctx context.Context, query dto.GetTransactionHistoryQuery) ([]Transaction, int64, error) {
+	transactions, count, err := s.repo.GetTransactionHistory(ctx, query)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get transaction history failed: %w", err)
 	}
-
-	if query.Limit > 0 {
-		dbQuery = dbQuery.Limit(query.Limit)
-	}
-	if query.Offset > 0 {
-		dbQuery = dbQuery.Offset(query.Offset)
-	}
-
-	if err := dbQuery.Order("created_at DESC").Find(&transactions).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to fetch transactions: %w", err)
-	}
-
 	return transactions, count, nil
 }
