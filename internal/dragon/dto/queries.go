@@ -1,8 +1,26 @@
-package dragon
+package dto
 
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+// Dragon represents a dragon (imported from models)
+type Dragon struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Name        string             `bson:"name" json:"name"`
+	Type        string             `bson:"type" json:"type"`
+	Level       int                `bson:"level" json:"level"`
+	Health      int                `bson:"health" json:"health"`
+	MaxHealth   int                `bson:"max_health" json:"max_health"`
+	AttackPower int                `bson:"attack_power" json:"attack_power"`
+	Defense     int                `bson:"defense" json:"defense"`
+	CreatedBy   string             `bson:"created_by" json:"created_by"`
+	IsAlive     bool               `bson:"is_alive" json:"is_alive"`
+	KilledBy    string             `bson:"killed_by,omitempty" json:"killed_by,omitempty"`
+	KilledAt    *string            `bson:"killed_at,omitempty" json:"killed_at,omitempty"`
+	CreatedAt   string             `bson:"created_at" json:"created_at"`
+	UpdatedAt   string             `bson:"updated_at" json:"updated_at"`
+}
 
 // ==================== HTTP REQUEST/RESPONSE DTOs ====================
 
