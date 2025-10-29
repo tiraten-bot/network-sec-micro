@@ -1,4 +1,4 @@
-package dragon
+package dto
 
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
