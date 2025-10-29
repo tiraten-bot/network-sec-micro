@@ -2,25 +2,13 @@ package main
 
 import (
     "log"
-    "net"
-    "net/http"
-    "net/http/httputil"
     "os"
     "time"
 
     "github.com/gofiber/fiber/v2"
     "github.com/gofiber/fiber/v2/middleware/cors"
     "github.com/gofiber/fiber/v2/middleware/logger"
-    "github.com/gofiber/fiber/v2/middleware/proxy"
-    adaptor "github.com/gofiber/adaptor/v2"
-    "golang.org/x/net/http2"
-    "golang.org/x/time/rate"
-    "github.com/sony/gobreaker"
-    "crypto/tls"
-    "sync"
-    "context"
     redis "github.com/redis/go-redis/v9"
-    "strconv"
 )
 
 func getEnv(key, def string) string {
