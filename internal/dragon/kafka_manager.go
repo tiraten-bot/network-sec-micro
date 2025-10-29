@@ -14,7 +14,12 @@ var (
 // GetKafkaPublisher returns singleton Kafka publisher
 func GetKafkaPublisher() *kafka.Publisher {
 	publisherOnce.Do(func() {
-		kafkaPublisher = kafka.NewPublisher()
+		brokers := []string{"localhost:9092"}
+		publisher, err := kafka.NewPublisher(brokers)
+		if err != nil {
+			panic(err)
+		}
+		kafkaPublisher = publisher
 	})
 	return kafkaPublisher
 }
