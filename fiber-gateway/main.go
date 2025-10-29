@@ -18,6 +18,8 @@ import (
     "github.com/sony/gobreaker"
     "crypto/tls"
     "sync"
+    "context"
+    redis "github.com/redis/go-redis/v9"
 )
 
 func getEnv(key, def string) string {
@@ -73,6 +75,16 @@ func main() {
     if cfgPath := os.Getenv("GW_CONFIG"); cfgPath != "" {
         if cfg, err := loadConfig(cfgPath); err == nil {
             if croutes, err := compileRoutes(cfg); err == nil {
+                // Redis client (optional)
+                var rdb *redis.Client
+                if addr := os.Getenv("REDIS_ADDR"); addr != "" {
+                    rdb = redis.NewClient(&redis.Options{
+                        Addr:     addr,
+                        Password: os.Getenv("REDIS_PASSWORD"),
+                        DB:       0,
+                    })
+                }
+
                 // Single catch-all; apply first-match policy per config order
                 // per-route state
                 type routeState struct {
@@ -81,6 +93,10 @@ func main() {
                     cb    *gobreaker.CircuitBreaker
                     lbMu  sync.Mutex
                     lbIdx int
+                    // least-connections & outlier detection
+                    active map[string]int
+                    fail   map[string]int
+                    ejectedUntil map[string]time.Time
                 }
                 states := make([]routeState, len(croutes))
 
@@ -106,6 +122,9 @@ func main() {
                         })
                     }
                     states[i].rlMap = make(map[string]*rate.Limiter)
+                    states[i].active = make(map[string]int)
+                    states[i].fail = make(map[string]int)
+                    states[i].ejectedUntil = make(map[string]time.Time)
                 }
 
                 app.All("/*", func(c *fiber.Ctx) error {
@@ -137,25 +156,56 @@ func main() {
                             if _, allow := cr.allowSet[method]; !allow { return c.SendStatus(fiber.StatusMethodNotAllowed) }
                         }
 
-                        // rate limit per key
+                        // rate limit per key (Redis fixed-window if configured)
                         if cr.cfg.RateLimit != nil && cr.cfg.RateLimit.Enabled {
                             key := c.IP()
-                            if kh := cr.cfg.RateLimit.KeyHeader; kh != "" {
-                                if v := c.Get(kh); v != "" { key = v }
+                            if kh := cr.cfg.RateLimit.KeyHeader; kh != "" { if v := c.Get(kh); v != "" { key = v } }
+                            if cr.cfg.RateLimit.UseRedis && rdb != nil {
+                                win := cr.cfg.RateLimit.WindowSec
+                                if win <= 0 { win = 1 }
+                                lim := cr.cfg.RateLimit.Limit
+                                if lim <= 0 { lim = 100 }
+                                now := time.Now().Unix()
+                                bucket := now - (now % int64(win))
+                                rkey := "rl:" + cr.cfg.Name + ":" + key + ":" + fmtInt(bucket)
+                                allowed, err := redisAllow(c.Context(), rdb, rkey, lim, win)
+                                if err != nil { return c.Status(fiber.StatusInternalServerError).SendString("rl err") }
+                                if !allowed { return c.Status(fiber.StatusTooManyRequests).SendString("rate limit exceeded") }
+                            } else {
+                                st.rlMu.Lock()
+                                lim, ok := st.rlMap[key]
+                                if !ok {
+                                    rps := cr.cfg.RateLimit.RPS; if rps <= 0 { rps = 10 }
+                                    burst := cr.cfg.RateLimit.Burst; if burst <= 0 { burst = int(rps) }
+                                    lim = rate.NewLimiter(rate.Limit(rps), burst)
+                                    st.rlMap[key] = lim
+                                }
+                                st.rlMu.Unlock()
+                                if !lim.Allow() { return c.Status(fiber.StatusTooManyRequests).SendString("rate limit exceeded") }
                             }
-                            st.rlMu.Lock()
-                            lim, ok := st.rlMap[key]
-                            if !ok {
-                                rps := cr.cfg.RateLimit.RPS
-                                if rps <= 0 { rps = 10 }
-                                burst := cr.cfg.RateLimit.Burst
-                                if burst <= 0 { burst = int(rps) }
-                                lim = rate.NewLimiter(rate.Limit(rps), burst)
-                                st.rlMap[key] = lim
+                        }
+
+                        // quota (Redis counters)
+                        if cr.cfg.Quota != nil && cr.cfg.Quota.Enabled && rdb != nil {
+                            qkey := c.IP(); if kh := cr.cfg.Quota.KeyHeader; kh != "" { if v := c.Get(kh); v != "" { qkey = v } }
+                            if cr.cfg.Quota.Hourly > 0 {
+                                ts := time.Now().UTC()
+                                base := ts.Format("2006010215")
+                                rkey := "q:h:" + cr.cfg.Name + ":" + qkey + ":" + base
+                                ok, err := redisQuota(c.Context(), rdb, rkey, cr.cfg.Quota.Hourly, int(time.Until(ts.Truncate(time.Hour).Add(time.Hour)).Seconds()))
+                                if err != nil { return c.Status(fiber.StatusInternalServerError).SendString("quota err") }
+                                if !ok { return c.Status(fiber.StatusTooManyRequests).SendString("hourly quota exceeded") }
                             }
-                            st.rlMu.Unlock()
-                            if !lim.Allow() {
-                                return c.Status(fiber.StatusTooManyRequests).SendString("rate limit exceeded")
+                            if cr.cfg.Quota.Daily > 0 {
+                                ts := time.Now().UTC()
+                                base := ts.Format("20060102")
+                                // seconds until next midnight UTC
+                                tomorrow := time.Date(ts.Year(), ts.Month(), ts.Day()+1, 0, 0, 0, 0, time.UTC)
+                                ttl := int(time.Until(tomorrow).Seconds())
+                                rkey := "q:d:" + cr.cfg.Name + ":" + qkey + ":" + base
+                                ok, err := redisQuota(c.Context(), rdb, rkey, cr.cfg.Quota.Daily, ttl)
+                                if err != nil { return c.Status(fiber.StatusInternalServerError).SendString("quota err") }
+                                if !ok { return c.Status(fiber.StatusTooManyRequests).SendString("daily quota exceeded") }
                             }
                         }
 
@@ -170,13 +220,39 @@ func main() {
                             for k, v := range cr.cfg.QueryInject { q.Set(k, v) }
                         }
 
-                        // load balancing pick
+                        // header-based routing override
                         base := cr.cfg.Upstream
+                        if len(cr.cfg.HeaderRoutes) > 0 {
+                            for _, hr := range cr.cfg.HeaderRoutes {
+                                if c.Get(hr.Header) == hr.Value { base = hr.Upstream; break }
+                            }
+                        }
+                        // load balancing pick
                         if len(cr.cfg.Upstreams) > 0 {
-                            st.lbMu.Lock()
-                            base = cr.cfg.Upstreams[st.lbIdx%len(cr.cfg.Upstreams)]
-                            st.lbIdx++
-                            st.lbMu.Unlock()
+                            // skip ejected
+                            pick := ""
+                            if cr.cfg.LoadBalancing == "least_connections" {
+                                st.lbMu.Lock()
+                                min := 1<<31 - 1
+                                for _, up := range cr.cfg.Upstreams {
+                                    if until, ok := st.ejectedUntil[up]; ok && time.Now().Before(until) { continue }
+                                    cur := st.active[up]
+                                    if cur < min { min = cur; pick = up }
+                                }
+                                if pick == "" { pick = cr.cfg.Upstreams[st.lbIdx%len(cr.cfg.Upstreams)]; st.lbIdx++ }
+                                st.lbMu.Unlock()
+                            } else {
+                                st.lbMu.Lock()
+                                // round robin skipping ejected if possible
+                                for i := 0; i < len(cr.cfg.Upstreams); i++ {
+                                    candidate := cr.cfg.Upstreams[(st.lbIdx+i)%len(cr.cfg.Upstreams)]
+                                    if until, ok := st.ejectedUntil[candidate]; ok && time.Now().Before(until) { continue }
+                                    pick = candidate; st.lbIdx = (st.lbIdx+i+1)%len(cr.cfg.Upstreams); break
+                                }
+                                if pick == "" { pick = cr.cfg.Upstreams[st.lbIdx%len(cr.cfg.Upstreams)]; st.lbIdx++ }
+                                st.lbMu.Unlock()
+                            }
+                            base = pick
                         }
                         // canary selection
                         if cr.cfg.CanaryUp != "" && cr.cfg.CanaryPct != "" {
@@ -205,7 +281,10 @@ func main() {
                                 }
                             }
                             target := toWS(base) + targetPath
-                            return proxy.Do(c, target)
+                            st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
+                            err := proxy.Do(c, target)
+                            st.lbMu.Lock(); st.active[base]--; if err != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                            return err
                         }
 
                         // gRPC proxy via h2c reverse proxy (net/http) mounted in Fiber
@@ -215,11 +294,17 @@ func main() {
                             }
                             h := newH2cReverseProxy(base, cr.cfg.RewritePrefix)
                             if st.cb == nil {
-                                return adaptor.HTTPHandler(h)(c)
+                                st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
+                                err := adaptor.HTTPHandler(h)(c)
+                                st.lbMu.Lock(); st.active[base]--; if err != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                                return err
                             }
                             // run via breaker
                             _, err := st.cb.Execute(func() (interface{}, error) {
-                                return nil, adaptor.HTTPHandler(h)(c)
+                                st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
+                                e := adaptor.HTTPHandler(h)(c)
+                                st.lbMu.Lock(); st.active[base]--; if e != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                                return nil, e
                             })
                             return err
                         }
@@ -227,10 +312,16 @@ func main() {
                         // default http proxy
                         target := base + targetPath
                         if st.cb == nil {
-                            return proxy.Do(c, target)
+                            st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
+                            err := proxy.Do(c, target)
+                            st.lbMu.Lock(); st.active[base]--; if err != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                            return err
                         }
                         _, err := st.cb.Execute(func() (interface{}, error) {
-                            return nil, proxy.Do(c, target)
+                            st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
+                            e := proxy.Do(c, target)
+                            st.lbMu.Lock(); st.active[base]--; if e != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                            return nil, e
                         })
                         return err
                     }
@@ -383,6 +474,36 @@ func newH2cReverseProxy(base string, stripPrefix string) http.Handler {
         },
     }
     return rp
+}
+
+// Redis helpers
+func redisAllow(ctx context.Context, rdb *redis.Client, key string, limit int, windowSec int) (bool, error) {
+    // INCR and set EXPIRE if first; allow if value <= limit
+    n, err := rdb.Incr(ctx, key).Result()
+    if err != nil { return false, err }
+    if n == 1 { _ = rdb.Expire(ctx, key, time.Duration(windowSec)*time.Second).Err() }
+    return n <= int64(limit), nil
+}
+
+func redisQuota(ctx context.Context, rdb *redis.Client, key string, limit int, ttlSec int) (bool, error) {
+    n, err := rdb.Incr(ctx, key).Result()
+    if err != nil { return false, err }
+    if n == 1 { _ = rdb.Expire(ctx, key, time.Duration(ttlSec)*time.Second).Err() }
+    return n <= int64(limit), nil
+}
+
+func fmtInt(v int64) string { return strconv.FormatInt(v, 10) }
+
+func maybeEject(rc RouteConfig, st *routeState, upstream string) {
+    if rc.OutlierDetection == nil || !rc.OutlierDetection.Enabled { return }
+    thr := rc.OutlierDetection.FailureThreshold
+    if thr <= 0 { thr = 5 }
+    if st.fail[upstream] >= thr {
+        dur := time.Duration(rc.OutlierDetection.EjectDurationSec) * time.Second
+        if dur <= 0 { dur = 30 * time.Second }
+        st.ejectedUntil[upstream] = time.Now().Add(dur)
+        st.fail[upstream] = 0
+    }
 }
 
 
