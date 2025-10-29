@@ -28,6 +28,11 @@ type routeState struct {
 // attachConfiguredRoutes installs a single catch-all handler that matches
 // declarative routes in order and proxies accordingly.
 func attachConfiguredRoutes(app *fiber.App, croutes []compiledRoute, rdb *redis.Client) {
+    app.All("/*", MakeRouteHandler(croutes, rdb))
+}
+
+// MakeRouteHandler builds a catch-all handler for the provided compiled routes
+func MakeRouteHandler(croutes []compiledRoute, rdb *redis.Client) fiber.Handler {
     states := make([]routeState, len(croutes))
 
     // init circuit breakers and maps
@@ -57,7 +62,7 @@ func attachConfiguredRoutes(app *fiber.App, croutes []compiledRoute, rdb *redis.
         states[i].ejectedUntil = make(map[string]time.Time)
     }
 
-    app.All("/*", func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
         host := c.Hostname()
         path := c.OriginalURL()
         method := c.Method()
@@ -248,46 +253,55 @@ func attachConfiguredRoutes(app *fiber.App, croutes []compiledRoute, rdb *redis.
         }
 
         return c.SendStatus(fiber.StatusNotFound)
-    })
+    }
 }
 
 // attachDefaultRoutes installs simple path-based static proxy rules when no config is provided.
 func attachDefaultRoutes(app *fiber.App) {
+    app.All("/api/warrior/*", MakeDefaultHandler())
+    app.All("/api/enemy/*", MakeDefaultHandler())
+    app.All("/api/dragon/*", MakeDefaultHandler())
+    app.All("/api/weapon/*", MakeDefaultHandler())
+}
+
+// MakeDefaultHandler proxies to static upstreams based on the first path segment
+func MakeDefaultHandler() fiber.Handler {
     warriorUp := getEnv("UPSTREAM_WARRIOR", "http://localhost:8080")
     warriorCanaryUp := getEnv("UPSTREAM_WARRIOR_CANARY", "")
     warriorCanaryPct := getEnv("UPSTREAM_WARRIOR_CANARY_PERCENT", "")
     enemyUp := getEnv("UPSTREAM_ENEMY", "http://localhost:8083")
     dragonUp := getEnv("UPSTREAM_DRAGON", "http://localhost:8084")
     weaponUp := getEnv("UPSTREAM_WEAPON", "http://localhost:8081")
-
-    app.All("/api/warrior/*", func(c *fiber.Ctx) error {
-        targetBase := warriorUp
-        if warriorCanaryUp != "" && warriorCanaryPct != "" {
-            rid := c.Get("X-Request-ID")
-            if len(rid) > 0 {
-                last := rid[len(rid)-1]
-                pct := 10
-                if p, err := parsePercent(warriorCanaryPct); err == nil { pct = p }
-                if int(last)%100 < pct {
-                    targetBase = warriorCanaryUp
+    return func(c *fiber.Ctx) error {
+        path := c.OriginalURL()
+        if hasPrefix(path, "/api/warrior/") {
+            targetBase := warriorUp
+            if warriorCanaryUp != "" && warriorCanaryPct != "" {
+                rid := c.Get("X-Request-ID")
+                if len(rid) > 0 {
+                    last := rid[len(rid)-1]
+                    pct := 10
+                    if p, err := parsePercent(warriorCanaryPct); err == nil { pct = p }
+                    if int(last)%100 < pct { targetBase = warriorCanaryUp }
                 }
             }
+            target := targetBase + path[len("/api/warrior"):]
+            return proxy.Do(c, target)
         }
-        target := targetBase + c.OriginalURL()[len("/api/warrior"):]
-        return proxy.Do(c, target)
-    })
-    app.All("/api/enemy/*", func(c *fiber.Ctx) error {
-        target := enemyUp + c.OriginalURL()[len("/api/enemy"):]
-        return proxy.Do(c, target)
-    })
-    app.All("/api/dragon/*", func(c *fiber.Ctx) error {
-        target := dragonUp + c.OriginalURL()[len("/api/dragon"):]
-        return proxy.Do(c, target)
-    })
-    app.All("/api/weapon/*", func(c *fiber.Ctx) error {
-        target := weaponUp + c.OriginalURL()[len("/api/weapon"):]
-        return proxy.Do(c, target)
-    })
+        if hasPrefix(path, "/api/enemy/") {
+            target := enemyUp + path[len("/api/enemy"):]
+            return proxy.Do(c, target)
+        }
+        if hasPrefix(path, "/api/dragon/") {
+            target := dragonUp + path[len("/api/dragon"):]
+            return proxy.Do(c, target)
+        }
+        if hasPrefix(path, "/api/weapon/") {
+            target := weaponUp + path[len("/api/weapon"):]
+            return proxy.Do(c, target)
+        }
+        return c.SendStatus(fiber.StatusNotFound)
+    }
 }
 
 
