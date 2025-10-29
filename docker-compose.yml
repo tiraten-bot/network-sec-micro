@@ -122,6 +122,27 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # MySQL Database for Coin Service
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: coin_db
+      MYSQL_USER: coin_user
+      MYSQL_PASSWORD: coin_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
   # Coin Service (gRPC)
   coin:
     build:
@@ -129,18 +150,20 @@ services:
       dockerfile: dockerfiles/coin.dockerfile
     container_name: coin-service
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: warrior_db
-      DB_SSLMODE: disable
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: coin_user
+      DB_PASSWORD: coin_password
+      DB_NAME: coin_db
+      DB_CHARSET: utf8mb4
+      DB_PARSE_TIME: true
+      DB_LOC: Local
       GRPC_PORT: 50051
       KAFKA_BROKERS: kafka:9092
     ports:
       - "50051:50051"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       kafka:
         condition: service_healthy
