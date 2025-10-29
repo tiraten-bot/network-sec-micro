@@ -1,0 +1,45 @@
+namespace: network-sec
+
+images:
+  warrior: { repository: warrior, tag: latest, pullPolicy: IfNotPresent }
+  weapon:  { repository: weapon,  tag: latest, pullPolicy: IfNotPresent }
+  enemy:   { repository: enemy,   tag: latest, pullPolicy: IfNotPresent }
+  dragon:  { repository: dragon,  tag: latest, pullPolicy: IfNotPresent }
+  coin:    { repository: coin,    tag: latest, pullPolicy: IfNotPresent }
+  gateway: { repository: fiber-gateway, tag: latest, pullPolicy: IfNotPresent }
+
+replicas:
+  warrior: 1
+  weapon: 1
+  enemy: 1
+  dragon: 1
+  coin: 1
+  gateway: 1
+
+env:
+  kafkaBrokers: kafka:9092
+  redisAddr: redis:6379
+  postgres:
+    host: postgres
+    port: 5432
+    user: postgres
+    password: postgres
+    db: warrior_db
+  mysql:
+    host: mysql
+    port: 3306
+    user: coin_user
+    password: coin_password
+    db: coin_db
+  mongo:
+    uri: mongodb://mongodb:27017
+    dragonDB: dragon_db
+    enemyDB: enemy_db
+    weaponDB: weapon_db
+
+ingress:
+  enabled: true
+  className: nginx
+  host: network.local
+
+
