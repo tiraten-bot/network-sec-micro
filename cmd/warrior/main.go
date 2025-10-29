@@ -10,16 +10,14 @@ import (
 )
 
 func main() {
-	// Initialize database first (before Wire)
+	// Initialize database first
 	if err := warrior.InitDatabase(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	// Initialize dependencies using Wire
-	_, handler, err := InitializeApp()
-	if err != nil {
-		log.Fatalf("Failed to initialize app: %v", err)
-	}
+	// Initialize dependencies manually (bypass Wire due to dependency issues)
+	service := warrior.NewService()
+	handler := warrior.NewHandler(service)
 
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
@@ -52,7 +50,7 @@ func main() {
 		})
 	})
 
-	// Setup routes with Wire-injected handler
+	// Setup routes with manually injected handler
 	warrior.SetupRoutes(r, handler)
 
 	// Start server
