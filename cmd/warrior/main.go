@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"network-sec-micro/internal/warrior"
+    kafkaLib "network-sec-micro/pkg/kafka"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,22 @@ func main() {
 	if err := warrior.InitDatabase(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+
+    // Initialize Kafka consumer for achievements
+    brokers := getEnvSlice("KAFKA_BROKERS", "localhost:9092")
+    consumer, err := kafkaLib.NewConsumer(
+        brokers,
+        "warrior-service-group",
+        []string{kafkaLib.TopicDragonDeath, kafkaLib.TopicEnemyDestroyed},
+        warrior.ProcessKafkaMessage,
+    )
+    if err != nil {
+        log.Fatalf("Failed to create Kafka consumer: %v", err)
+    }
+    defer consumer.Close()
+    if err := consumer.Start(); err != nil {
+        log.Fatalf("Failed to start Kafka consumer: %v", err)
+    }
 
 	// Initialize dependencies manually (Wire has dependency issues with puddle/v2)
 	service := warrior.NewService()
@@ -63,4 +80,41 @@ func main() {
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+func getEnvSlice(key, defaultValue string) []string {
+    value := os.Getenv(key)
+    if value == "" {
+        return []string{defaultValue}
+    }
+    var out []string
+    for _, s := range splitAndTrim(value, ",") {
+        if s != "" {
+            out = append(out, s)
+        }
+    }
+    if len(out) == 0 {
+        return []string{defaultValue}
+    }
+    return out
+}
+
+func splitAndTrim(s, sep string) []string {
+    parts := []string{}
+    start := 0
+    for i := 0; i <= len(s); i++ {
+        if i == len(s) || string(s[i]) == sep {
+            part := s[start:i]
+            // trim spaces
+            for len(part) > 0 && (part[0] == ' ' || part[0] == '\t') {
+                part = part[1:]
+            }
+            for len(part) > 0 && (part[len(part)-1] == ' ' || part[len(part)-1] == '\t') {
+                part = part[:len(part)-1]
+            }
+            parts = append(parts, part)
+            start = i + 1
+        }
+    }
+    return parts
 }
