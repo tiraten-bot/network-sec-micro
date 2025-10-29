@@ -6,8 +6,16 @@ commonLabels:
 
 resources:
   - namespace.yaml
+  - postgres.yaml
+  - mysql.yaml
+  - mongodb.yaml
+  - kafka.yaml
   - redis.yaml
   - warrior.yaml
+  - weapon.yaml
+  - enemy.yaml
+  - dragon.yaml
+  - coin.yaml
   - gateway.yaml
 
 
