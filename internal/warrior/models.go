@@ -32,6 +32,10 @@ type Warrior struct {
 	CoinBalance int       `gorm:"default:1000" json:"coin_balance"`     // Starting coin balance
 	TotalPower  int       `gorm:"default:100" json:"total_power"`       // Total attack power
 	WeaponCount int       `gorm:"default:0" json:"weapon_count"`        // Number of owned weapons
+    // Title and achievement counters
+    Title            string    `gorm:"type:varchar(50);default:''" json:"title"`
+    EnemyKillCount   int       `gorm:"default:0" json:"enemy_kill_count"`
+    DragonKillCount  int       `gorm:"default:0" json:"dragon_kill_count"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
