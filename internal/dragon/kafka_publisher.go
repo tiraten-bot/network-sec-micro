@@ -35,7 +35,7 @@ func PublishDragonDeathEvent(event DragonDeathEvent) error {
 	}
 
 	topic := kafka.TopicDragonDeath
-	if err := publisher.PublishMessage(topic, message); err != nil {
+	if err := publisher.Publish(topic, message); err != nil {
 		return fmt.Errorf("failed to publish dragon death event: %w", err)
 	}
 
