@@ -29,6 +29,7 @@ type RouteConfig struct {
 
     // Behavior flags
     WebSocketPassthrough bool `json:"websocket_passthrough,omitempty"`
+    GrpcProxy            bool `json:"grpc_proxy,omitempty"`           // enable gRPC h2c proxy
 }
 
 type compiledRoute struct {
