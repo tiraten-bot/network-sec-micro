@@ -3,6 +3,7 @@ package coin
 import (
 	"context"
 	"errors"
+	"log"
 
 	pb "network-sec-micro/api/proto/coin"
 	"network-sec-micro/internal/coin/dto"
@@ -78,14 +79,17 @@ func (s *CoinServiceServer) DeductCoins(ctx context.Context, req *pb.DeductCoins
 	}
 
 	// Create transaction record
-	s.Service.CreateTransaction(dto.CreateTransactionCommand{
+	if _, err := s.Service.CreateTransaction(ctx, dto.CreateTransactionCommand{
 		WarriorID:       warrior.ID,
 		Amount:          -req.Amount,
 		TransactionType: string(TransactionTypeDeduct),
 		Reason:          req.Reason,
 		BalanceBefore:   balanceBefore,
 		BalanceAfter:    balanceAfter,
-	})
+	}); err != nil {
+		// Log error but don't fail the deduction
+		log.Printf("Failed to create transaction record: %v", err)
+	}
 
 	return &pb.DeductCoinsResponse{
 		Success:       true,
@@ -115,14 +119,17 @@ func (s *CoinServiceServer) AddCoins(ctx context.Context, req *pb.AddCoinsReques
 	}
 
 	// Create transaction record
-	s.Service.CreateTransaction(dto.CreateTransactionCommand{
+	if _, err := s.Service.CreateTransaction(ctx, dto.CreateTransactionCommand{
 		WarriorID:       warrior.ID,
 		Amount:          req.Amount,
 		TransactionType: string(TransactionTypeAdd),
 		Reason:          req.Reason,
 		BalanceBefore:   balanceBefore,
 		BalanceAfter:    balanceAfter,
-	})
+	}); err != nil {
+		// Log error but don't fail the addition
+		log.Printf("Failed to create transaction record: %v", err)
+	}
 
 	return &pb.AddCoinsResponse{
 		Success:       true,
@@ -191,7 +198,7 @@ func (s *CoinServiceServer) GetTransactionHistory(ctx context.Context, req *pb.G
 	}
 	offset := int(req.Offset)
 
-	transactions, count, err := s.Service.GetTransactionHistory(dto.GetTransactionHistoryQuery{
+	transactions, count, err := s.Service.GetTransactionHistory(ctx, dto.GetTransactionHistoryQuery{
 		WarriorID: uint(req.WarriorId),
 		Limit:     limit,
 		Offset:    offset,
