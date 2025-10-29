@@ -64,6 +64,23 @@ func handleDragonDeath(base map[string]interface{}) error {
         log.Printf("warrior: failed to update dragon kill count: %v", err)
         return err
     }
+
+    // Persist killed monster details
+    km := KilledMonster{
+        WarriorID:   w.ID,
+        MonsterKind: "dragon",
+        DragonType:  toString(base["dragon_type"]),
+        MonsterID:   toString(base["dragon_id"]),
+        MonsterName: toString(base["dragon_name"]),
+        Level:       toInt(base["dragon_level"]),
+        MaxHealth:   toInt(base["dragon_max_health"]),
+        AttackPower: toInt(base["dragon_attack_power"]),
+        Defense:     toInt(base["dragon_defense"]),
+        KilledAt:    timeNowUTC(),
+    }
+    if err := DB.Create(&km).Error; err != nil {
+        log.Printf("warrior: failed to record killed dragon: %v", err)
+    }
     return nil
 }
 
@@ -101,7 +118,46 @@ func handleEnemyDestroyed(base map[string]interface{}) error {
         log.Printf("warrior: failed to update enemy kill count: %v", err)
         return err
     }
+
+    // Persist killed enemy details
+    km := KilledMonster{
+        WarriorID:   w.ID,
+        MonsterKind: "enemy",
+        EnemyType:   toString(base["enemy_type"]),
+        MonsterID:   toString(base["enemy_id"]),
+        MonsterName: toString(base["enemy_name"]),
+        Level:       toInt(base["enemy_level"]),
+        MaxHealth:   toInt(base["enemy_health"]),
+        AttackPower: toInt(base["enemy_attack_power"]),
+        Defense:     0,
+        KilledAt:    timeNowUTC(),
+    }
+    if err := DB.Create(&km).Error; err != nil {
+        log.Printf("warrior: failed to record killed enemy: %v", err)
+    }
     return nil
+}
+
+// helper conversions
+func toString(v interface{}) string {
+    if v == nil { return "" }
+    if s, ok := v.(string); ok { return s }
+    return ""
+}
+
+func toInt(v interface{}) int {
+    switch t := v.(type) {
+    case float64:
+        return int(t)
+    case int:
+        return t
+    default:
+        return 0
+    }
+}
+
+func timeNowUTC() (t time.Time) {
+    return time.Now().UTC()
 }
 
 
