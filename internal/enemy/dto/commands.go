@@ -16,3 +16,9 @@ type AttackWarriorCommand struct {
 	Amount      int
 	WeaponID    string
 }
+
+type DestroyEnemyCommand struct {
+    EnemyID           string
+    KillerWarriorID   uint
+    KillerWarriorName string
+}
