@@ -197,6 +197,32 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # Dragon Service (HTTP API)
+  dragon:
+    build:
+      context: .
+      dockerfile: dockerfiles/dragon.dockerfile
+    container_name: dragon-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: dragon_db
+      WARRIOR_GRPC_HOST: warrior:50052
+      KAFKA_BROKERS: kafka:9092
+      GIN_MODE: release
+      PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      warrior:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
