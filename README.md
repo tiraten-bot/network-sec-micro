@@ -152,18 +152,18 @@ graph TD
     DW --> A2
     DW --> A6
     
-    style LK fill:#FFD700,stroke:#000000,stroke-width:3px
-    style LE fill:#FFD700,stroke:#000000,stroke-width:3px
-    style LW fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style DK fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style DE fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style DW fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style A1 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style A2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style A3 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style A4 fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style A5 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style A6 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style LK fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style LE fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style LW fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style DK fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style DE fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style DW fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A3 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A4 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A5 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A6 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Database Architecture
