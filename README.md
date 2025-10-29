@@ -58,6 +58,20 @@ graph TB
     WP -->|Consume| K
     
     K --> Z
+    
+    style WEB fill:#FFD700,stroke:#000000,stroke-width:3px
+    style API fill:#FFD700,stroke:#000000,stroke-width:3px
+    style LB fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style W fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style WP fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style C fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style E fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style D fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style PG fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style MG fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style MY fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style K fill:#FFD700,stroke:#000000,stroke-width:3px
+    style Z fill:#FF8C00,stroke:#8B0000,stroke-width:3px
 ```
 
 ## Service Communication Flow
@@ -74,8 +88,7 @@ sequenceDiagram
     
     Note over Client,Dragon: Warrior Weapon Purchase Flow
     Client->>Warrior: Login & Get Token
-    Client->>Weapon: Buy Weapon (with token)
-    Weapon->>Warrior: Validate Token (gRPC)
+    Warrior->>Weapon: Validate Token (gRPC)
     Weapon->>Coin: Deduct Coins (gRPC)
     Coin-->>Weapon: Payment Confirmed
     Weapon->>Kafka: Publish Purchase Event
@@ -138,6 +151,19 @@ graph TD
     DE --> A6
     DW --> A2
     DW --> A6
+    
+    style LK fill:#FFD700,stroke:#000000,stroke-width:3px
+    style LE fill:#FFD700,stroke:#000000,stroke-width:3px
+    style LW fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style DK fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style DE fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style DW fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style A1 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style A2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style A3 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style A4 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style A5 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style A6 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
 ```
 
 ## Database Architecture
@@ -244,6 +270,15 @@ graph LR
     
     C -->|Deduct Coins| C
     WP2 -->|Add Loot Weapon| WP2
+    
+    style WP fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style E fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style D fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style T1 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style T2 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style T3 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style C fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style WP2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
 ```
 
 ## Service Dependencies
@@ -284,6 +319,16 @@ graph TD
     D -->|Events| K
     C -->|Consume| K
     WP -->|Consume| K
+    
+    style W fill:#FFD700,stroke:#000000,stroke-width:3px
+    style WP fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style C fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style E fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style D fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style K fill:#FFD700,stroke:#000000,stroke-width:3px
+    style PG fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style MG fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style MY fill:#FF8C00,stroke:#8B0000,stroke-width:3px
 ```
 
 ## API Endpoints Overview
@@ -325,110 +370,60 @@ graph TB
         D3[GET /api/v1/dragons/:id]
         D4[GET /api/v1/dragons/type/:type]
     end
+    
+    style W1 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style W2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style W3 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style W4 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style WP1 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style WP2 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style WP3 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style WP4 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style C1 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style C2 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style C3 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style C4 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style C5 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style E1 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style E2 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style E3 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style E4 fill:#DC143C,stroke:#8B0000,stroke-width:3px
+    style D1 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style D2 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style D3 fill:#FFD700,stroke:#000000,stroke-width:3px
+    style D4 fill:#FFD700,stroke:#000000,stroke-width:3px
 ```
-
-## Quick Start
-
-### Prerequisites
-- Docker & Docker Compose
-- Go 1.24+ (for local development)
-- Protobuf compiler
-
-### Running with Docker Compose
-```bash
-# Clone the repository
-git clone <repository-url>
-cd network-sec-micro
-
-# Start all services
-docker-compose up -d
-
-# Check service status
-docker-compose ps
-```
-
-### Local Development
-```bash
-# Install dependencies
-make install
-
-# Generate protobuf code
-make proto
-
-# Build all services
-make build
-
-# Run individual services
-bash scripts/warrior-run.sh    # Port 8080
-bash scripts/weapon-run.sh     # Port 8081
-bash scripts/coin-run.sh       # Port 50051
-bash scripts/enemy-run.sh      # Port 8083
-bash scripts/dragon-run.sh     # Port 8084
-```
-
-### Service URLs
-- **Warrior Service**: http://localhost:8080
-- **Weapon Service**: http://localhost:8081
-- **Coin Service**: gRPC localhost:50051
-- **Enemy Service**: http://localhost:8083
-- **Dragon Service**: http://localhost:8084
 
 ## Game Flow Examples
 
-### 1. Warrior Registration & Weapon Purchase
-```bash
-# Register a warrior
-curl -X POST http://localhost:8080/api/v1/warriors/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testwarrior","email":"test@example.com","password":"password123","role":"light_warrior"}'
-
-# Login and get token
-curl -X POST http://localhost:8080/api/v1/warriors/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testwarrior","password":"password123"}'
-
-# Buy a weapon
-curl -X POST http://localhost:8081/api/v1/weapons/weapon-id/buy \
-  -H "Authorization: Bearer <token>"
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Warrior as Warrior Service
+    participant Weapon as Weapon Service
+    participant Coin as Coin Service
+    participant Dragon as Dragon Service
+    participant Kafka as Kafka Events
+    
+    Note over Client,Kafka: Complete Game Flow
+    Client->>Warrior: Register & Login
+    Warrior-->>Client: JWT Token
+    
+    Client->>Weapon: Buy Weapon
+    Weapon->>Warrior: Validate Token
+    Weapon->>Coin: Deduct Coins
+    Coin-->>Weapon: Payment Success
+    Weapon->>Kafka: Publish Purchase Event
+    Weapon-->>Client: Weapon Purchased
+    
+    Client->>Dragon: Create Dragon (Dark Emperor)
+    Dragon-->>Client: Dragon Created
+    
+    Client->>Dragon: Attack Dragon (Light King)
+    Dragon->>Warrior: Get Warrior Info
+    Dragon->>Dragon: Calculate Damage
+    Dragon->>Kafka: Publish Death Event
+    Weapon->>Kafka: Consume Event
+    Weapon->>Weapon: Add Loot Weapon
+    Dragon-->>Client: Dragon Defeated
 ```
-
-### 2. Dark Emperor Creates Dragon
-```bash
-# Create a dragon (Dark Emperor only)
-curl -X POST http://localhost:8084/api/v1/dragons \
-  -H "Authorization: Bearer <dark_emperor_token>" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Fire Dragon","type":"fire","level":50}'
-```
-
-### 3. Light King Attacks Dragon
-```bash
-# Attack dragon (Light King/Emperor only)
-curl -X POST http://localhost:8084/api/v1/dragons/dragon-id/attack \
-  -H "Authorization: Bearer <light_king_token>"
-```
-
-## Technology Stack
-
-- **Language**: Go 1.24
-- **Web Framework**: Gin
-- **Databases**: PostgreSQL, MongoDB, MySQL
-- **gRPC**: Inter-service communication
-- **Event Streaming**: Apache Kafka
-- **Authentication**: JWT
-- **Password Hashing**: bcrypt
-- **Dependency Injection**: Google Wire
-- **Containerization**: Docker & Docker Compose
-- **API Documentation**: OpenAPI/Swagger (planned)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
