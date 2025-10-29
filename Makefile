@@ -24,6 +24,9 @@ proto:
 
 build:
 	go build -o bin/warrior cmd/warrior/main.go
+	go build -o bin/weapon cmd/weapon/main.go
+	go build -o bin/coin cmd/coin/main.go
+	go build -o bin/enemy cmd/enemy/main.go
 
 run:
 	go run cmd/warrior/main.go
@@ -31,3 +34,4 @@ run:
 clean:
 	rm -rf bin/
 	rm -f api/proto/**/*.pb.go
+	@echo "🧹 Cleaned binaries and generated protobuf files"
