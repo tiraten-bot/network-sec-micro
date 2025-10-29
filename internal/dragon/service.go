@@ -101,7 +101,7 @@ func (s *Service) AttackDragon(cmd dto.AttackDragonCommand) (*Dragon, error) {
 	}
 
 	// Calculate damage (warrior power vs dragon defense)
-	damage := s.calculateDamage(warrior.TotalPower, dragon.Defense)
+	damage := s.calculateDamage(int(warrior.TotalPower), dragon.Defense)
 	dragon.TakeDamage(damage)
 
 	// Update dragon
