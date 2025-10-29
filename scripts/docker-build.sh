@@ -26,7 +26,11 @@ docker build -f dockerfiles/enemy.dockerfile -t enemy:latest .
 echo "🐳 Building dragon service..."
 docker build -f dockerfiles/dragon.dockerfile -t dragon:latest .
 
+# Build fiber-gateway
+echo "🐳 Building fiber-gateway..."
+docker build -f dockerfiles/fibergateway.dockerfile -t fiber-gateway:latest .
+
 echo "✅ All Docker images built successfully!"
-echo "📦 Images: warrior:latest, weapon:latest, coin:latest, enemy:latest, dragon:latest"
+echo "📦 Images: warrior:latest, weapon:latest, coin:latest, enemy:latest, dragon:latest, fiber-gateway:latest"
 echo ""
 echo "🚀 To run with Docker Compose: docker-compose up -d"
