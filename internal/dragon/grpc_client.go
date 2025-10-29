@@ -67,7 +67,7 @@ func (c *WarriorClient) GetWarriorByUsername(ctx context.Context, username strin
 // GetWarriorByID gets warrior by ID
 func (c *WarriorClient) GetWarriorByID(ctx context.Context, id uint32) (*warrior.Warrior, error) {
 	req := &pb.GetWarriorByIDRequest{
-		Id: id,
+		WarriorId: id,
 	}
 
 	resp, err := c.client.GetWarriorByID(ctx, req)
@@ -81,8 +81,9 @@ func (c *WarriorClient) GetWarriorByID(ctx context.Context, id uint32) (*warrior
 // UpdateWarriorPower updates warrior's power
 func (c *WarriorClient) UpdateWarriorPower(ctx context.Context, id uint32, power int32) error {
 	req := &pb.UpdateWarriorPowerRequest{
-		Id:    id,
-		Power: power,
+		WarriorId:   id,
+		TotalPower:  power,
+		WeaponCount: 0, // Not used in this context
 	}
 
 	_, err := c.client.UpdateWarriorPower(ctx, req)
