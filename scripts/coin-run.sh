@@ -8,11 +8,13 @@ echo "🚀 Starting coin service..."
 
 # Set default environment variables if not set
 export DB_HOST=${DB_HOST:-localhost}
-export DB_PORT=${DB_PORT:-5432}
-export DB_USER=${DB_USER:-postgres}
-export DB_PASSWORD=${DB_PASSWORD:-postgres}
-export DB_NAME=${DB_NAME:-warrior_db}
-export DB_SSLMODE=${DB_SSLMODE:-disable}
+export DB_PORT=${DB_PORT:-3306}
+export DB_USER=${DB_USER:-coin_user}
+export DB_PASSWORD=${DB_PASSWORD:-coin_password}
+export DB_NAME=${DB_NAME:-coin_db}
+export DB_CHARSET=${DB_CHARSET:-utf8mb4}
+export DB_PARSE_TIME=${DB_PARSE_TIME:-true}
+export DB_LOC=${DB_LOC:-Local}
 export GRPC_PORT=${GRPC_PORT:-50051}
 export KAFKA_BROKERS=${KAFKA_BROKERS:-localhost:9092}
 
