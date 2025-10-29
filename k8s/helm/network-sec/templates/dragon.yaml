@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dragon
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicas.dragon }}
+  selector:
+    matchLabels:
+      app: dragon
+  template:
+    metadata:
+      labels:
+        app: dragon
+    spec:
+      containers:
+        - name: dragon
+          image: {{ .Values.images.dragon.repository }}:{{ .Values.images.dragon.tag }}
+          imagePullPolicy: {{ .Values.images.dragon.pullPolicy }}
+          env:
+            - { name: MONGODB_URI, value: {{ .Values.env.mongo.uri | quote }} }
+            - { name: MONGODB_DATABASE, value: {{ .Values.env.mongo.dragonDB | quote }} }
+            - { name: WARRIOR_GRPC_HOST, value: "warrior:50052" }
+            - { name: KAFKA_BROKERS, value: {{ .Values.env.kafkaBrokers | quote }} }
+            - { name: GIN_MODE, value: "release" }
+            - { name: PORT, value: "8084" }
+          ports:
+            - containerPort: 8084
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dragon
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: dragon
+  ports:
+    - port: 8084
+      targetPort: 8084
+
