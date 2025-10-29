@@ -36,7 +36,7 @@ func InitDatabase() error {
 	log.Println("Database connection established")
 
 	// Auto migrate the schema
-	if err := DB.AutoMigrate(&Warrior{}); err != nil {
+    if err := DB.AutoMigrate(&Warrior{}, &KilledMonster{}); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
