@@ -264,3 +264,40 @@ func (h *Handler) GetMageWarriors(c *gin.Context) {
 		Count:    len(warriorResponses),
 	})
 }
+
+// GetMyKilledMonsters lists current warrior's killed monsters
+func (h *Handler) GetMyKilledMonsters(c *gin.Context) {
+    warrior, err := GetCurrentWarrior(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized", Message: err.Error()})
+        return
+    }
+    kills, count, err := h.Service.GetKilledMonsters(warrior.ID, 100, 0)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal_error", Message: err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{
+        "kills": kills,
+        "count": count,
+    })
+}
+
+// GetMyStrongestKill returns current warrior's strongest killed monster
+func (h *Handler) GetMyStrongestKill(c *gin.Context) {
+    warrior, err := GetCurrentWarrior(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized", Message: err.Error()})
+        return
+    }
+    km, err := h.Service.GetStrongestKilledMonster(warrior.ID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal_error", Message: err.Error()})
+        return
+    }
+    if km == nil {
+        c.JSON(http.StatusOK, gin.H{"strongest": nil})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"strongest": km})
+}
