@@ -17,7 +17,8 @@ type RouteConfig struct {
     Regex        string            `json:"regex,omitempty"`           // optional regex match
     MethodsAllow []string          `json:"methods_allow,omitempty"`
     MethodsDeny  []string          `json:"methods_deny,omitempty"`
-    Upstream     string            `json:"upstream"`                  // primary upstream base URL
+    Upstream     string            `json:"upstream,omitempty"`        // primary upstream base URL
+    Upstreams    []string          `json:"upstreams,omitempty"`       // multiple upstreams for load balancing
     CanaryUp     string            `json:"canary_upstream,omitempty"` // optional canary
     CanaryPct    string            `json:"canary_percent,omitempty"`  // e.g. "10%" or "10"
 
@@ -30,6 +31,26 @@ type RouteConfig struct {
     // Behavior flags
     WebSocketPassthrough bool `json:"websocket_passthrough,omitempty"`
     GrpcProxy            bool `json:"grpc_proxy,omitempty"`           // enable gRPC h2c proxy
+
+    // Rate limit
+    RateLimit *RateLimitConfig `json:"rate_limit,omitempty"`
+    // Circuit breaker
+    CircuitBreaker *CircuitBreakerConfig `json:"circuit_breaker,omitempty"`
+}
+
+type RateLimitConfig struct {
+    Enabled   bool    `json:"enabled"`
+    RPS       float64 `json:"rps"`           // requests per second
+    Burst     int     `json:"burst"`         // burst size
+    KeyHeader string  `json:"key_header"`    // use this header as key; fallback to IP
+}
+
+type CircuitBreakerConfig struct {
+    Enabled       bool   `json:"enabled"`
+    FailureRatio  float64 `json:"failure_ratio"` // open when failure ratio over window exceeds
+    MinRequests   uint32 `json:"min_requests"`
+    IntervalSec   int    `json:"interval_sec"`   // moving window
+    TimeoutSec    int    `json:"timeout_sec"`    // open state duration
 }
 
 type compiledRoute struct {
@@ -37,6 +58,7 @@ type compiledRoute struct {
     regex      *regexp.Regexp
     allowSet   map[string]struct{}
     denySet    map[string]struct{}
+    lbIndex    int
 }
 
 func loadConfig(path string) (*GatewayConfig, error) {
