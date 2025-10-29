@@ -26,9 +26,14 @@ go build -o bin/coin cmd/coin/main.go
 echo "👹 Building enemy service..."
 go build -o bin/enemy cmd/enemy/main.go
 
+# Build dragon service
+echo "🐉 Building dragon service..."
+go build -o bin/dragon cmd/dragon/main.go
+
 echo "✅ All services built successfully!"
 echo "📦 Binaries location: ./bin/"
 echo "   - warrior (HTTP API)"
 echo "   - weapon (HTTP API)" 
 echo "   - coin (gRPC API)"
 echo "   - enemy (HTTP API)"
+echo "   - dragon (HTTP API)"
