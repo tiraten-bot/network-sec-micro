@@ -44,6 +44,13 @@ type RouteConfig struct {
     LoadBalancing string `json:"load_balancing,omitempty"`
     // Outlier detection
     OutlierDetection *OutlierDetectionConfig `json:"outlier_detection,omitempty"`
+
+    // Aggregation (fan-out/fan-in)
+    Aggregates      []AggregateCall      `json:"aggregates,omitempty"`
+    AggregatePolicy *AggregatePolicy     `json:"aggregate_policy,omitempty"`
+
+    // Response cache
+    Cache *CacheConfig `json:"cache,omitempty"`
 }
 
 type RateLimitConfig struct {
@@ -81,6 +88,29 @@ type OutlierDetectionConfig struct {
     Enabled           bool `json:"enabled"`
     FailureThreshold  int  `json:"failure_threshold"`
     EjectDurationSec  int  `json:"eject_duration_sec"`
+}
+
+type AggregateCall struct {
+    Name     string            `json:"name"`        // key in merged response
+    URL      string            `json:"url"`         // absolute or base-relative
+    Method   string            `json:"method"`      // GET by default
+    TimeoutS int               `json:"timeout_s"`   // per call timeout
+    Headers  map[string]string `json:"headers,omitempty"`
+}
+
+type AggregatePolicy struct {
+    TimeoutS       int    `json:"timeout_s"`         // overall timeout
+    Partial        string `json:"partial"`           // ignore|fail_fast
+    ResponseRoot   string `json:"response_root"`     // optional root key
+    // Simple mapping rules (aggregate-only)
+    Rename         map[string]string `json:"rename,omitempty"` // key rename in merged root
+    Omit           []string          `json:"omit,omitempty"`
+}
+
+type CacheConfig struct {
+    Enabled    bool     `json:"enabled"`
+    TtlSec     int      `json:"ttl_sec"`
+    VaryHeaders []string `json:"vary_headers,omitempty"`
 }
 
 type compiledRoute struct {
