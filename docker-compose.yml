@@ -171,9 +171,31 @@ services:
       - warrior-network
     restart: unless-stopped
 
-networks:
-  warrior-network:
-    driver: bridge
+  # Enemy Service (HTTP API)
+  enemy:
+    build:
+      context: .
+      dockerfile: dockerfiles/enemy.dockerfile
+    container_name: enemy-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: enemy_db
+      WARRIOR_GRPC_HOST: warrior:50052
+      KAFKA_BROKERS: kafka:9092
+      GIN_MODE: release
+      PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      warrior:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
