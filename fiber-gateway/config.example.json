@@ -14,7 +14,11 @@
       "rewrite_prefix": "/api/warrior",
       "websocket_passthrough": true,
       "rate_limit": {"enabled": true, "rps": 50, "burst": 100, "key_header": "Authorization"},
-      "circuit_breaker": {"enabled": true, "failure_ratio": 0.5, "min_requests": 20, "interval_sec": 30, "timeout_sec": 20}
+      "circuit_breaker": {"enabled": true, "failure_ratio": 0.5, "min_requests": 20, "interval_sec": 30, "timeout_sec": 20},
+      "quota": {"enabled": true, "daily": 5000, "hourly": 500, "key_header": "Authorization"},
+      "header_routes": [{"header": "X-Tenant", "value": "vip", "upstream": "http://localhost:8080"}],
+      "load_balancing": "least_connections",
+      "outlier_detection": {"enabled": true, "failure_threshold": 5, "eject_duration_sec": 30}
     },
     {
       "name": "enemy regex",
@@ -22,7 +26,8 @@
       "methods_allow": ["GET", "POST", "PUT", "DELETE"],
       "upstream": "http://localhost:8083",
       "rewrite_prefix": "/api/enemy",
-      "rate_limit": {"enabled": true, "rps": 20, "burst": 40}
+      "rate_limit": {"enabled": true, "use_redis": true, "window_sec": 1, "limit": 30, "key_header": "Authorization"},
+      "quota": {"enabled": true, "hourly": 100}
     }
   ]
 }
