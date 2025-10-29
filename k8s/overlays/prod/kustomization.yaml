@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namePrefix: prod-
+namespace: network-sec
+resources:
+  - ../../k8s/base
+images:
+  - name: warrior
+    newTag: stable
+  - name: weapon
+    newTag: stable
+  - name: enemy
+    newTag: stable
+  - name: dragon
+    newTag: stable
+  - name: coin
+    newTag: stable
+  - name: fiber-gateway
+    newTag: stable
+patchesStrategicMerge:
+  - replicas.yaml
+  - ingress.yaml
+  - resources.yaml
+
+
