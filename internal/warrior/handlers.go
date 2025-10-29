@@ -52,6 +52,7 @@ func (h *Handler) Login(c *gin.Context) {
 			Username:  response.Warrior.Username,
 			Email:     response.Warrior.Email,
 			Role:      string(response.Warrior.Role),
+			Title:     response.Warrior.Title,
 			CreatedAt: response.Warrior.CreatedAt,
 			UpdatedAt: response.Warrior.UpdatedAt,
 		},
@@ -74,6 +75,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 		Username:  warrior.Username,
 		Email:     warrior.Email,
 		Role:      string(warrior.Role),
+		Title:     warrior.Title,
 		CreatedAt: warrior.CreatedAt,
 		UpdatedAt: warrior.UpdatedAt,
 	})
@@ -119,6 +121,7 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 			Username:  w.Username,
 			Email:     w.Email,
 			Role:      string(w.Role),
+			Title:     w.Title,
 			CreatedAt: w.CreatedAt,
 			UpdatedAt: w.UpdatedAt,
 		}
@@ -161,6 +164,7 @@ func (h *Handler) GetKnightWarriors(c *gin.Context) {
 			Username:  k.Username,
 			Email:     k.Email,
 			Role:      string(k.Role),
+			Title:     k.Title,
 			CreatedAt: k.CreatedAt,
 			UpdatedAt: k.UpdatedAt,
 		}
@@ -204,6 +208,7 @@ func (h *Handler) GetArcherWarriors(c *gin.Context) {
 			Username:  a.Username,
 			Email:     a.Email,
 			Role:      string(a.Role),
+			Title:     a.Title,
 			CreatedAt: a.CreatedAt,
 			UpdatedAt: a.UpdatedAt,
 		}
@@ -247,6 +252,7 @@ func (h *Handler) GetMageWarriors(c *gin.Context) {
 			Username:  m.Username,
 			Email:     m.Email,
 			Role:      string(m.Role),
+			Title:     m.Title,
 			CreatedAt: m.CreatedAt,
 			UpdatedAt: m.UpdatedAt,
 		}
