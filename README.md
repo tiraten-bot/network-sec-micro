@@ -281,6 +281,172 @@ graph LR
     style WP2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
 ```
 
+## Gateway Routing and Resilience
+
+```mermaid
+flowchart LR
+    subgraph GW["Fiber API Gateway"]
+        RL[Rate Limiter\n(Token Bucket/Redis)]
+        CB[Circuit Breaker]
+        LB[Load Balancer\n(RR/Least-Conn)]
+        OD[Outlier Detection]
+        TR[Transforms\n(headers/query/rewrite)]
+        AGG[Aggregates\n(fan-out/fan-in)]
+        CACHE[Response Cache\n(ETag/TTL)]
+    end
+
+    C[(Client)] --> RL --> CB --> TR --> LB --> OD -->|HTTP/WS/gRPC(h2c)| UP[(Upstreams)]
+    TR --> AGG --> CACHE
+
+    style GW fill:#0b3d91,stroke:#001a4d,stroke-width:2px,color:#ffffff
+    style RL fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style CB fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style LB fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style OD fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style TR fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style AGG fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style CACHE fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style C fill:#08315c,stroke:#001a4d,color:#ffffff
+    style UP fill:#08315c,stroke:#001a4d,color:#ffffff
+```
+
+## Docker vs Kubernetes Topology
+
+```mermaid
+graph TB
+    subgraph Docker Compose
+        DCGW[Gateway:8090]
+        DCW[Warrior:8080]
+        DCWP[Weapon:8081]
+        DCE[Enemy:8083]
+        DCD[Dragon:8084]
+        DCC[Coin:50051]
+        DCK[Kafka:9092]
+        DCR[Redis:6379]
+        DCPG[Postgres]
+        DCMG[Mongo]
+        DCMY[MySQL]
+    end
+
+    subgraph Kubernetes (Helm)
+        KSGW[Deployment fiber-gateway]
+        KSW[Deployment warrior]
+        KSWP[Deployment weapon]
+        KSE[Deployment enemy]
+        KSD[Deployment dragon]
+        KSC[Deployment coin]
+        KSR[bitnami/redis]
+        KSK[bitnami/kafka + zookeeper]
+        KSPG[bitnami/postgresql]
+        KSMG[bitnami/mongodb]
+        KSMY[bitnami/mysql]
+        ING[Ingress]
+    end
+
+    DCGW --- DCW & DCWP & DCE & DCD
+    DCK --- DCWP & DCE & DCD & DCC
+    DCR --- DCGW
+    DCPG --- DCW
+    DCMG --- DCWP & DCE & DCD
+    DCMY --- DCC
+
+    ING --- KSGW
+    KSGW --- KSW & KSWP & KSE & KSD
+    KSK --- KSWP & KSE & KSD & KSC
+    KSR --- KSGW
+    KSPG --- KSW
+    KSMG --- KSWP & KSE & KSD
+    KSMY --- KSC
+
+    style DCGW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style DCW fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style DCWP fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style DCE fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style DCD fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style DCC fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style DCK fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCR fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCPG fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCMG fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCMY fill:#133e7c,stroke:#001a4d,color:#ffffff
+
+    style KSGW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style KSW fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSWP fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSE fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSD fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSC fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSK fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSR fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSPG fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSMG fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSMY fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style ING fill:#08315c,stroke:#001a4d,color:#ffffff
+```
+
+## Kafka Topics (Extended)
+
+```mermaid
+graph LR
+    subgraph Topics
+        T1[weapon.purchase]
+        T2[enemy.attack]
+        T3[dragon.death]
+        T4[enemy.destroyed]
+    end
+
+    subgraph Producers
+        P1[Weapon]
+        P2[Enemy]
+        P3[Dragon]
+    end
+
+    subgraph Consumers
+        C1[Coin]
+        C2[Weapon]
+        C3[Warrior]
+    end
+
+    P1 --> T1
+    P2 --> T2
+    P3 --> T3
+    P2 --> T4
+
+    T1 --> C1
+    T2 --> C1
+    T3 --> C2
+    T4 --> C3
+
+    style T1 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style T2 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style T3 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style T4 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style P1 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style P2 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style P3 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style C1 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style C2 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style C3 fill:#133e7c,stroke:#001a4d,color:#ffffff
+```
+
+## Deployment Pipeline (Local → Docker → Helm)
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Local as Local (scripts)
+    participant DC as Docker Compose
+    participant Helm as Helmfile (Infra)
+    participant Chart as Helm (App)
+
+    Dev->>Local: ./scripts/*.sh
+    Note right of Local: build/run/test
+    Local-->>DC: docker-build.sh / docker-run.sh
+    Dev->>Helm: helm-apply.sh (infra deps)
+    Dev->>Chart: helm-app-apply.sh (app chart)
+    Chart-->>Dev: Ingress URL
+```
+
 ## Service Dependencies
 
 ```mermaid
