@@ -88,4 +88,30 @@ func newH2cReverseProxy(base string, stripPrefix string) http.Handler {
 
 func fmtInt(v int64) string { return strconv.FormatInt(v, 10) }
 
+// simple in-memory cache (best-effort)
+type cacheEntry struct {
+    expiresAt time.Time
+    etag      string
+    payload   []byte
+    headers   map[string]string
+}
+
+type memoryCache struct {
+    mu sync.Mutex
+    m  map[string]cacheEntry
+}
+
+func newMemoryCache() *memoryCache { return &memoryCache{m: make(map[string]cacheEntry)} }
+
+func (c *memoryCache) get(key string) (cacheEntry, bool) {
+    c.mu.Lock(); defer c.mu.Unlock()
+    e, ok := c.m[key]
+    if !ok || time.Now().After(e.expiresAt) { return cacheEntry{}, false }
+    return e, true
+}
+
+func (c *memoryCache) set(key string, e cacheEntry) {
+    c.mu.Lock(); c.m[key] = e; c.mu.Unlock()
+}
+
 
