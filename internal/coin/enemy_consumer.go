@@ -1,6 +1,7 @@
 package coin
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 
@@ -40,7 +41,7 @@ func ProcessEnemyAttackMessage(message []byte) error {
 	// Deduct coins from warrior
 	service := NewService()
 
-	if err := service.DeductCoins(dto.DeductCoinsCommand{
+	if err := service.DeductCoins(context.Background(), dto.DeductCoinsCommand{
 		WarriorID: event.WarriorID,
 		Amount:    int64(event.StolenValue),
 		Reason:    "goblin_attack: " + event.EnemyName + " stole your coins",
