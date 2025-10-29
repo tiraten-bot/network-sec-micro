@@ -1,274 +1,434 @@
 # Empire
 
-A microservices-based role-playing game management system featuring hierarchical roles, role-based access control, and weapon trading. The system is built with Go, using PostgreSQL for warrior management and MongoDB for weapon inventory, following CQRS pattern with Wire dependency injection.
+A comprehensive microservices-based game system featuring warriors, weapons, coins, enemies, and dragons with role-based access control, gRPC communication, and event-driven architecture using Kafka.
 
-## System Architecture
+## Architecture Overview
 
 ```mermaid
 graph TB
-    subgraph "Warrior Service (PostgreSQL)"
-        WS[Warrior Service<br/>:8080]
-        DB1[(PostgreSQL<br/>warriors)]
+    subgraph "Client Layer"
+        WEB[Web Client]
+        API[API Client]
     end
     
-    subgraph "Weapon Service (MongoDB)"
-        WPS[Weapon Service<br/>:8081]
-        DB2[(MongoDB<br/>weapons)]
+    subgraph "API Gateway Layer"
+        LB[Load Balancer]
     end
     
-    subgraph "Shared Packages"
-        AUTH[pkg/auth<br/>JWT]
-        RBAC[pkg/rbac<br/>Access Control]
-        VAL[pkg/validator<br/>Validation]
+    subgraph "Microservices Layer"
+        W[Warrior Service<br/>HTTP :8080]
+        WP[Weapon Service<br/>HTTP :8081]
+        C[Coin Service<br/>gRPC :50051]
+        E[Enemy Service<br/>HTTP :8083]
+        D[Dragon Service<br/>HTTP :8084]
     end
     
-    CLIENT[Client] -->|Login| WS
-    CLIENT -->|Auth Token| WPS
-    WS --> AUTH
-    WPS --> AUTH
-    WS --> RBAC
-    WPS --> RBAC
-    WS --> DB1
-    WPS --> DB2
-    WS --> AUTH
+    subgraph "Data Layer"
+        PG[(PostgreSQL<br/>Warrior Data)]
+        MG[(MongoDB<br/>Weapon/Enemy/Dragon)]
+        MY[(MySQL<br/>Coin Transactions)]
+    end
+    
+    subgraph "Event Layer"
+        K[Kafka<br/>Event Streaming]
+        Z[Zookeeper<br/>Kafka Coordination]
+    end
+    
+    WEB --> LB
+    API --> LB
+    LB --> W
+    LB --> WP
+    LB --> E
+    LB --> D
+    
+    W -.->|gRPC| C
+    E -.->|gRPC| W
+    D -.->|gRPC| W
+    
+    W --> PG
+    WP --> MG
+    E --> MG
+    D --> MG
+    C --> MY
+    
+    WP -->|Events| K
+    E -->|Events| K
+    D -->|Events| K
+    C -->|Consume| K
+    WP -->|Consume| K
+    
+    K --> Z
 ```
 
-## Role Hierarchy
-
-```mermaid
-graph TD
-    LE[Light Emperor]
-    LK[Light King]
-    K[Knight]
-    A[Archer]
-    M[Mage]
-    
-    DE[Dark Emperor]
-    DK[Dark King]
-    
-    LE -->|Creates| LK
-    LE -->|Creates| K
-    LE -->|Creates| A
-    LE -->|Creates| M
-    
-    LK -->|Creates| K
-    LK -->|Creates| A
-    LK -->|Creates| M
-    
-    DE -->|Creates| DK
-    
-    style LE fill:#FFD700
-    style DE fill:#4B0082
-    style LK fill:#FFA500
-    style DK fill:#800080
-```
-
-## Authentication Flow
+## Service Communication Flow
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant WarriorService as Warrior Service<br/>(:8080)
-    participant Auth as pkg/auth
-    participant PG as PostgreSQL
+    participant Warrior as Warrior Service
+    participant Weapon as Weapon Service
+    participant Coin as Coin Service
+    participant Enemy as Enemy Service
+    participant Dragon as Dragon Service
+    participant Kafka as Kafka Events
     
-    Client->>WarriorService: POST /api/login<br/>{username, password}
-    WarriorService->>PG: Find warrior by username
-    PG-->>WarriorService: Warrior data
-    WarriorService->>Auth: HashPassword + Compare
-    Auth-->>WarriorService: Password verified
-    WarriorService->>Auth: GenerateToken(userID, username, role)
-    Auth-->>WarriorService: JWT Token
-    WarriorService-->>Client: {token, warrior}
+    Note over Client,Dragon: Warrior Weapon Purchase Flow
+    Client->>Warrior: Login & Get Token
+    Client->>Weapon: Buy Weapon (with token)
+    Weapon->>Warrior: Validate Token (gRPC)
+    Weapon->>Coin: Deduct Coins (gRPC)
+    Coin-->>Weapon: Payment Confirmed
+    Weapon->>Kafka: Publish Purchase Event
+    Weapon-->>Client: Weapon Purchased
     
-    Client->Validation Token: Use in Authorization: Bearer
+    Note over Client,Dragon: Enemy Attack Flow
+    Client->>Enemy: Create Goblin (Dark Emperor)
+    Enemy->>Warrior: Get Warrior Info (gRPC)
+    Enemy->>Enemy: Attack Warrior
+    Enemy->>Kafka: Publish Attack Event
+    Coin->>Kafka: Consume Attack Event
+    Coin->>Coin: Deduct Warrior Coins
+    
+    Note over Client,Dragon: Dragon Battle Flow
+    Client->>Dragon: Create Dragon (Dark Emperor)
+    Client->>Dragon: Attack Dragon (Light King/Emperor)
+    Dragon->>Warrior: Get Warrior Info (gRPC)
+    Dragon->>Dragon: Calculate Damage
+    Dragon->>Kafka: Publish Death Event (if killed)
+    Weapon->>Kafka: Consume Death Event
+    Weapon->>Weapon: Add Loot Weapon
 ```
 
-## Warrior Creation Flow
+## Role-Based Access Control (RBAC)
 
 ```mermaid
-sequenceDiagram
-    participant User as Light Emperor/King
-    participant WS as Warrior Service
-    participant Auth as Auth Middleware
-    participant Service as Service Layer
-    participant PG as PostgreSQL
-    
-    User->>WS: POST /api/warriors<br/>+ JWT Token
-    WS->>Auth: Validate Token
-    Auth->>Auth: Extract Claims<br/>{userID, username, role}
-    Auth-->>WS: User info
-    
-    alt Role is Light Emperor or Light King
-        WS->>Service: CreateWarrior(command)
-        Service->>Service: Validate role
-        Service->>PG: Insert warrior
-        PG-->>Service: Created warrior
-        Service-->>WS: Success
-        WS-->>User: 201 Created<br/>{warrior}
-    else Role not authorized
-        WS-->>User: 403 Forbidden
+graph TD
+    subgraph "Light Side"
+        LK[Light King<br/>Can kill dragons<br/>Can view all balances]
+        LE[Light Emperor<br/>Can kill dragons<br/>Can view all balances]
+        LW[Light Warrior<br/>Can buy weapons<br/>Can view own balance]
     end
+    
+    subgraph "Dark Side"
+        DK[Dark King<br/>Can create enemies<br/>Can view all balances]
+        DE[Dark Emperor<br/>Can create enemies & dragons<br/>Can view all balances]
+        DW[Dark Warrior<br/>Can buy weapons<br/>Can view own balance]
+    end
+    
+    subgraph "Actions"
+        A1[Create Warriors]
+        A2[Buy Weapons]
+        A3[Create Enemies]
+        A4[Create Dragons]
+        A5[Kill Dragons]
+        A6[View Balances]
+    end
+    
+    LK --> A5
+    LK --> A6
+    LE --> A5
+    LE --> A6
+    LW --> A2
+    LW --> A6
+    
+    DK --> A3
+    DK --> A6
+    DE --> A3
+    DE --> A4
+    DE --> A6
+    DW --> A2
+    DW --> A6
 ```
 
-## Weapon Purchase Flow
+## Database Architecture
 
 ```mermaid
-sequenceDiagram
-    participant User as Any Warrior
-    participant WPS as Weapon Service<br/>:8081
-    participant Auth as JWT Auth
-    participant Service as Weapon Service
-    participant MongoDB as MongoDB
+erDiagram
+    WARRIOR {
+        uint id PK
+        string username UK
+        string email UK
+        string password
+        string role
+        int coin_balance
+        int total_power
+        int weapon_count
+        timestamp created_at
+        timestamp updated_at
+    }
     
-    User->>WPS: POST /api/weapons/buy<br/>+ JWT Token<br/>{weapon_id}
-    WPS->>Auth: Validate Token
-    Auth-->>WPS: {userID, role}
+    WEAPON {
+        string id PK
+        string name
+        string type
+        int attack_power
+        int price
+        string created_by
+        array owned_by
+        timestamp created_at
+        timestamp updated_at
+    }
     
-    WPS->>Service: BuyWeapon(command)
-    Service->>MongoDB: Find weapon by ID
-    MongoDB-->>Service: Weapon data
+    TRANSACTION {
+        uint id PK
+        uint warrior_id FK
+        int64 amount
+        string transaction_type
+        string reason
+        int64 balance_before
+        int64 balance_after
+        timestamp created_at
+    }
     
-    alt CanBuy = true
-        alt Not already owned
-            Service->>MongoDB: Update weapon<br/>Add buyer to owned_by
-            MongoDB-->>Service: Success
-            Service-->>WPS: Success
-            WPS-->>User: 200 OK
-        else Already owned
-            Service-->>WPS: Error
-            WPS-->>User: 400 Already owned
-        end
-    else Role cannot buy
-        Service-->>WPS: Error
-        WPS-->>User: 403 Forbidden
-    end
+    ENEMY {
+        objectid id PK
+        string name
+        string type
+        int level
+        int health
+        int attack_power
+        string created_by
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    DRAGON {
+        objectid id PK
+        string name
+        string type
+        int level
+        int health
+        int max_health
+        int attack_power
+        int defense
+        string created_by
+        boolean is_alive
+        string killed_by
+        timestamp killed_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    WARRIOR ||--o{ TRANSACTION : "has"
+    WARRIOR ||--o{ WEAPON : "owns"
 ```
 
-## RBAC Matrix
+## Event-Driven Architecture
 
 ```mermaid
 graph LR
-    subgraph "Actions"
-        CW[Create Warriors]
-        CK[Create Kings]
-        UW[Update Warriors]
-        DW[Delete Warriors]
-        CWEP[Create Weapons]
-        BWC[Buy Common]
-        BWR[Buy Rare]
-        BWL[Buy Legendary]
+    subgraph "Event Producers"
+        WP[Weapon Service]
+        E[Enemy Service]
+        D[Dragon Service]
     end
     
-    subgraph "Light Emperor"
-        LE[CW:✓ CK:✓ UW:✓ DW:✓<br/>CWEP:✓ BWC:✓ BWR:✓ BWL:✓]
+    subgraph "Kafka Topics"
+        T1[weapon.purchase]
+        T2[enemy.attack]
+        T3[dragon.death]
     end
     
-    subgraph "Light King"
-        LK[CW:✓ CK:✗ UW:Self DW:✓<br/>CWEP:✓ BWC:✓ BWR:✓ BWL:✗]
+    subgraph "Event Consumers"
+        C[Coin Service]
+        WP2[Weapon Service]
     end
     
-    subgraph "Knights/Archers/Mages"
-        WAR[CW:✗ CK:✗ UW:Self DW:✗<br/>CWEP:✗ BWC:✓ BWR:✗ BWL:✗]
-    end
+    WP -->|WeaponPurchaseEvent| T1
+    E -->|EnemyAttackEvent| T2
+    D -->|DragonDeathEvent| T3
     
-    subgraph "Dark Emperor"
-        DE[CW:✗ CK:✓ UW:Self DW:✗<br/>CWEP:✗ BWC:✗ BWR:✗ BWL:✗]
-    end
+    T1 --> C
+    T2 --> C
+    T3 --> WP2
     
-    subgraph "Dark King"
-        DK[CW:✗ CK:✗ UW:Self DW:✗<br/>CWEP:✗ BWC:✗ BWR:✗ BWL:✗]
-    end
-```
-
-## Weapon Type Access
-
-```mermaid
-stateDiagram-v2
-    [*] --> Common
-    [*] --> Rare
-    [*] --> Legendary
-    
-    Common --> KnightOwns: Knight/Archer/Mage
-    Common --> KingOwns: Light King/Emperor
-    
-    Rare --> KingOwns: Light King/Emperor
-    
-    Legendary --> EmperorOwns: Light Emperor ONLY
-    
-    KnightOwns --> [*]
-    KingOwns --> [*]
-    EmperorOwns --> [*]
+    C -->|Deduct Coins| C
+    WP2 -->|Add Loot Weapon| WP2
 ```
 
 ## Service Dependencies
 
 ```mermaid
 graph TD
-    subgraph "cmd/warrior"
-        WM[main.go]
-        WIRE[wire_gen.go]
+    subgraph "Core Services"
+        W[Warrior Service<br/>Authentication & User Management]
     end
     
-    subgraph "internal/warrior"
-        WS[service.go]
-        WH[handlers.go]
-        CRUD[crud_handlers.go]
-        KH[king_handlers.go]
-        R[routes.go]
+    subgraph "Game Services"
+        WP[Weapon Service<br/>Weapon Management]
+        C[Coin Service<br/>Transaction Management]
+        E[Enemy Service<br/>Enemy Management]
+        D[Dragon Service<br/>Dragon Management]
     end
     
-    subgraph "cmd/weapon"
-        WPM[main.go]
+    subgraph "Infrastructure"
+        K[Kafka<br/>Event Streaming]
+        PG[PostgreSQL<br/>Warrior Data]
+        MG[MongoDB<br/>Game Data]
+        MY[MySQL<br/>Transaction Data]
     end
     
-    subgraph "internal/weapon"
-        WPS[service.go]
-        WPH[handlers.go]
-        WR[routes.go]
+    W --> PG
+    WP --> MG
+    E --> MG
+    D --> MG
+    C --> MY
+    
+    WP -.->|gRPC| W
+    E -.->|gRPC| W
+    D -.->|gRPC| W
+    WP -.->|gRPC| C
+    
+    WP -->|Events| K
+    E -->|Events| K
+    D -->|Events| K
+    C -->|Consume| K
+    WP -->|Consume| K
+```
+
+## API Endpoints Overview
+
+```mermaid
+graph TB
+    subgraph "Warrior Service :8080"
+        W1[POST /api/v1/warriors/register]
+        W2[POST /api/v1/warriors/login]
+        W3[GET /api/v1/warriors/profile]
+        W4[PUT /api/v1/warriors/profile]
     end
     
-    subgraph "pkg/*"
-        AUTH[pkg/auth]
-        RBAC[pkg/rbac]
-        VAL[pkg/validator]
+    subgraph "Weapon Service :8081"
+        WP1[GET /api/v1/weapons]
+        WP2[POST /api/v1/weapons]
+        WP3[POST /api/v1/weapons/:id/buy]
+        WP4[GET /api/v1/weapons/my-weapons]
     end
     
-    WM --> WS
-    WM --> WH
-    WM --> CRUD
-    WM --> KH
-    WM --> R
-    WM --> AUTH
-    WM --> RBAC
-    WM --> VAL
+    subgraph "Coin Service :50051"
+        C1[GetBalance]
+        C2[DeductCoins]
+        C3[AddCoins]
+        C4[TransferCoins]
+        C5[GetTransactionHistory]
+    end
     
-    WPM --> WPS
-    WPM --> WPH
-    WPM --> WR
-    WPM --> AUTH
-    WPM --> RBAC
-    WPM --> VAL
+    subgraph "Enemy Service :8083"
+        E1[POST /api/v1/enemies]
+        E2[POST /api/v1/enemies/:id/attack]
+        E3[GET /api/v1/enemies]
+        E4[GET /api/v1/enemies/type/:type]
+    end
     
-    WH --> WS
-    WPH --> WPS
+    subgraph "Dragon Service :8084"
+        D1[POST /api/v1/dragons]
+        D2[POST /api/v1/dragons/:id/attack]
+        D3[GET /api/v1/dragons/:id]
+        D4[GET /api/v1/dragons/type/:type]
+    end
 ```
 
 ## Quick Start
 
+### Prerequisites
+- Docker & Docker Compose
+- Go 1.24+ (for local development)
+- Protobuf compiler
+
+### Running with Docker Compose
 ```bash
-# Build warrior service
-cd cmd/warrior && go run main.go
+# Clone the repository
+git clone <repository-url>
+cd network-sec-micro
 
-# Build weapon service  
-cd cmd/weapon && go run main.go
-
-# With Docker Compose
+# Start all services
 docker-compose up -d
 
-# Services
-# - Warrior: localhost:8080
-# - Weapon: localhost:8081
-# - PostgreSQL: localhost:5432
-# - MongoDB: localhost:27017
+# Check service status
+docker-compose ps
 ```
+
+### Local Development
+```bash
+# Install dependencies
+make install
+
+# Generate protobuf code
+make proto
+
+# Build all services
+make build
+
+# Run individual services
+bash scripts/warrior-run.sh    # Port 8080
+bash scripts/weapon-run.sh     # Port 8081
+bash scripts/coin-run.sh       # Port 50051
+bash scripts/enemy-run.sh      # Port 8083
+bash scripts/dragon-run.sh     # Port 8084
+```
+
+### Service URLs
+- **Warrior Service**: http://localhost:8080
+- **Weapon Service**: http://localhost:8081
+- **Coin Service**: gRPC localhost:50051
+- **Enemy Service**: http://localhost:8083
+- **Dragon Service**: http://localhost:8084
+
+## Game Flow Examples
+
+### 1. Warrior Registration & Weapon Purchase
+```bash
+# Register a warrior
+curl -X POST http://localhost:8080/api/v1/warriors/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testwarrior","email":"test@example.com","password":"password123","role":"light_warrior"}'
+
+# Login and get token
+curl -X POST http://localhost:8080/api/v1/warriors/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testwarrior","password":"password123"}'
+
+# Buy a weapon
+curl -X POST http://localhost:8081/api/v1/weapons/weapon-id/buy \
+  -H "Authorization: Bearer <token>"
+```
+
+### 2. Dark Emperor Creates Dragon
+```bash
+# Create a dragon (Dark Emperor only)
+curl -X POST http://localhost:8084/api/v1/dragons \
+  -H "Authorization: Bearer <dark_emperor_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Fire Dragon","type":"fire","level":50}'
+```
+
+### 3. Light King Attacks Dragon
+```bash
+# Attack dragon (Light King/Emperor only)
+curl -X POST http://localhost:8084/api/v1/dragons/dragon-id/attack \
+  -H "Authorization: Bearer <light_king_token>"
+```
+
+## Technology Stack
+
+- **Language**: Go 1.24
+- **Web Framework**: Gin
+- **Databases**: PostgreSQL, MongoDB, MySQL
+- **gRPC**: Inter-service communication
+- **Event Streaming**: Apache Kafka
+- **Authentication**: JWT
+- **Password Hashing**: bcrypt
+- **Dependency Injection**: Google Wire
+- **Containerization**: Docker & Docker Compose
+- **API Documentation**: OpenAPI/Swagger (planned)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
