@@ -249,7 +249,7 @@ func (s *Service) publishDragonDeathEvent(dragon Dragon, killerUsername string) 
 	weaponTypes := []string{"sword", "bow", "staff", "dagger", "axe", "mace", "spear", "wand"}
 	randomWeaponType := weaponTypes[rand.Intn(len(weaponTypes))]
 
-	event := kafka.DragonDeathEvent{
+	event := DragonDeathEvent{
 		EventType:       "dragon_death",
 		Timestamp:       time.Now().Format(time.RFC3339),
 		SourceService:   "dragon",
@@ -263,6 +263,6 @@ func (s *Service) publishDragonDeathEvent(dragon Dragon, killerUsername string) 
 	}
 
 	if err := PublishDragonDeathEvent(event); err != nil {
-		log.Printf("Failed to publish dragon death event: %v", err)
+		fmt.Printf("Failed to publish dragon death event: %v", err)
 	}
 }
