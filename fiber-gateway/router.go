@@ -2,6 +2,8 @@ package main
 
 import (
     "context"
+    "encoding/json"
+    "net/http"
     "sync"
     "time"
 
@@ -200,6 +202,11 @@ func MakeRouteHandler(croutes []compiledRoute, rdb *redis.Client) fiber.Handler 
             if cr.cfg.RewritePrefix != "" && hasPrefix(path, cr.cfg.RewritePrefix) {
                 targetPath = path[len(cr.cfg.RewritePrefix):]
                 if !hasPrefix(targetPath, "/") { targetPath = "/" + targetPath }
+            }
+
+            // Aggregation path (if configured)
+            if len(cr.cfg.Aggregates) > 0 {
+                return handleAggregate(c, cr)
             }
 
             // websocket passthrough
