@@ -1,7 +1,6 @@
 package dragon
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -29,13 +28,8 @@ func PublishDragonDeathEvent(event DragonDeathEvent) error {
 		return fmt.Errorf("kafka publisher not initialized")
 	}
 
-	message, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal dragon death event: %w", err)
-	}
-
 	topic := kafka.TopicDragonDeath
-	if err := publisher.Publish(topic, message); err != nil {
+    if err := publisher.Publish(topic, event); err != nil {
 		return fmt.Errorf("failed to publish dragon death event: %w", err)
 	}
 
