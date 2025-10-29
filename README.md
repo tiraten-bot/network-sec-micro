@@ -59,19 +59,19 @@ graph TB
     
     K --> Z
     
-    style WEB fill:#FFD700,stroke:#000000,stroke-width:3px
-    style API fill:#FFD700,stroke:#000000,stroke-width:3px
-    style LB fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style W fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style WP fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style C fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style E fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style D fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style PG fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style MG fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style MY fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style K fill:#FFD700,stroke:#000000,stroke-width:3px
-    style Z fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style WEB fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style API fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style LB fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style W fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style WP fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style D fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style PG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style MG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style MY fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style K fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style Z fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Service Communication Flow
