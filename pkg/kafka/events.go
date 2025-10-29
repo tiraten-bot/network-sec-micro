@@ -35,9 +35,24 @@ func NewWeaponPurchaseEvent(weaponID, warriorName, weaponName string, warriorID,
 	}
 }
 
+// DragonDeathEvent represents dragon death event for weapon loot
+type DragonDeathEvent struct {
+	EventType       string `json:"event_type"`
+	Timestamp       string `json:"timestamp"`
+	SourceService   string `json:"source_service"`
+	DragonID        string `json:"dragon_id"`
+	DragonName      string `json:"dragon_name"`
+	DragonType      string `json:"dragon_type"`
+	DragonLevel     int    `json:"dragon_level"`
+	KillerUsername  string `json:"killer_username"`
+	LootWeaponType  string `json:"loot_weapon_type"`
+	LootWeaponName  string `json:"loot_weapon_name"`
+}
+
 // Topic names
 const (
 	TopicWeaponPurchase = "weapon.purchase"
 	TopicCoinDeduct     = "coin.deduct"
+	TopicDragonDeath    = "dragon.death"
 )
 
