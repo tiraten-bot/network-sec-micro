@@ -2,6 +2,9 @@ package main
 
 import (
     "log"
+    "net"
+    "net/http"
+    "net/http/httputil"
     "os"
     "time"
 
@@ -9,6 +12,8 @@ import (
     "github.com/gofiber/fiber/v2/middleware/cors"
     "github.com/gofiber/fiber/v2/middleware/logger"
     "github.com/gofiber/fiber/v2/middleware/proxy"
+    adaptor "github.com/gofiber/adaptor/v2"
+    "golang.org/x/net/http2"
 )
 
 func getEnv(key, def string) string {
@@ -129,6 +134,12 @@ func main() {
                             return proxy.Do(c, target)
                         }
 
+                        // gRPC proxy via h2c reverse proxy (net/http) mounted in Fiber
+                        if cr.cfg.GrpcProxy {
+                            h := newH2cReverseProxy(base, cr.cfg.RewritePrefix)
+                            return adaptor.HTTPHandler(h)(c)
+                        }
+
                         // default http proxy
                         target := base + targetPath
                         return proxy.Do(c, target)
@@ -241,6 +252,47 @@ func toWS(httpURL string) string {
     if hasPrefix(httpURL, "https://") { return "wss://" + httpURL[len("https://"):] }
     if hasPrefix(httpURL, "http://") { return "ws://" + httpURL[len("http://"):] }
     return httpURL
+}
+
+// newH2cReverseProxy creates a ReverseProxy that supports cleartext HTTP/2 (h2c)
+func newH2cReverseProxy(base string, stripPrefix string) http.Handler {
+    director := func(r *http.Request) {
+        // Build target URL by joining base with request URI minus stripPrefix
+        // r.URL already has the original path
+        targetPath := r.URL.Path
+        if stripPrefix != "" && hasPrefix(targetPath, stripPrefix) {
+            targetPath = targetPath[len(stripPrefix):]
+            if targetPath == "" || targetPath[0] != '/' {
+                targetPath = "/" + targetPath
+            }
+        }
+        // Parse base manually
+        // Expect base like http://host:port or https://host:port
+        if hasPrefix(base, "http://") {
+            r.URL.Scheme = "http"
+            r.URL.Host = base[len("http://"):]
+        } else if hasPrefix(base, "https://") {
+            r.URL.Scheme = "https"
+            r.URL.Host = base[len("https://"):]
+        } else {
+            r.URL.Scheme = "http"
+            r.URL.Host = base
+        }
+        r.URL.Path = targetPath
+        // pass through
+    }
+
+    rp := &httputil.ReverseProxy{Director: director}
+
+    // h2c transport (allows HTTP/2 without TLS)
+    rp.Transport = &http2.Transport{
+        AllowHTTP: true,
+        DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+            // Use plain TCP for h2c
+            return net.Dial(network, addr)
+        },
+    }
+    return rp
 }
 
 
