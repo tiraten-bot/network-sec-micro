@@ -49,10 +49,37 @@ type DragonDeathEvent struct {
 	LootWeaponName  string `json:"loot_weapon_name"`
 }
 
+// EnemyDestroyedEvent represents when a warrior destroys an enemy
+type EnemyDestroyedEvent struct {
+    Event
+    EnemyID        string `json:"enemy_id"`
+    EnemyType      string `json:"enemy_type"`
+    EnemyName      string `json:"enemy_name"`
+    KillerWarriorID   uint   `json:"killer_warrior_id"`
+    KillerWarriorName string `json:"killer_warrior_name"`
+}
+
+// NewEnemyDestroyedEvent creates a new enemy destroyed event
+func NewEnemyDestroyedEvent(enemyID, enemyType, enemyName, killerWarriorName string, killerWarriorID uint) *EnemyDestroyedEvent {
+    return &EnemyDestroyedEvent{
+        Event: Event{
+            EventType:     "enemy_destroyed",
+            Timestamp:     time.Now(),
+            SourceService: "enemy",
+        },
+        EnemyID:            enemyID,
+        EnemyType:          enemyType,
+        EnemyName:          enemyName,
+        KillerWarriorID:    killerWarriorID,
+        KillerWarriorName:  killerWarriorName,
+    }
+}
+
 // Topic names
 const (
 	TopicWeaponPurchase = "weapon.purchase"
 	TopicCoinDeduct     = "coin.deduct"
 	TopicDragonDeath    = "dragon.death"
+    TopicEnemyDestroyed = "enemy.destroyed"
 )
 
