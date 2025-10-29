@@ -60,7 +60,86 @@ func main() {
         return c.Next()
     })
 
-    // Upstreams
+    // Try declarative config first
+    if cfgPath := os.Getenv("GW_CONFIG"); cfgPath != "" {
+        if cfg, err := loadConfig(cfgPath); err == nil {
+            if croutes, err := compileRoutes(cfg); err == nil {
+                // Single catch-all; apply first-match policy per config order
+                app.All("/*", func(c *fiber.Ctx) error {
+                    host := c.Hostname()
+                    path := c.OriginalURL()
+                    method := c.Method()
+
+                    for _, cr := range croutes {
+                        // host match (if provided)
+                        if len(cr.cfg.Hosts) > 0 {
+                            matched := false
+                            for _, h := range cr.cfg.Hosts {
+                                if h == host { matched = true; break }
+                            }
+                            if !matched { continue }
+                        }
+                        // path prefix match (if provided)
+                        if cr.cfg.PathPrefix != "" {
+                            if !hasPrefix(path, cr.cfg.PathPrefix) { continue }
+                        }
+                        // regex match (if provided)
+                        if cr.regex != nil && !cr.regex.MatchString(path) { continue }
+                        // method policy
+                        if len(cr.denySet) > 0 {
+                            if _, deny := cr.denySet[method]; deny { return c.SendStatus(fiber.StatusMethodNotAllowed) }
+                        }
+                        if len(cr.allowSet) > 0 {
+                            if _, allow := cr.allowSet[method]; !allow { return c.SendStatus(fiber.StatusMethodNotAllowed) }
+                        }
+
+                        // apply transforms
+                        // headers set
+                        for k, v := range cr.cfg.HeadersSet { c.Request().Header.Set(k, v) }
+                        // headers remove
+                        for _, k := range cr.cfg.HeadersRemove { c.Request().Header.Del(k) }
+                        // query inject
+                        if len(cr.cfg.QueryInject) > 0 {
+                            q := c.Request().URI().QueryArgs()
+                            for k, v := range cr.cfg.QueryInject { q.Set(k, v) }
+                        }
+
+                        // canary selection
+                        base := cr.cfg.Upstream
+                        if cr.cfg.CanaryUp != "" && cr.cfg.CanaryPct != "" {
+                            rid := c.Get("X-Request-ID")
+                            if len(rid) > 0 {
+                                last := rid[len(rid)-1]
+                                pct := 10
+                                if p, err := parsePercent(cr.cfg.CanaryPct); err == nil { pct = p }
+                                if int(last)%100 < pct { base = cr.cfg.CanaryUp }
+                            }
+                        }
+
+                        // rewrite
+                        targetPath := path
+                        if cr.cfg.RewritePrefix != "" && hasPrefix(path, cr.cfg.RewritePrefix) {
+                            targetPath = path[len(cr.cfg.RewritePrefix):]
+                            if !hasPrefix(targetPath, "/") { targetPath = "/" + targetPath }
+                        }
+
+                        // websocket passthrough: upgrade to ws(s) if needed
+                        if cr.cfg.WebSocketPassthrough && isWebSocket(c) {
+                            target := toWS(base) + targetPath
+                            return proxy.Do(c, target)
+                        }
+
+                        // default http proxy
+                        target := base + targetPath
+                        return proxy.Do(c, target)
+                    }
+                    return c.SendStatus(fiber.StatusNotFound)
+                })
+            }
+        }
+    }
+
+    // Fallback static upstreams (if no config provided)
     warriorUp := getEnv("UPSTREAM_WARRIOR", "http://localhost:8080")
     warriorCanaryUp := os.Getenv("UPSTREAM_WARRIOR_CANARY")
     warriorCanaryPct := os.Getenv("UPSTREAM_WARRIOR_CANARY_PERCENT")
@@ -144,6 +223,24 @@ func parsePercent(s string) (int, error) {
         v = 100
     }
     return v, nil
+}
+
+func hasPrefix(s, p string) bool {
+    if len(p) == 0 { return true }
+    if len(s) < len(p) { return false }
+    return s[:len(p)] == p
+}
+
+func isWebSocket(c *fiber.Ctx) bool {
+    if c.Get("Upgrade") == "websocket" { return true }
+    conn := c.Get("Connection")
+    return conn == "Upgrade" || conn == "upgrade"
+}
+
+func toWS(httpURL string) string {
+    if hasPrefix(httpURL, "https://") { return "wss://" + httpURL[len("https://"):] }
+    if hasPrefix(httpURL, "http://") { return "ws://" + httpURL[len("http://"):] }
+    return httpURL
 }
 
 
