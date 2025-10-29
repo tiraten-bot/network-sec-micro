@@ -1,0 +1,7 @@
+apiVersion: v2
+name: network-sec
+description: Umbrella chart for network-sec microservices (gateway + services)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
