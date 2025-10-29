@@ -95,6 +95,47 @@ func (s *Service) AttackWarrior(cmd dto.AttackWarriorCommand) error {
 	return nil
 }
 
+// DestroyEnemy marks an enemy as destroyed and publishes an event
+func (s *Service) DestroyEnemy(cmd dto.DestroyEnemyCommand) error {
+    ctx := context.Background()
+
+    enemyID, err := primitive.ObjectIDFromHex(cmd.EnemyID)
+    if err != nil {
+        return errors.New("invalid enemy ID")
+    }
+
+    var enemy Enemy
+    if err := EnemyColl.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy); err != nil {
+        if err == mongo.ErrNoDocuments {
+            return errors.New("enemy not found")
+        }
+        return err
+    }
+
+    // Remove the enemy document to represent destruction
+    if _, err := EnemyColl.DeleteOne(ctx, bson.M{"_id": enemyID}); err != nil {
+        return fmt.Errorf("failed to destroy enemy: %w", err)
+    }
+
+    // Publish enemy destroyed event
+    evt := kafka.NewEnemyDestroyedEvent(
+        enemy.ID.Hex(),
+        string(enemy.Type),
+        enemy.Name,
+        cmd.KillerWarriorName,
+        cmd.KillerWarriorID,
+    )
+    publisher, err := GetKafkaPublisher()
+    if err != nil {
+        return err
+    }
+    if err := publisher.Publish(kafka.TopicEnemyDestroyed, evt); err != nil {
+        return fmt.Errorf("failed to publish enemy destroyed event: %w", err)
+    }
+
+    return nil
+}
+
 // ==================== QUERIES (READ OPERATIONS) ====================
 
 // GetEnemy gets an enemy by ID
