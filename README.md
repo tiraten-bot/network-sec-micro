@@ -286,13 +286,13 @@ graph LR
 ```mermaid
 flowchart LR
     subgraph GW["Fiber API Gateway"]
-        RL[Rate Limiter\n(Token Bucket/Redis)]
+        RL[Rate Limiter<br/>(Token Bucket/Redis)]
         CB[Circuit Breaker]
-        LB[Load Balancer\n(RR/Least-Conn)]
+        LB[Load Balancer<br/>(RR/Least-Conn)]
         OD[Outlier Detection]
-        TR[Transforms\n(headers/query/rewrite)]
-        AGG[Aggregates\n(fan-out/fan-in)]
-        CACHE[Response Cache\n(ETag/TTL)]
+        TR[Transforms<br/>(headers/query/rewrite)]
+        AGG[Aggregates<br/>(fan-out/fan-in)]
+        CACHE[Response Cache<br/>(ETag/TTL)]
     end
 
     C[(Client)] --> RL --> CB --> TR --> LB --> OD -->|HTTP/WS/gRPC(h2c)| UP[(Upstreams)]
@@ -314,7 +314,7 @@ flowchart LR
 
 ```mermaid
 graph TB
-    subgraph Docker Compose
+    subgraph "Docker Compose"
         DCGW[Gateway:8090]
         DCW[Warrior:8080]
         DCWP[Weapon:8081]
@@ -328,7 +328,7 @@ graph TB
         DCMY[MySQL]
     end
 
-    subgraph Kubernetes (Helm)
+    subgraph "Kubernetes (Helm)"
         KSGW[Deployment fiber-gateway]
         KSW[Deployment warrior]
         KSWP[Deployment weapon]
