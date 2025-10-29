@@ -6,6 +6,7 @@ import (
     "net/http"
     "sync"
     "time"
+    "strconv"
 
     adaptor "github.com/gofiber/adaptor/v2"
     "github.com/gofiber/fiber/v2"
@@ -36,6 +37,7 @@ func attachConfiguredRoutes(app *fiber.App, croutes []compiledRoute, rdb *redis.
 // MakeRouteHandler builds a catch-all handler for the provided compiled routes
 func MakeRouteHandler(croutes []compiledRoute, rdb *redis.Client) fiber.Handler {
     states := make([]routeState, len(croutes))
+    cache := newMemoryCache()
 
     // init circuit breakers and maps
     for i := range croutes {
@@ -206,7 +208,39 @@ func MakeRouteHandler(croutes []compiledRoute, rdb *redis.Client) fiber.Handler 
 
             // Aggregation path (if configured)
             if len(cr.cfg.Aggregates) > 0 {
-                return handleAggregate(c, cr)
+                // caching for aggregate
+                if cr.cfg.Cache != nil && cr.cfg.Cache.Enabled && c.Method() == fiber.MethodGet {
+                    key := "agg:" + path
+                    if len(cr.cfg.Cache.VaryHeaders) > 0 {
+                        for _, h := range cr.cfg.Cache.VaryHeaders { key += "|" + c.Get(h) }
+                    }
+                    if ce, ok := cache.get(key); ok {
+                        if inm := c.Get("If-None-Match"); inm != "" && inm == ce.etag {
+                            return c.SendStatus(fiber.StatusNotModified)
+                        }
+                        for hk, hv := range ce.headers { c.Set(hk, hv) }
+                        c.Set("ETag", ce.etag)
+                        c.Type("json")
+                        return c.Status(fiber.StatusOK).Send(ce.payload)
+                    }
+                    res, status, headers, err := executeAggregate(c, cr)
+                    if err != nil { return err }
+                    body, _ := json.Marshal(res)
+                    etag := strconv.FormatInt(int64(len(body)), 16) + ":" + fmtInt(time.Now().UnixNano())
+                    ce := cacheEntry{expiresAt: time.Now().Add(time.Duration(cr.cfg.Cache.TtlSec)*time.Second), etag: etag, payload: body, headers: headers}
+                    cache.set(key, ce)
+                    for hk, hv := range headers { c.Set(hk, hv) }
+                    c.Set("ETag", etag)
+                    c.Type("json")
+                    return c.Status(status).Send(body)
+                }
+                // without cache
+                res, status, headers, err := executeAggregate(c, cr)
+                if err != nil { return err }
+                for hk, hv := range headers { c.Set(hk, hv) }
+                c.Type("json")
+                body, _ := json.Marshal(res)
+                return c.Status(status).Send(body)
             }
 
             // websocket passthrough
