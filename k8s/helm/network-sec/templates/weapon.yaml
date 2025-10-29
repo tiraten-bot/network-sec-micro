@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weapon
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicas.weapon }}
+  selector:
+    matchLabels:
+      app: weapon
+  template:
+    metadata:
+      labels:
+        app: weapon
+    spec:
+      containers:
+        - name: weapon
+          image: {{ .Values.images.weapon.repository }}:{{ .Values.images.weapon.tag }}
+          imagePullPolicy: {{ .Values.images.weapon.pullPolicy }}
+          env:
+            - { name: MONGODB_URI, value: {{ .Values.env.mongo.uri | quote }} }
+            - { name: MONGODB_DB, value: {{ .Values.env.mongo.weaponDB | quote }} }
+            - { name: PORT, value: "8081" }
+            - { name: KAFKA_BROKERS, value: {{ .Values.env.kafkaBrokers | quote }} }
+            - { name: GIN_MODE, value: "release" }
+          ports:
+            - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weapon
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: weapon
+  ports:
+    - port: 8081
+      targetPort: 8081
+
