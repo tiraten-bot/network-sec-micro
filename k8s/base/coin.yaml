@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coin
+  template:
+    metadata:
+      labels:
+        app: coin
+    spec:
+      containers:
+        - name: coin
+          image: coin:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_HOST
+              value: mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              value: coin_user
+            - name: DB_PASSWORD
+              value: coin_password
+            - name: DB_NAME
+              value: coin_db
+            - name: DB_CHARSET
+              value: utf8mb4
+            - name: DB_PARSE_TIME
+              value: "true"
+            - name: DB_LOC
+              value: Local
+            - name: GRPC_PORT
+              value: "50051"
+            - name: KAFKA_BROKERS
+              value: kafka:9092
+          ports:
+            - containerPort: 50051
+          readinessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 50051
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coin
+spec:
+  selector:
+    app: coin
+  ports:
+    - port: 50051
+      targetPort: 50051
+
+
