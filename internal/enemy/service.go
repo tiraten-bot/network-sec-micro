@@ -122,6 +122,9 @@ func (s *Service) DestroyEnemy(cmd dto.DestroyEnemyCommand) error {
         enemy.ID.Hex(),
         string(enemy.Type),
         enemy.Name,
+        enemy.Level,
+        enemy.Health,
+        enemy.AttackPower,
         cmd.KillerWarriorName,
         cmd.KillerWarriorID,
     )
