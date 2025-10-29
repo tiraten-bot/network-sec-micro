@@ -36,13 +36,24 @@ type RouteConfig struct {
     RateLimit *RateLimitConfig `json:"rate_limit,omitempty"`
     // Circuit breaker
     CircuitBreaker *CircuitBreakerConfig `json:"circuit_breaker,omitempty"`
+    // Quota limits
+    Quota *QuotaConfig `json:"quota,omitempty"`
+    // Header-based routing rules
+    HeaderRoutes []HeaderRoute `json:"header_routes,omitempty"`
+    // Load balancing policy (round_robin, least_connections)
+    LoadBalancing string `json:"load_balancing,omitempty"`
+    // Outlier detection
+    OutlierDetection *OutlierDetectionConfig `json:"outlier_detection,omitempty"`
 }
 
 type RateLimitConfig struct {
     Enabled   bool    `json:"enabled"`
-    RPS       float64 `json:"rps"`           // requests per second
-    Burst     int     `json:"burst"`         // burst size
+    RPS       float64 `json:"rps"`           // requests per second (for in-memory)
+    Burst     int     `json:"burst"`         // burst size (for in-memory)
     KeyHeader string  `json:"key_header"`    // use this header as key; fallback to IP
+    UseRedis  bool    `json:"use_redis"`     // enable Redis-backed limiter
+    WindowSec int     `json:"window_sec"`    // fixed window (if Redis), seconds
+    Limit     int     `json:"limit"`         // max requests per window (if Redis)
 }
 
 type CircuitBreakerConfig struct {
@@ -51,6 +62,25 @@ type CircuitBreakerConfig struct {
     MinRequests   uint32 `json:"min_requests"`
     IntervalSec   int    `json:"interval_sec"`   // moving window
     TimeoutSec    int    `json:"timeout_sec"`    // open state duration
+}
+
+type QuotaConfig struct {
+    Enabled    bool   `json:"enabled"`
+    Daily      int    `json:"daily,omitempty"`
+    Hourly     int    `json:"hourly,omitempty"`
+    KeyHeader  string `json:"key_header,omitempty"` // keying; fallback IP
+}
+
+type HeaderRoute struct {
+    Header   string `json:"header"`
+    Value    string `json:"value"`
+    Upstream string `json:"upstream"`
+}
+
+type OutlierDetectionConfig struct {
+    Enabled           bool `json:"enabled"`
+    FailureThreshold  int  `json:"failure_threshold"`
+    EjectDurationSec  int  `json:"eject_duration_sec"`
 }
 
 type compiledRoute struct {
