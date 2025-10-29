@@ -9,7 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/google/wire v0.6.0
+	github.com/google/wire v0.5.0
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.43.0
 	google.golang.org/grpc v1.76.0
