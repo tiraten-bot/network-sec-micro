@@ -271,14 +271,14 @@ graph LR
     C -->|Deduct Coins| C
     WP2 -->|Add Loot Weapon| WP2
     
-    style WP fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style E fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style D fill:#DC143C,stroke:#8B0000,stroke-width:3px
-    style T1 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style T2 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style T3 fill:#FFD700,stroke:#000000,stroke-width:3px
-    style C fill:#FF8C00,stroke:#8B0000,stroke-width:3px
-    style WP2 fill:#FF8C00,stroke:#8B0000,stroke-width:3px
+    style WP fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style D fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style C fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style WP2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Gateway Routing and Resilience
