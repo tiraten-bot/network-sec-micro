@@ -1,0 +1,27 @@
+{
+  "routes": [
+    {
+      "name": "warrior api",
+      "hosts": ["localhost"],
+      "path_prefix": "/api/warrior",
+      "methods_deny": ["TRACE"],
+      "upstream": "http://localhost:8080",
+      "canary_upstream": "http://localhost:18080",
+      "canary_percent": "10%",
+      "headers_set": {"X-Gateway": "fiber"},
+      "headers_remove": ["X-Internal-Token"],
+      "query_inject": {"via": "gw"},
+      "rewrite_prefix": "/api/warrior",
+      "websocket_passthrough": true
+    },
+    {
+      "name": "enemy regex",
+      "regex": "^/api/enemy(/.*)?$",
+      "methods_allow": ["GET", "POST", "PUT", "DELETE"],
+      "upstream": "http://localhost:8083",
+      "rewrite_prefix": "/api/enemy"
+    }
+  ]
+}
+
+
