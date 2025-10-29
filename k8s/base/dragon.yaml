@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dragon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dragon
+  template:
+    metadata:
+      labels:
+        app: dragon
+    spec:
+      containers:
+        - name: dragon
+          image: dragon:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongodb:27017
+            - name: MONGODB_DATABASE
+              value: dragon_db
+            - name: WARRIOR_GRPC_HOST
+              value: warrior:50052
+            - name: KAFKA_BROKERS
+              value: kafka:9092
+            - name: GIN_MODE
+              value: release
+            - name: PORT
+              value: "8084"
+          ports:
+            - containerPort: 8084
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8084
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8084
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dragon
+spec:
+  selector:
+    app: dragon
+  ports:
+    - port: 8084
+      targetPort: 8084
+
+
