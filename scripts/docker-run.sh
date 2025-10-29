@@ -14,5 +14,5 @@ echo "📊 Status:"
 docker-compose ps
 
 echo ""
-echo "📝 Logs: docker-compose logs -f warrior"
+echo "📝 Logs: docker-compose logs -f fiber-gateway"
 echo "🛑 Stop: docker-compose down"
