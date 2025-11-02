@@ -627,6 +627,7 @@ Tüm HTTP servisleri için Swagger/OpenAPI dokümantasyonu mevcuttur. Swagger UI
 - **Warrior Service**: http://localhost:8080/swagger/index.html
 - **Weapon Service**: http://localhost:8081/swagger/index.html
 - **Dragon Service**: http://localhost:8084/swagger/index.html
+- **Battle Service**: http://localhost:8085/swagger/index.html
 
 ### Swagger Dokümantasyonlarını Generate Etme
 
@@ -640,6 +641,7 @@ Swagger dokümantasyonlarını yeniden oluşturmak için:
 cd cmd/warrior && swag init --parseDependency --parseInternal
 cd cmd/weapon && swag init --parseDependency --parseInternal
 cd cmd/dragon && swag init --parseDependency --parseInternal
+cd cmd/battle && swag init --parseDependency --parseInternal
 ```
 
 ### Authentication
