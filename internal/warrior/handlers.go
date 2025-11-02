@@ -321,7 +321,16 @@ func (h *Handler) GetMyKilledMonsters(c *gin.Context) {
     })
 }
 
-// GetMyStrongestKill returns current warrior's strongest killed monster
+// GetMyStrongestKill godoc
+// @Summary Get strongest killed monster
+// @Description Get the strongest monster killed by authenticated warrior
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "strongest: KilledMonster"
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /profile/strongest-kill [get]
 func (h *Handler) GetMyStrongestKill(c *gin.Context) {
     warrior, err := GetCurrentWarrior(c)
     if err != nil {
