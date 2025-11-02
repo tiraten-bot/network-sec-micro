@@ -277,19 +277,21 @@ func (h *Handler) GetDragonsByType(c *gin.Context) {
 	var dtoDragons []dto.Dragon
 	for _, dragon := range dragons {
 		dtoDragon := dto.Dragon{
-			ID:          dragon.ID,
-			Name:        dragon.Name,
-			Type:        string(dragon.Type),
-			Level:       dragon.Level,
-			Health:      dragon.Health,
-			MaxHealth:   dragon.MaxHealth,
-			AttackPower: dragon.AttackPower,
-			Defense:     dragon.Defense,
-			CreatedBy:   dragon.CreatedBy,
-			IsAlive:     dragon.IsAlive,
-			KilledBy:    dragon.KilledBy,
-			CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ID:                        dragon.ID,
+			Name:                      dragon.Name,
+			Type:                      string(dragon.Type),
+			Level:                     dragon.Level,
+			Health:                    dragon.Health,
+			MaxHealth:                 dragon.MaxHealth,
+			AttackPower:               dragon.AttackPower,
+			Defense:                   dragon.Defense,
+			CreatedBy:                 dragon.CreatedBy,
+			IsAlive:                   dragon.IsAlive,
+			KilledBy:                  dragon.KilledBy,
+			RevivalCount:              dragon.RevivalCount,
+			AwaitingCrisisIntervention: dragon.AwaitingCrisisIntervention,
+			CreatedAt:                 dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:                 dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
 		if dragon.KilledAt != nil {
 			killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
@@ -346,19 +348,21 @@ func (h *Handler) GetDragonsByCreator(c *gin.Context) {
 	var dtoDragons []dto.Dragon
 	for _, dragon := range dragons {
 		dtoDragon := dto.Dragon{
-			ID:          dragon.ID,
-			Name:        dragon.Name,
-			Type:        string(dragon.Type),
-			Level:       dragon.Level,
-			Health:      dragon.Health,
-			MaxHealth:   dragon.MaxHealth,
-			AttackPower: dragon.AttackPower,
-			Defense:     dragon.Defense,
-			CreatedBy:   dragon.CreatedBy,
-			IsAlive:     dragon.IsAlive,
-			KilledBy:    dragon.KilledBy,
-			CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ID:                        dragon.ID,
+			Name:                      dragon.Name,
+			Type:                      string(dragon.Type),
+			Level:                     dragon.Level,
+			Health:                    dragon.Health,
+			MaxHealth:                 dragon.MaxHealth,
+			AttackPower:               dragon.AttackPower,
+			Defense:                   dragon.Defense,
+			CreatedBy:                 dragon.CreatedBy,
+			IsAlive:                   dragon.IsAlive,
+			KilledBy:                  dragon.KilledBy,
+			RevivalCount:              dragon.RevivalCount,
+			AwaitingCrisisIntervention: dragon.AwaitingCrisisIntervention,
+			CreatedAt:                 dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:                 dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
 		if dragon.KilledAt != nil {
 			killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
