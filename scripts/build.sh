@@ -34,6 +34,10 @@ go build -o bin/dragon cmd/dragon/main.go
 echo "⚔️ Building battle service..."
 go build -o bin/battle cmd/battle/main.go
 
+# Build battlespell service
+echo "✨ Building battlespell service..."
+go build -o bin/battlespell cmd/battlespell/main.go
+
 # Build fiber-gateway
 echo "🌐 Building fiber-gateway..."
 go build -o bin/fiber-gateway ./fiber-gateway
@@ -46,4 +50,5 @@ echo "   - coin (gRPC API)"
 echo "   - enemy (HTTP API)"
 echo "   - dragon (HTTP API)"
 echo "   - battle (HTTP API)"
+echo "   - battlespell (HTTP API + gRPC)"
 echo "   - fiber-gateway (API Gateway)"
