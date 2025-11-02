@@ -64,19 +64,21 @@ func (h *Handler) CreateDragon(c *gin.Context) {
 
 	// Convert Dragon to dto.Dragon
 	dtoDragon := &dto.Dragon{
-		ID:          dragon.ID,
-		Name:        dragon.Name,
-		Type:        string(dragon.Type),
-		Level:       dragon.Level,
-		Health:      dragon.Health,
-		MaxHealth:   dragon.MaxHealth,
-		AttackPower: dragon.AttackPower,
-		Defense:     dragon.Defense,
-		CreatedBy:   dragon.CreatedBy,
-		IsAlive:     dragon.IsAlive,
-		KilledBy:    dragon.KilledBy,
-		CreatedAt:   dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:                        dragon.ID,
+		Name:                      dragon.Name,
+		Type:                      string(dragon.Type),
+		Level:                     dragon.Level,
+		Health:                    dragon.Health,
+		MaxHealth:                 dragon.MaxHealth,
+		AttackPower:               dragon.AttackPower,
+		Defense:                   dragon.Defense,
+		CreatedBy:                 dragon.CreatedBy,
+		IsAlive:                   dragon.IsAlive,
+		KilledBy:                  dragon.KilledBy,
+		RevivalCount:              dragon.RevivalCount,
+		AwaitingCrisisIntervention: dragon.AwaitingCrisisIntervention,
+		CreatedAt:                 dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:                 dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 	if dragon.KilledAt != nil {
 		killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
