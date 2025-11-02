@@ -119,10 +119,8 @@ func LogBattleStart(ctx context.Context, battle *Battle, message string) error {
 		TurnNumber:   0,
 		Timestamp:    battle.CreatedAt,
 		EventType:    "battle_start",
-		AttackerName: battle.WarriorName,
-		TargetName:   battle.OpponentName,
-		WarriorHP:    battle.WarriorHP,
-		OpponentHP:   battle.OpponentHP,
+		AttackerName: battle.LightSideName,
+		TargetName:   battle.DarkSideName,
 		Message:      message,
 	}
 
