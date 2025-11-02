@@ -650,7 +650,7 @@ func (h *Handler) ReviveDragon(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":    true,
-		"participant": dto.ToBattleParticipantResponse(participant),
+		"participant": dto.ToParticipantResponse(participant),
 		"message":    fmt.Sprintf("Dragon %s revived successfully", participant.Name),
 	})
 }
@@ -723,7 +723,7 @@ func (h *Handler) DarkEmperorJoinBattle(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":    true,
-		"participant": dto.ToBattleParticipantResponse(participant),
+		"participant": dto.ToParticipantResponse(participant),
 		"message":    fmt.Sprintf("Dark Emperor %s joined the battle!", user.Username),
 	})
 }
