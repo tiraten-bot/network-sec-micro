@@ -23,6 +23,7 @@ spec:
             - { name: UPSTREAM_ENEMY, value: "http://enemy:8083" }
             - { name: UPSTREAM_DRAGON, value: "http://dragon:8084" }
             - { name: UPSTREAM_WEAPON, value: "http://weapon:8081" }
+            - { name: UPSTREAM_BATTLE, value: "http://battle:8085" }
             - { name: REDIS_ADDR, value: {{ .Values.env.redisAddr | quote }} }
           ports:
             - containerPort: 8090
