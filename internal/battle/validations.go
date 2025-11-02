@@ -73,58 +73,36 @@ func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
 	}
 
 	// Validate dark side
-	maxDarkLevel := ParticipantLevel(0)
-	hasDarkKing := false
-	hasDarkEmperor := false
 	hasDragon := false
 	hasEnemy := false
-	maxEnemyLevel := 0
-	minDragonLevel := 999
 
 	for _, p := range cmd.DarkParticipants {
-		pType := ParticipantType(p.Type)
-		
-		// Check for invalid types for dark side
-		if pType == ParticipantTypeWarrior || p.Type == "light_king" || p.Type == "light_emperor" {
-			return fmt.Errorf("invalid participant type for dark side: %s", p.Type)
-		}
-
-		// Check for dark_king (not allowed in battles)
-		if pType == ParticipantTypeDarkKing {
-			return errors.New("dark_king is not allowed in battles, only dark_emperor can participate")
-		}
-
+		// Side validation
 		if p.Side != "dark" {
 			return errors.New("dark side can only contain dark participants")
 		}
 
-		level := GetParticipantLevel(pType)
-		if level == 0 {
-			return fmt.Errorf("invalid participant type: %s", p.Type)
+		// Type validation
+		validDarkTypes := map[string]bool{
+			"enemy":         true,
+			"dragon":        true,
+			"dark_emperor": true,
+		}
+		if !validDarkTypes[p.Type] {
+			return fmt.Errorf("invalid participant type for dark side: %s (allowed: enemy, dragon, dark_emperor). Note: dark_king is NOT allowed", p.Type)
 		}
 
-		// Track highest level
-		if level > maxDarkLevel {
-			maxDarkLevel = level
+		// Check for dark_king (explicitly not allowed)
+		if p.Type == "dark_king" {
+			return errors.New("dark_king is not allowed in battles, only dark_emperor can participate")
 		}
 
-		// Track specific types
-		if pType == ParticipantTypeDragon {
+		// Track types
+		if p.Type == "dragon" {
 			hasDragon = true
-			// Get dragon level from participant info (if available)
-			// For now, we'll check later
-		} else if pType == ParticipantTypeEnemy {
+		} else if p.Type == "enemy" {
 			hasEnemy = true
-			// Get enemy level from participant info
-			// We'll need level in participant info
-		} else if pType == ParticipantTypeDarkEmperor {
-			hasDarkEmperor = true
 		}
-	}
-
-	// Validate: Only dark_emperor allowed (no dark_king)
-	if hasDarkKing {
-		return errors.New("dark_king is not allowed in battles, only dark_emperor can participate")
 	}
 
 	// Validate: Enemy level cannot exceed dragon level
@@ -137,13 +115,13 @@ func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
 				if p.Level > 0 {
 					dragonLevels = append(dragonLevels, p.Level)
 				} else {
-					// Default dragon level if not specified
-					dragonLevels = append(dragonLevels, 50) // Default dragon level
+					// Default dragon level if not specified (dragons are typically higher level)
+					dragonLevels = append(dragonLevels, 50)
 				}
 			}
 		}
 
-		// Check enemy levels
+		// Check enemy levels against dragon levels
 		for _, p := range cmd.DarkParticipants {
 			if p.Type == "enemy" {
 				enemyLevel := p.Level
@@ -154,7 +132,8 @@ func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
 				// Enemy level must be less than or equal to all dragon levels
 				for _, dragonLevel := range dragonLevels {
 					if enemyLevel > dragonLevel {
-						return fmt.Errorf("enemy level (%d) cannot exceed dragon level (%d)", enemyLevel, dragonLevel)
+						return fmt.Errorf("enemy '%s' has level %d which exceeds dragon level %d - enemy level cannot exceed dragon level", 
+							p.Name, enemyLevel, dragonLevel)
 					}
 				}
 			}
