@@ -83,6 +83,16 @@ func (h *Handler) StartBattle(c *gin.Context) {
 		return
 	}
 
+	// Validate battle authorization: only emperors can start directly, kings need approvals
+	ctx := c.Request.Context()
+	if err := ValidateBattleAuthorization(ctx, user.Role, user.UserID, req.KingApprovals); err != nil {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "authorization_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
 	maxTurns := req.MaxTurns
 	if maxTurns <= 0 {
 		maxTurns = 100 // Default for team battles
