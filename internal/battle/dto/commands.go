@@ -49,3 +49,23 @@ type CompleteBattleCommand struct {
 	BattleID      string `json:"battle_id" binding:"required"`
 	Reason        string `json:"reason"` // "light_victory", "dark_victory", "draw", "cancelled"
 }
+
+// ReviveDragonCommand represents a command to revive a dragon in battle
+type ReviveDragonCommand struct {
+	BattleID           string `json:"battle_id" binding:"required"`
+	DragonParticipantID string `json:"dragon_participant_id" binding:"required"`
+}
+
+// DarkEmperorJoinBattleCommand represents a command for Dark Emperor to join battle during crisis
+type DarkEmperorJoinBattleCommand struct {
+	BattleID            string `json:"battle_id" binding:"required"`
+	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
+	DarkEmperorUserID   string `json:"dark_emperor_user_id" binding:"required"`
+}
+
+// SacrificeDragonCommand represents a command to sacrifice dragon and revive enemies
+type SacrificeDragonCommand struct {
+	BattleID            string `json:"battle_id" binding:"required"`
+	DragonParticipantID string `json:"dragon_participant_id" binding:"required"`
+	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
+}
