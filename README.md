@@ -617,3 +617,62 @@ sequenceDiagram
     Weapon->>Weapon: Add Loot Weapon
     Dragon-->>Client: Dragon Defeated
 ```
+
+## API Documentation (Swagger/OpenAPI)
+
+Tüm HTTP servisleri için Swagger/OpenAPI dokümantasyonu mevcuttur. Swagger UI ile API endpoint'lerini test edebilir ve detaylı dokümantasyona erişebilirsiniz.
+
+### Swagger UI URL'leri
+
+- **Warrior Service**: http://localhost:8080/swagger/index.html
+- **Weapon Service**: http://localhost:8081/swagger/index.html
+- **Dragon Service**: http://localhost:8084/swagger/index.html
+
+### Swagger Dokümantasyonlarını Generate Etme
+
+Swagger dokümantasyonlarını yeniden oluşturmak için:
+
+```bash
+# Otomatik script ile tüm servisler için
+./scripts/swagger-gen.sh
+
+# Veya manuel olarak her servis için
+cd cmd/warrior && swag init --parseDependency --parseInternal
+cd cmd/weapon && swag init --parseDependency --parseInternal
+cd cmd/dragon && swag init --parseDependency --parseInternal
+```
+
+### Authentication
+
+Çoğu endpoint JWT token ile korunmaktadır. Swagger UI'da token kullanmak için:
+
+1. Swagger UI'ın sağ üstündeki **"Authorize"** 🔒 butonuna tıklayın
+2. `Bearer <your-jwt-token>` formatında token'ı girin
+3. Örnek: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+
+Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
+
+### Servis Bazlı Endpoint'ler
+
+#### Warrior Service
+- Authentication: Login, Profile
+- Warrior Management: CRUD operations (King only)
+- Profile: Password change, Killed monsters, Strongest kill
+- Role-based: Knights, Archers, Mages listing
+
+#### Weapon Service
+- Weapon Listing: Get all weapons, filter by type
+- Weapon Purchase: Buy weapons (triggers Kafka events)
+- My Weapons: List owned weapons
+- Admin: Create weapons (Light Emperor/King only)
+
+#### Dragon Service
+- Dragon Management: Create, Attack, Get by ID
+- Filtering: Get by type, Get by creator
+- Events: Dragon death events published to Kafka
+
+### Notlar
+
+- **Coin Service**: gRPC servis olduğu için protobuf dosyalarından dokümantasyon oluşturulabilir (`api/proto/coin/coin.proto`)
+- **Enemy Service**: Şu anda HTTP endpoint'leri implement edilmemiştir (sadece Kafka consumer)
+- **API Gateway**: Gateway üzerinden erişilen servislerin dokümantasyonları kendi servis portlarından erişilebilir
