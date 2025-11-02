@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package battlespell;
+
+option go_package = "network-sec-micro/api/proto/battlespell";
+
+import "google/protobuf/timestamp.proto";
+
+// BattleSpell Service (gRPC methods for spell casting)
+service BattleSpellService {
+  // Cast a spell in battle
+  rpc CastSpell(CastSpellRequest) returns (CastSpellResponse);
+  
+  // Get active spells for a battle
+  rpc GetActiveSpells(GetActiveSpellsRequest) returns (GetActiveSpellsResponse);
+  
+  // Trigger Wraith of Dragon effect (called by battle service when dragon kills warrior)
+  rpc TriggerWraithOfDragon(TriggerWraithOfDragonRequest) returns (TriggerWraithOfDragonResponse);
+}
+
+// Request to cast a spell
+message CastSpellRequest {
+  string battle_id = 1;
+  string spell_type = 2;
+  string caster_username = 3;
+  string caster_user_id = 4;
+  string caster_role = 5;
+  string target_dragon_id = 6;
+  string target_dark_emperor_id = 7;
+}
+
+// Response after casting spell
+message CastSpellResponse {
+  bool success = 1;
+  string message = 2;
+  int32 affected_count = 3; // Number of participants affected
+}
+
+// Request to get active spells
+message GetActiveSpellsRequest {
+  string battle_id = 1;
+}
+
+// Response with active spells
+message GetActiveSpellsResponse {
+  repeated Spell spells = 1;
+}
+
+// Request to trigger wraith of dragon
+message TriggerWraithOfDragonRequest {
+  string battle_id = 1;
+}
+
+// Response after triggering wraith
+message TriggerWraithOfDragonResponse {
+  bool triggered = 1;
+  string destroyed_warrior_id = 2;
+  int32 wraith_count = 3;
+  string message = 4;
+}
+
+// Spell model
+message Spell {
+  string id = 1;
+  string battle_id = 2;
+  string spell_type = 3;
+  string side = 4;
+  string caster_username = 5;
+  string caster_user_id = 6;
+  string caster_role = 7;
+  string target_dragon_id = 8;
+  string target_dark_emperor_id = 9;
+  int32 stack_count = 10;
+  int32 wraith_count = 11;
+  bool is_active = 12;
+  google.protobuf.Timestamp cast_at = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+}
+
