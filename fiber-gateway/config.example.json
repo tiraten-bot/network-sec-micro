@@ -43,6 +43,21 @@
       "quota": {"enabled": true, "daily": 2000, "hourly": 200, "key_header": "Authorization"},
       "load_balancing": "round_robin",
       "outlier_detection": {"enabled": true, "failure_threshold": 5, "eject_duration_sec": 30}
+    },
+    {
+      "name": "battlespell api",
+      "hosts": ["localhost"],
+      "path_prefix": "/api/v1/spells",
+      "methods_deny": ["TRACE"],
+      "upstreams": ["http://localhost:8086"],
+      "headers_set": {"X-Gateway": "fiber"},
+      "headers_remove": ["X-Internal-Token"],
+      "rewrite_prefix": "/api/v1/spells",
+      "rate_limit": {"enabled": true, "rps": 20, "burst": 30, "key_header": "Authorization"},
+      "circuit_breaker": {"enabled": true, "failure_ratio": 0.5, "min_requests": 10, "interval_sec": 30, "timeout_sec": 20},
+      "quota": {"enabled": true, "daily": 1000, "hourly": 100, "key_header": "Authorization"},
+      "load_balancing": "round_robin",
+      "outlier_detection": {"enabled": true, "failure_threshold": 5, "eject_duration_sec": 30}
     }
   ]
 }
