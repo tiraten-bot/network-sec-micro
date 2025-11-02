@@ -565,6 +565,15 @@ graph TB
         D4[GET /api/v1/dragons/type/:type]
     end
     
+    subgraph "Battle Service :8085"
+        B1[POST /api/battles]
+        B2[POST /api/battles/attack]
+        B3[GET /api/battles/:id]
+        B4[GET /api/battles/my-battles]
+        B5[GET /api/battles/stats]
+        B6[GET /api/battles/:id/turns]
+    end
+    
     style W1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style W2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style W3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
@@ -586,6 +595,12 @@ graph TB
     style D2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style D3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style D4 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B1 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B3 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B4 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B5 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B6 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Game Flow Examples
