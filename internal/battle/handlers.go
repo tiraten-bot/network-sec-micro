@@ -496,7 +496,7 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		BattleID: objectID,
 	}
 
-	battle, err := h.Service.GetBattle(query)
+	battle, lightParts, darkParts, err := h.Service.GetBattle(query)
 	if err != nil {
 		if err.Error() == "battle not found" {
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{
@@ -512,8 +512,29 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		return
 	}
 
-	// RBAC check
-	if !CheckBattleAccess(c, battle.WarriorID) {
+	// RBAC check: Check if user is a participant or has admin access
+	user, _ := GetCurrentUser(c)
+	userIDStr := fmt.Sprintf("%d", user.UserID)
+	hasAccess := false
+	
+	// Check if user is a participant
+	for _, p := range lightParts {
+		if p.ParticipantID == userIDStr {
+			hasAccess = true
+			break
+		}
+	}
+	if !hasAccess {
+		for _, p := range darkParts {
+			if p.ParticipantID == userIDStr {
+				hasAccess = true
+				break
+			}
+		}
+	}
+
+	// Admin/emperor access
+	if !hasAccess && !CheckBattleAccess(c, 0) {
 		c.JSON(http.StatusForbidden, dto.ErrorResponse{
 			Error:   "forbidden",
 			Message: "You do not have permission to view this battle's logs",
