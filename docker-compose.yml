@@ -234,6 +234,7 @@ services:
       MONGODB_DB: battle_db
       WARRIOR_GRPC_ADDR: warrior:50052
       COIN_GRPC_ADDR: coin:50051
+      BATTLESPELL_GRPC_ADDR: battlespell:50054
       KAFKA_BROKERS: kafka:9092
       REDIS_ADDR: redis:6379
       GIN_MODE: release
@@ -253,6 +254,31 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # BattleSpell Service (HTTP API + gRPC)
+  battlespell:
+    build:
+      context: .
+      dockerfile: dockerfiles/battlespell.dockerfile
+    container_name: battlespell-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: battlespell_db
+      BATTLE_GRPC_ADDR: battle:50053
+      GIN_MODE: release
+      PORT: 8086
+      GRPC_PORT: 50054
+    ports:
+      - "8086:8086"
+      - "50054:50054"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      battle:
+        condition: service_started
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
   # Fiber API Gateway
   fiber-gateway:
     build:
@@ -267,6 +293,7 @@ services:
       UPSTREAM_DRAGON: http://dragon:8084
       UPSTREAM_WEAPON: http://weapon:8081
       UPSTREAM_BATTLE: http://battle:8085
+      UPSTREAM_BATTLESPELL: http://battlespell:8086
       # Kafka/Redis optional if used by config rules
       REDIS_ADDR: redis:6379
     ports:
