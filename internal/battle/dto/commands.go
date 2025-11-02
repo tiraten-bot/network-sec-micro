@@ -8,6 +8,8 @@ type StartBattleCommand struct {
 	OpponentID    string `json:"opponent_id" binding:"required"`
 	OpponentType  string `json:"opponent_type"`
 	OpponentName  string `json:"opponent_name"`
+	OpponentHP    int    `json:"opponent_hp"` // Opponent health points
+	OpponentMaxHP int    `json:"opponent_max_hp"` // Opponent max health
 	MaxTurns      int    `json:"max_turns"` // Maximum turns before draw
 }
 
