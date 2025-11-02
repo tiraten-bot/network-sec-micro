@@ -785,7 +785,7 @@ func (h *Handler) SacrificeDragon(c *gin.Context) {
 		return
 	}
 
-	revivedCount, err := h.Service.SacrificeDragonAndReviveEnemies(c.Request.Context(), battleID, req.DragonParticipantID, req.DarkEmperorUsername)
+	revivedCount, multipliedCount, err := h.Service.SacrificeDragonAndReviveEnemies(c.Request.Context(), battleID, req.DragonParticipantID, req.DarkEmperorUsername)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "sacrifice_failed",
@@ -794,9 +794,12 @@ func (h *Handler) SacrificeDragon(c *gin.Context) {
 		return
 	}
 
+	totalAffected := revivedCount + multipliedCount
 	c.JSON(http.StatusOK, gin.H{
-		"success":       true,
-		"revived_count": revivedCount,
-		"message":      fmt.Sprintf("Dragon sacrificed! %d enemies revived.", revivedCount),
+		"success":          true,
+		"revived_count":     revivedCount,
+		"multiplied_count": multipliedCount,
+		"total_affected":   totalAffected,
+		"message":          fmt.Sprintf("Dragon sacrificed! %d enemies revived, %d new enemies created (total: %d).", revivedCount, multipliedCount, totalAffected),
 	})
 
