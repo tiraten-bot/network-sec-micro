@@ -802,4 +802,69 @@ func (h *Handler) SacrificeDragon(c *gin.Context) {
 		"total_affected":   totalAffected,
 		"message":          fmt.Sprintf("Dragon sacrificed! %d enemies revived, %d new enemies created (total: %d).", revivedCount, multipliedCount, totalAffected),
 	})
+}
+
+// CastSpell godoc
+// @Summary Cast a spell in battle
+// @Description Casts a spell in an ongoing battle. Only kings can cast spells for their side.
+// @Tags battles
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CastSpellRequest true "Spell casting data"
+// @Success 200 {object} map[string]interface{} "success: bool, message: string"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /battles/cast-spell [post]
+func (h *Handler) CastSpell(c *gin.Context) {
+	user, err := GetCurrentUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Verify user is a king
+	if user.Role != "light_king" && user.Role != "dark_king" {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "only kings can cast spells",
+		})
+		return
+	}
+
+	var req dto.CastSpellRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	cmd := dto.CastSpellCommand{
+		BattleID:            req.BattleID,
+		SpellType:           req.SpellType,
+		CasterUsername:      user.Username,
+		CasterUserID:        fmt.Sprintf("%d", user.UserID),
+		CasterRole:          user.Role,
+		TargetDragonID:      req.TargetDragonID,
+		TargetDarkEmperorID: req.TargetDarkEmperorID,
+	}
+
+	if err := h.Service.CastSpell(c.Request.Context(), cmd); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "spell_cast_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": fmt.Sprintf("Spell %s cast successfully!", req.SpellType),
+	})
+}
 
