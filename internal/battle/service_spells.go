@@ -10,6 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// CastSpellCommand represents a command to cast a spell (internal use, matches dto.CastSpellCommand)
+type CastSpellCommand = dto.CastSpellCommand
+
 // CastSpell casts a spell in a battle
 func (s *Service) CastSpell(ctx context.Context, cmd dto.CastSpellCommand) error {
 	// Validate spell type
