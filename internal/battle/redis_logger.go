@@ -152,12 +152,10 @@ func LogBattleEnd(ctx context.Context, battle *Battle, message string) error {
 		Timestamp:    time.Now(),
 		EventType:    "battle_end",
 		Message:      message,
-		WarriorHP:    battle.WarriorHP,
-		OpponentHP:   battle.OpponentHP,
 	}
 
-	if battle.WinnerName != "" {
-		logEntry.Message = fmt.Sprintf("Battle ended. Winner: %s. %s", battle.WinnerName, message)
+	if battle.WinnerSide != "" {
+		logEntry.Message = fmt.Sprintf("Battle ended. Winner: %s. %s", battle.WinnerSide, message)
 	}
 
 	logData, err := json.Marshal(logEntry)
