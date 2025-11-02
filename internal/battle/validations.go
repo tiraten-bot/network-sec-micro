@@ -43,52 +43,28 @@ func GetParticipantLevel(pType ParticipantType) ParticipantLevel {
 
 // ValidateBattleParticipants validates team composition for battle
 func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
+	// Basic validation: Only light vs dark
+	// Light side can only have: warrior, light_king, light_emperor
+	// Dark side can only have: enemy, dragon, dark_emperor (NOT dark_king)
+	
 	// Validate light side
-	maxLightLevel := ParticipantLevel(0)
-	hasLightKing := false
-	hasLightEmperor := false
-
 	for _, p := range cmd.LightParticipants {
-		pType := ParticipantType(p.Type)
-		
-		// Check for invalid types
-		if pType == ParticipantTypeEnemy || pType == ParticipantTypeDragon || 
-		   pType == ParticipantTypeDarkKing || pType == ParticipantTypeDarkEmperor {
-			return fmt.Errorf("invalid participant type for light side: %s", p.Type)
-		}
-
-		// Check for dark_king (not allowed)
+		// Side validation
 		if p.Side != "light" {
 			return errors.New("light side can only contain light participants")
 		}
 
-		level := GetParticipantLevel(pType)
-		if level == 0 {
-			return fmt.Errorf("invalid participant type: %s", p.Type)
+		// Type validation
+		validLightTypes := map[string]bool{
+			"warrior":       true,
+			"light_king":    true,
+			"light_emperor": true,
+		}
+		if !validLightTypes[p.Type] {
+			return fmt.Errorf("invalid participant type for light side: %s (allowed: warrior, light_king, light_emperor)", p.Type)
 		}
 
-		// Track highest level
-		if level > maxLightLevel {
-			maxLightLevel = level
-		}
-
-		// Track specific types
-		if pType == ParticipantTypeWarrior {
-			// Validate warrior level
-			if p.Level > 1 {
-				return fmt.Errorf("warriors cannot exceed level 1, found level %d for %s", p.Level, p.Name)
-			}
-		} else if p.Type == "light_king" {
-			hasLightKing = true
-		} else if p.Type == "light_emperor" {
-			hasLightEmperor = true
-		}
-	}
-
-	// Validate: Warriors cannot be at king level or higher
-	// Warriors (knight, archer, mage) are always level 1
-	// If there's a light_king or light_emperor in the team, warriors must still be level 1
-	for _, p := range cmd.LightParticipants {
+		// Level validation for warriors
 		if p.Type == "warrior" {
 			if p.Level > 1 {
 				return fmt.Errorf("warrior %s has level %d, but warriors cannot exceed level 1", p.Name, p.Level)
