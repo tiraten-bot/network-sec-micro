@@ -2,6 +2,7 @@ package battle
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
 	"network-sec-micro/pkg/auth"
@@ -37,7 +38,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Set user info in context
 		c.Set("username", claims.Username)
-		c.Set("user_id", string(rune(claims.UserID)))
+		c.Set("user_id", strconv.FormatUint(uint64(claims.UserID), 10))
 		c.Set("role", claims.Role)
 		c.Next()
 	}
