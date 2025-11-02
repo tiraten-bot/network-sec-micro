@@ -826,21 +826,33 @@ func (h *Handler) CastSpell(c *gin.Context) {
 		return
 	}
 
-	// Verify user is a king
+	// RBAC: Verify user is a king (light_king or dark_king only)
 	if user.Role != "light_king" && user.Role != "dark_king" {
 		c.JSON(http.StatusForbidden, dto.ErrorResponse{
 			Error:   "forbidden",
-			Message: "only kings can cast spells",
+			Message: "only light_king and dark_king can cast spells",
 		})
+		c.Abort()
 		return
 	}
 
+	// Additional validation: Check if spell type matches user's side
 	var req dto.CastSpellRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
 			Message: err.Error(),
 		})
+		return
+	}
+
+	spellType := SpellType(req.SpellType)
+	if !spellType.CanBeCastBy(user.Role) {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: fmt.Sprintf("spell %s cannot be cast by role %s", req.SpellType, user.Role),
+		})
+		c.Abort()
 		return
 	}
 
