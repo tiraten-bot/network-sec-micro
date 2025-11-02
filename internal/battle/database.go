@@ -13,6 +13,7 @@ import (
 
 var BattleColl *mongo.Collection
 var BattleTurnColl *mongo.Collection
+var BattleParticipantColl *mongo.Collection
 
 // InitDatabase initializes the MongoDB database connection
 func InitDatabase() error {
@@ -37,6 +38,7 @@ func InitDatabase() error {
 	db := client.Database(dbName)
 	BattleColl = db.Collection((&Battle{}).CollectionName())
 	BattleTurnColl = db.Collection((&BattleTurn{}).CollectionName())
+	BattleParticipantColl = db.Collection((&BattleParticipant{}).CollectionName())
 
 	// Create indexes
 	if err := createIndexes(); err != nil {
@@ -85,6 +87,27 @@ func createIndexes() error {
 	_, err = BattleTurnColl.Indexes().CreateMany(ctx, turnIndexes)
 	if err != nil {
 		return fmt.Errorf("failed to create battle_turn indexes: %w", err)
+	}
+
+	// BattleParticipant indexes
+	participantIndexes := []mongo.IndexModel{
+		{
+			Keys: map[string]interface{}{"battle_id": 1, "side": 1},
+		},
+		{
+			Keys: map[string]interface{}{"battle_id": 1, "is_alive": 1},
+		},
+		{
+			Keys: map[string]interface{}{"battle_id": 1},
+		},
+		{
+			Keys: map[string]interface{}{"participant_id": 1},
+		},
+	}
+
+	_, err = BattleParticipantColl.Indexes().CreateMany(ctx, participantIndexes)
+	if err != nil {
+		return fmt.Errorf("failed to create battle_participant indexes: %w", err)
 	}
 
 	log.Println("Indexes created successfully")
