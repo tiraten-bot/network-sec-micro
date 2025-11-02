@@ -123,6 +123,15 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 				log.Printf("Warning: failed to log participant death: %v", err)
 			}
 		}()
+
+		// If target is a dragon, check for revival possibility
+		if target.Type == ParticipantTypeDragon {
+			go func() {
+				if err := s.HandleDragonDeathInBattle(ctx, battleID, &targetCopy); err != nil {
+					log.Printf("Warning: failed to handle dragon death: %v", err)
+				}
+			}()
+		}
 	}
 
 	// Update target participant
