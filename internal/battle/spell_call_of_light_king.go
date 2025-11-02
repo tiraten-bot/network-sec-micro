@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -61,7 +62,7 @@ func (s *Service) CastCallOfTheLightKing(ctx context.Context, battleID primitive
 
 		updateData := bson.M{
 			"attack_power": newAttackPower,
-			"updated_at":   battle.UpdatedAt,
+			"updated_at":   time.Now(),
 		}
 
 		_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{"_id": warrior.ID}, bson.M{"$set": updateData})
@@ -82,9 +83,9 @@ func (s *Service) CastCallOfTheLightKing(ctx context.Context, battleID primitive
 		CasterUserID:   casterUserID,
 		CasterRole:    "light_king",
 		IsActive:      true,
-		CastAt:        battle.UpdatedAt,
-		CreatedAt:     battle.UpdatedAt,
-		UpdatedAt:     battle.UpdatedAt,
+		CastAt:        time.Now(),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	_, err = SpellColl.InsertOne(ctx, spell)
