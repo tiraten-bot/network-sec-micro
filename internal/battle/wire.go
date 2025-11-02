@@ -1,0 +1,12 @@
+package battle
+
+import (
+	"github.com/google/wire"
+)
+
+// ProviderSet is a Wire provider set for battle service
+var ProviderSet = wire.NewSet(
+	NewService,
+	NewHandler,
+)
+
