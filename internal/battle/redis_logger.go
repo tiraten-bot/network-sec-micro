@@ -51,11 +51,19 @@ func LogBattleTurn(ctx context.Context, battleID primitive.ObjectID, turn *Battl
 		TargetType:     turn.TargetType,
 		DamageDealt:    turn.DamageDealt,
 		CriticalHit:    turn.CriticalHit,
-		TargetHPBefore: battle.OpponentHP, // HP before attack (from battle state)
 		TargetHPAfter:  turn.TargetHPAfter,
 		WarriorHP:      battle.WarriorHP,
 		OpponentHP:     battle.OpponentHP,
 		Message:        message,
+	}
+
+	// Determine TargetHPBefore based on target type
+	// battle object passed should have HP before the attack
+	if turn.TargetType == "warrior" {
+		logEntry.TargetHPBefore = battle.WarriorHP
+	} else {
+		logEntry.TargetHPBefore = battle.OpponentHP
+	}
 	}
 
 	// Marshal to JSON
