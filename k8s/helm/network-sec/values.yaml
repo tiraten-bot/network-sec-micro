@@ -7,6 +7,7 @@ images:
   dragon:  { repository: dragon,  tag: latest, pullPolicy: IfNotPresent }
   coin:    { repository: coin,    tag: latest, pullPolicy: IfNotPresent }
   battle:  { repository: battle,  tag: latest, pullPolicy: IfNotPresent }
+  battlespell: { repository: battlespell, tag: latest, pullPolicy: IfNotPresent }
   gateway: { repository: fiber-gateway, tag: latest, pullPolicy: IfNotPresent }
 
 replicas:
@@ -16,6 +17,7 @@ replicas:
   dragon: 1
   coin: 1
   battle: 1
+  battlespell: 1
   gateway: 1
 
 env:
@@ -39,6 +41,37 @@ env:
     enemyDB: enemy_db
     weaponDB: weapon_db
     battleDB: battle_db
+    battlespellDB: battlespell_db
+
+battlespell:
+  replicas: 1
+  image:
+    repository: battlespell
+    tag: latest
+    pullPolicy: IfNotPresent
+  mongodb:
+    database: battlespell_db
+  battleGrpcAddr: battle:50053
+  ginMode: release
+  port: 8086
+  grpcPort: 50054
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+  service:
+    type: ClusterIP
+    port: 8086
+    grpcPort: 50054
 
 ingress:
   enabled: true
