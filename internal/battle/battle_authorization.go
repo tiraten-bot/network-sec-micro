@@ -44,10 +44,6 @@ func ValidateBattleAuthorization(ctx context.Context, userRole string, userID ui
 		return errors.New("failed to connect to warrior service")
 	}
 
-	// Get all warriors (we'll filter for kings)
-	// Note: This requires a new gRPC method or we filter client-side
-	// For now, let's create a helper that gets kings via gRPC
-	
 	// Validate approvals are provided
 	if len(kingApprovals) == 0 {
 		return errors.New("king approvals are required when a king starts a battle")
@@ -107,41 +103,6 @@ func ValidateBattleAuthorization(ctx context.Context, userRole string, userID ui
 	// If total kings > 3, we'll need the actual count to properly validate "more than half"
 
 	return nil
-}
-
-// countKingsOnSide counts total kings on a specific side
-// Since we don't have a direct gRPC method, we'll query warrior service via HTTP or use a simpler approach
-// For now, we'll implement a workaround by querying each approval ID and counting
-func countKingsOnSide(ctx context.Context, side string) (int, error) {
-	// Determine king role based on side
-	var kingRole string
-	if side == "light" {
-		kingRole = "light_king"
-	} else {
-		kingRole = "dark_king"
-	}
-
-	// Since we don't have GetAllWarriorsByRole gRPC method, we'll use a different approach:
-	// We'll need to track this via a cache or pass it as a parameter
-	// For now, let's require the caller to provide total kings count or we estimate
-	
-	// Workaround: Since we validate each approval, we can count unique valid kings
-	// But we need total count first. Let's assume we'll get this from request or cache it
-	
-	// For MVP, we'll use a simpler validation: require at least 2 approvals (including creator)
-	// This works if there are at least 2 kings total on that side
-	// In production, we'd add GetWarriorsCountByRole gRPC method
-	
-	// Temporary: Return minimum required (2) if side has kings, error if we can't determine
-	// This means: if there are 2 kings, need 2 approvals (more than half of 2 = 2)
-	// If there are 3 kings, need 2 approvals (more than half of 3 = 2)
-	// etc.
-	
-	// For now, we'll validate that approvals are provided and valid
-	// We'll check if we have enough approvals relative to a minimum threshold
-	// The actual validation will happen in ValidateBattleAuthorization
-	
-	return -1, nil // -1 means "unknown, will validate differently"
 }
 
 // validateKingOnSide validates if a warrior ID is a king on the specified side
