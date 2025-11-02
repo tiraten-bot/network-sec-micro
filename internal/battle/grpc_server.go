@@ -122,19 +122,19 @@ func (s *BattleServiceServer) UpdateParticipantStats(ctx context.Context, req *p
 		return nil, status.Error(codes.InvalidArgument, "invalid battle ID")
 	}
 
-	updateData := primitive.M{
+	updateData := bson.M{
 		"hp":          req.Hp,
 		"max_hp":      req.MaxHp,
 		"attack_power": req.AttackPower,
 		"defense":     req.Defense,
 		"is_alive":    req.IsAlive,
-		"updated_at":  primitive.DateTime(primitive.NewDateTimeFromTime(time.Now())),
+		"updated_at":  time.Now(),
 	}
 
-	_, err = BattleParticipantColl.UpdateOne(ctx, primitive.M{
+	_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{
 		"battle_id":      battleID,
 		"participant_id": req.ParticipantId,
-	}, primitive.M{"$set": updateData})
+	}, bson.M{"$set": updateData})
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to update participant: %v", err))
@@ -148,7 +148,7 @@ func (s *BattleServiceServer) UpdateParticipantStats(ctx context.Context, req *p
 
 // CastSpell casts a spell via gRPC
 func (s *BattleServiceServer) CastSpell(ctx context.Context, req *pb.CastSpellRequest) (*pb.CastSpellResponse, error) {
-	cmd := CastSpellCommand{
+	cmd := dto.CastSpellCommand{
 		BattleID:            req.BattleId,
 		SpellType:           req.SpellType,
 		CasterUsername:      req.CasterUsername,
