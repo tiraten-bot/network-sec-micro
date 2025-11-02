@@ -30,6 +30,8 @@ type Dragon struct {
 	IsAlive     bool               `bson:"is_alive" json:"is_alive"`
 	KilledBy    string             `bson:"killed_by,omitempty" json:"killed_by,omitempty"` // Light king/emperor username
 	KilledAt    *time.Time         `bson:"killed_at,omitempty" json:"killed_at,omitempty"`
+	RevivalCount int               `bson:"revival_count" json:"revival_count"` // Number of times dragon has been revived (max 3)
+	AwaitingCrisisIntervention bool `bson:"awaiting_crisis_intervention" json:"awaiting_crisis_intervention"` // True when revival_count == 2 (before 3rd revival)
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
 }
