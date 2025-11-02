@@ -7,21 +7,23 @@ import (
 	"log"
 	"time"
 
+	pbBattle "network-sec-micro/api/proto/battle"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // CastDestroyTheLight reduces warrior attack and defense by 30% (stackable up to 2 times: 70% → 49%)
-func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.ObjectID, casterUsername string, casterUserID string) error {
-	// Get battle
-	var battle Battle
-	err := BattleColl.FindOne(ctx, bson.M{"_id": battleID}).Decode(&battle)
+func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.ObjectID, casterUsername string, casterUserID string) (int, error) {
+	// Get battle via gRPC
+	battleIDStr := battleID.Hex()
+	battle, err := GetBattleByID(ctx, battleIDStr)
 	if err != nil {
-		return errors.New("battle not found")
+		return 0, errors.New("battle not found")
 	}
 
-	if battle.Status != BattleStatusInProgress {
-		return errors.New("battle must be in progress to cast spell")
+	if battle.Status != "in_progress" {
+		return 0, errors.New("battle must be in progress to cast spell")
 	}
 
 	// Check existing Destroy the Light spells (stackable up to 2 times)
@@ -38,12 +40,10 @@ func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.Ob
 
 	currentStackCount := len(existingSpells)
 	if currentStackCount >= 2 {
-		return errors.New("Destroy the Light spell can only be stacked 2 times (already at max)")
+		return 0, errors.New("Destroy the Light spell can only be stacked 2 times (already at max)")
 	}
 
 	// Calculate reduction multiplier
-	// First cast: 100% → 70% (0.7 multiplier)
-	// Second cast: 70% → 49% (0.7 * 0.7 = 0.49 multiplier)
 	var reductionMultiplier float64
 	if currentStackCount == 0 {
 		reductionMultiplier = 0.7 // First stack: 30% reduction
@@ -51,52 +51,35 @@ func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.Ob
 		reductionMultiplier = 0.49 // Second stack: 51% total reduction (49% remaining)
 	}
 
-	// Get all warrior participants on light side
-	filter := bson.M{
-		"battle_id": battleID,
-		"type":      ParticipantTypeWarrior,
-		"side":      TeamSideLight,
-		"is_alive":  true,
-	}
-
-	cursor, err = BattleParticipantColl.Find(ctx, filter)
+	// Get all warrior participants on light side via gRPC
+	participants, err := GetBattleParticipants(ctx, battleIDStr, "light")
 	if err != nil {
-		return fmt.Errorf("failed to find warriors: %w", err)
-	}
-	defer cursor.Close(ctx)
-
-	var warriors []BattleParticipant
-	if err := cursor.All(ctx, &warriors); err != nil {
-		return fmt.Errorf("failed to decode warriors: %w", err)
+		return 0, fmt.Errorf("failed to get battle participants: %w", err)
 	}
 
 	// Reduce attack and defense for all warriors
 	updatedCount := 0
-	for _, warrior := range warriors {
-		newAttackPower := int(float64(warrior.AttackPower) * reductionMultiplier)
-		newDefense := int(float64(warrior.Defense) * reductionMultiplier)
+	for _, p := range participants {
+		if p.Type == "warrior" && p.IsAlive {
+			newAttackPower := int32(float64(p.AttackPower) * reductionMultiplier)
+			newDefense := int32(float64(p.Defense) * reductionMultiplier)
 
-		// Minimum values (at least 1)
-		if newAttackPower < 1 {
-			newAttackPower = 1
-		}
-		if newDefense < 1 {
-			newDefense = 1
-		}
+			// Minimum values (at least 1)
+			if newAttackPower < 1 {
+				newAttackPower = 1
+			}
+			if newDefense < 1 {
+				newDefense = 1
+			}
 
-		updateData := bson.M{
-			"attack_power": newAttackPower,
-			"defense":      newDefense,
-			"updated_at":   time.Now(),
-		}
+			err = UpdateParticipantStats(ctx, battleIDStr, p.ParticipantId, p.Hp, p.MaxHp, newAttackPower, newDefense, p.IsAlive)
+			if err != nil {
+				log.Printf("Failed to reduce warrior %s stats: %v", p.Name, err)
+				continue
+			}
 
-		_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{"_id": warrior.ID}, bson.M{"$set": updateData})
-		if err != nil {
-			log.Printf("Failed to reduce warrior %s stats: %v", warrior.Name, err)
-			continue
+			updatedCount++
 		}
-
-		updatedCount++
 	}
 
 	// Create spell record
@@ -120,17 +103,6 @@ func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.Ob
 		log.Printf("Warning: failed to record spell cast: %v", err)
 	}
 
-	// Log to Redis
-	go func() {
-		remainingPercent := int(reductionMultiplier * 100)
-		message := fmt.Sprintf("💀 SPELL CAST: Destroy the Light! Warrior stats reduced to %d%% (Stack: %d/2)! (%d warriors affected)",
-			remainingPercent, newStackCount, updatedCount)
-		if err := LogBattleEvent(ctx, battleID, "spell_cast", message); err != nil {
-			log.Printf("Failed to log spell cast: %v", err)
-		}
-	}()
-
 	log.Printf("Destroy the Light spell cast by %s in battle %s - Stack %d/2, %d warriors affected", casterUsername, battleID.Hex(), newStackCount, updatedCount)
-	return nil
+	return updatedCount, nil
 }
-
