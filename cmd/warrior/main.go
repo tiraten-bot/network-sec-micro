@@ -1,3 +1,24 @@
+// @title Warrior Service API
+// @version 1.0
+// @description Warrior service handles user authentication, registration, and warrior management with role-based access control (RBAC)
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 package main
 
 import (
@@ -6,6 +27,8 @@ import (
 
 	"network-sec-micro/internal/warrior"
     kafkaLib "network-sec-micro/pkg/kafka"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -69,6 +92,9 @@ func main() {
 
 	// Setup routes with manually injected handler
 	warrior.SetupRoutes(r, handler)
+
+	// Swagger docs
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Start server
 	port := os.Getenv("PORT")
