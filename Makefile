@@ -11,7 +11,7 @@ wire:
 # Generate protobuf code
 proto:
 	@echo "🔨 Generating protobuf code..."
-	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior
+	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior api/proto/battle
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/coin/coin.proto
@@ -21,6 +21,9 @@ proto:
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/warrior/warrior.proto
+	@protoc --go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		api/proto/battle/battle.proto
 	@echo "✅ Protobuf code generated!"
 
 build:
@@ -29,6 +32,7 @@ build:
 	go build -o bin/coin cmd/coin/main.go
 	go build -o bin/enemy cmd/enemy/main.go
 	go build -o bin/dragon cmd/dragon/main.go
+	go build -o bin/battle cmd/battle/main.go
 
 run:
 	go run cmd/warrior/main.go
