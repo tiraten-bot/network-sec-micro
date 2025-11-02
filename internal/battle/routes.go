@@ -20,10 +20,11 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 			rbac := protected.Group("")
 			rbac.Use(RBACMiddleware())
 			{
-				rbac.GET("/battles/:id", handler.GetBattle)
-				rbac.GET("/battles/my-battles", handler.GetMyBattles)
-				rbac.GET("/battles/stats", handler.GetBattleStats)
-				rbac.GET("/battles/:id/turns", handler.GetBattleTurns)
+			rbac.GET("/battles/:id", handler.GetBattle)
+			rbac.GET("/battles/my-battles", handler.GetMyBattles)
+			rbac.GET("/battles/stats", handler.GetBattleStats)
+			rbac.GET("/battles/:id/turns", handler.GetBattleTurns)
+			rbac.GET("/battles/:id/logs", handler.GetBattleLogs)
 			}
 		}
 	}
