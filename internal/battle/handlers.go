@@ -102,7 +102,14 @@ func (h *Handler) StartBattle(c *gin.Context) {
 	}
 
 	// Get opponent HP (placeholder - should fetch from enemy/dragon service)
-	cmd.OpponentHP = 200 // Default
+	// TODO: Make HTTP/gRPC calls to enemy/dragon service to get opponent stats
+	if req.BattleType == "dragon" {
+		cmd.OpponentHP = 500
+		cmd.OpponentMaxHP = 500
+	} else {
+		cmd.OpponentHP = 200
+		cmd.OpponentMaxHP = 200
+	}
 
 	battle, err := h.Service.StartBattle(cmd)
 	if err != nil {
