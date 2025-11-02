@@ -69,7 +69,7 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, error) {
 		WarriorHP:     warriorMaxHP,
 		WarriorMaxHP:  warriorMaxHP,
 		OpponentHP:    cmd.OpponentHP, // Should come from enemy/dragon service
-		OpponentMaxHP: cmd.OpponentHP,
+		OpponentMaxHP: cmd.OpponentMaxHP,
 		CurrentTurn:   0,
 		MaxTurns:      maxTurns,
 		Status:        BattleStatusPending,
