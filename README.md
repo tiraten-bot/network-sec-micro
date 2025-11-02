@@ -21,6 +21,7 @@ graph TB
         C[Coin Service<br/>gRPC :50051]
         E[Enemy Service<br/>HTTP :8083]
         D[Dragon Service<br/>HTTP :8084]
+        B[Battle Service<br/>HTTP :8085]
     end
     
     subgraph "Data Layer"
@@ -40,10 +41,13 @@ graph TB
     LB --> WP
     LB --> E
     LB --> D
+    LB --> B
     
     W -.->|gRPC| C
     E -.->|gRPC| W
     D -.->|gRPC| W
+    B -.->|gRPC| W
+    B -.->|gRPC| C
     
     W --> PG
     WP --> MG
