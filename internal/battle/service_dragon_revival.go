@@ -469,6 +469,7 @@ func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID 
 		darkEmperorUsername, dragonParticipant.Name, revivalCount, dragonSacrificed, revivedCount, multipliedCount, multiplier, battleID.Hex())
 
 	return revivedCount, multipliedCount, nil
+}
 
 // LogBattleEvent logs a battle event to Redis (simplified helper)
 func LogBattleEvent(ctx context.Context, battleID primitive.ObjectID, eventType string, message string) error {
