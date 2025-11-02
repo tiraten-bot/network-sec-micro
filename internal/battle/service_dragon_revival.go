@@ -412,20 +412,24 @@ func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID 
 		revivedCount++
 	}
 
-	// Multiply enemy population: add (multiplier - 1) copies of each enemy
-	// Use all enemies (alive + revived) as templates
+	// Multiply enemy population: Each existing enemy gets exactly (multiplier - 1) copies
+	// So if multiplier is 3, each enemy gets 2 copies (original + 2 copies = 3 total)
+	// If multiplier is 2, each enemy gets 1 copy (original + 1 copy = 2 total)
+	// Use all enemies (alive + revived) as templates - every single enemy will be multiplied
 	templateEnemies := append(aliveEnemies, defeatedEnemies...)
 	multipliedCount := 0
 	newParticipants := []interface{}{}
 
 	now := time.Now()
+	// Iterate through each existing enemy and create exact copies
 	for _, template := range templateEnemies {
-		// Create (multiplier - 1) new copies
-		for i := 0; i < multiplier-1; i++ {
+		// Create exactly (multiplier - 1) copies of this specific enemy
+		// This ensures every enemy gets multiplied, not randomly
+		for copyNum := 1; copyNum <= multiplier-1; copyNum++ {
 			newEnemy := &BattleParticipant{
 				BattleID:      battleID,
-				ParticipantID: fmt.Sprintf("%s_copy_%d_%d", template.ParticipantID, time.Now().Unix(), i), // Unique ID
-				Name:          fmt.Sprintf("%s (Clone %d)", template.Name, i+1),
+				ParticipantID: fmt.Sprintf("%s_copy_%d_%d", template.ParticipantID, now.Unix(), copyNum), // Unique ID
+				Name:          fmt.Sprintf("%s (Copy %d)", template.Name, copyNum),
 				Type:          ParticipantTypeEnemy,
 				Side:          TeamSideDark,
 				HP:            template.MaxHP, // Full HP
