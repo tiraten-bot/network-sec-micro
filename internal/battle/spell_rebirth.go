@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -53,7 +54,7 @@ func (s *Service) CastRebirth(ctx context.Context, battleID primitive.ObjectID, 
 		warrior.IsAlive = true
 		warrior.IsDefeated = false
 		warrior.DefeatedAt = nil
-		warrior.UpdatedAt = battle.UpdatedAt
+		warrior.UpdatedAt = time.Now()
 
 		updateData := bson.M{
 			"hp":          warrior.HP,
