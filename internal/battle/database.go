@@ -14,7 +14,6 @@ import (
 var BattleColl *mongo.Collection
 var BattleTurnColl *mongo.Collection
 var BattleParticipantColl *mongo.Collection
-var SpellColl *mongo.Collection
 
 // InitDatabase initializes the MongoDB database connection
 func InitDatabase() error {
@@ -40,7 +39,6 @@ func InitDatabase() error {
 	BattleColl = db.Collection((&Battle{}).CollectionName())
 	BattleTurnColl = db.Collection((&BattleTurn{}).CollectionName())
 	BattleParticipantColl = db.Collection((&BattleParticipant{}).CollectionName())
-	SpellColl = db.Collection((&Spell{}).CollectionName())
 
 	// Create indexes
 	if err := createIndexes(); err != nil {
@@ -110,21 +108,6 @@ func createIndexes() error {
 	_, err = BattleParticipantColl.Indexes().CreateMany(ctx, participantIndexes)
 	if err != nil {
 		return fmt.Errorf("failed to create battle_participant indexes: %w", err)
-	}
-
-	// Spell indexes
-	spellIndexes := []mongo.IndexModel{
-		{
-			Keys: map[string]interface{}{"battle_id": 1, "spell_type": 1, "is_active": 1},
-		},
-		{
-			Keys: map[string]interface{}{"battle_id": 1, "is_active": 1},
-		},
-	}
-
-	_, err = SpellColl.Indexes().CreateMany(ctx, spellIndexes)
-	if err != nil {
-		return fmt.Errorf("failed to create spell indexes: %w", err)
 	}
 
 	log.Println("Indexes created successfully")
