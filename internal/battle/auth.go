@@ -1,7 +1,10 @@
 package battle
 
 import (
+	"errors"
 	"strings"
+
+	"network-sec-micro/pkg/auth"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,34 +28,36 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		token := parts[1]
-
-		// Validate token with warrior service (simplified - in production use proper JWT validation)
-		// For now, we'll extract user info from token claims
-		// TODO: Implement proper JWT validation via warrior service or shared secret
-
-		// Placeholder: In production, validate JWT and extract claims
-		// For now, accept any token (development mode)
-		// c.Set("username", "test_user")
-		// c.Set("user_id", "1")
-		// c.Set("role", "knight")
-
-		// For development, we'll skip validation but set default values
-		// In production, call warrior service's token validation endpoint or use shared JWT secret
-		c.Set("username", c.GetHeader("X-Username")) // Get from header if available
-		c.Set("user_id", c.GetHeader("X-User-ID"))
-		c.Set("role", c.GetHeader("X-Role"))
-
-		// If headers not set, try to extract from token (simplified)
-		if c.GetString("username") == "" {
-			// In production, decode JWT and extract claims
-			// For now, set defaults for development
-			c.Set("username", "test_warrior")
-			c.Set("user_id", "1")
-			c.Set("role", "knight")
+		claims, err := auth.ValidateToken(token)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "unauthorized", "message": "invalid token"})
+			c.Abort()
+			return
 		}
 
-		c.Set("token", token)
+		// Set user info in context
+		c.Set("username", claims.Username)
+		c.Set("user_id", string(rune(claims.UserID)))
+		c.Set("role", claims.Role)
 		c.Next()
 	}
 }
+
+// GetCurrentUser returns the current user from context
+func GetCurrentUser(c *gin.Context) (*User, error) {
+	username := c.GetString("username")
+	if username == "" {
+		return nil, errors.New("username not found in context")
+	}
+
+	userIDStr := c.GetString("user_id")
+	userID, _ := strconv.ParseUint(userIDStr, 10, 32)
+
+	return &User{
+		Username: username,
+		UserID:   uint(userID),
+		Role:     c.GetString("role"),
+	}, nil
+}
+
 
