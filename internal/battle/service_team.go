@@ -28,6 +28,11 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 		return nil, nil, errors.New("dark side must have at least one participant")
 	}
 
+	// Validate team composition rules
+	if err := ValidateBattleParticipants(cmd); err != nil {
+		return nil, nil, fmt.Errorf("validation failed: %w", err)
+	}
+
 	// Set defaults
 	lightSideName := cmd.LightSideName
 	if lightSideName == "" {
