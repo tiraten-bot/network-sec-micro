@@ -193,7 +193,7 @@ func (h *Handler) Attack(c *gin.Context) {
 
 // GetBattle godoc
 // @Summary Get battle by ID
-// @Description Get battle details by ID
+// @Description Get battle details by ID. RBAC: Emperors see all, Kings see faction battles, Warriors see only their own.
 // @Tags battles
 // @Accept json
 // @Produce json
@@ -201,6 +201,7 @@ func (h *Handler) Attack(c *gin.Context) {
 // @Param id path string true "Battle ID"
 // @Success 200 {object} dto.BattleResponse
 // @Failure 400 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
 // @Router /battles/{id} [get]
 func (h *Handler) GetBattle(c *gin.Context) {
@@ -238,6 +239,15 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: err.Error(),
+		})
+		return
+	}
+
+	// RBAC check: Can user access this battle?
+	if !CheckBattleAccess(c, battle.WarriorID) {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "You do not have permission to view this battle",
 		})
 		return
 	}
