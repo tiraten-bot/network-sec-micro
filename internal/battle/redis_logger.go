@@ -64,7 +64,6 @@ func LogBattleTurn(ctx context.Context, battleID primitive.ObjectID, turn *Battl
 	} else {
 		logEntry.TargetHPBefore = battle.OpponentHP
 	}
-	}
 
 	// Marshal to JSON
 	logData, err := json.Marshal(logEntry)
