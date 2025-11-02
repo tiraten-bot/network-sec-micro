@@ -37,8 +37,8 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize service and handler using Wire
-	service, handler, err := InitializeApp()
+	// Initialize service, handler, and gRPC server using Wire
+	service, handler, grpcServer, err := InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize app with Wire: %v", err)
 	}
@@ -65,7 +65,7 @@ func main() {
 		}
 
 		s := grpc.NewServer()
-		pb.RegisterBattleSpellServiceServer(s, battlespell.NewBattleSpellServiceServer(service))
+		pb.RegisterBattleSpellServiceServer(s, grpcServer)
 
 		log.Printf("BattleSpell gRPC service starting on port %s", grpcPort)
 		if err := s.Serve(lis); err != nil {
