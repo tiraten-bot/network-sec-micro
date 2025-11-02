@@ -82,9 +82,9 @@ func (s *Service) CastRebirth(ctx context.Context, battleID primitive.ObjectID, 
 		CasterUserID:   casterUserID,
 		CasterRole:    "light_king",
 		IsActive:      false, // Rebirth is instant, not a lasting effect
-		CastAt:        battle.UpdatedAt,
-		CreatedAt:     battle.UpdatedAt,
-		UpdatedAt:     battle.UpdatedAt,
+		CastAt:        time.Now(),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	_, err = SpellColl.InsertOne(ctx, spell)
