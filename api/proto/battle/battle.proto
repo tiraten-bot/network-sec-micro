@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package battle;
+
+option go_package = "network-sec-micro/api/proto/battle";
+
+import "google/protobuf/timestamp.proto";
+
+// Battle Service (gRPC methods for service-to-service communication)
+service BattleService {
+  // Get battle details by ID
+  rpc GetBattleByID(GetBattleByIDRequest) returns (GetBattleByIDResponse);
+  
+  // Get active battles
+  rpc GetActiveBattles(GetActiveBattlesRequest) returns (GetActiveBattlesResponse);
+  
+  // Get battle participants
+  rpc GetBattleParticipants(GetBattleParticipantsRequest) returns (GetBattleParticipantsResponse);
+  
+  // Update participant stats
+  rpc UpdateParticipantStats(UpdateParticipantStatsRequest) returns (UpdateParticipantStatsResponse);
+  
+  // Cast spell (called by other services if needed)
+  rpc CastSpell(CastSpellRequest) returns (CastSpellResponse);
+}
+
+// Request to get battle by ID
+message GetBattleByIDRequest {
+  string battle_id = 1;
+}
+
+// Response with battle
+message GetBattleByIDResponse {
+  Battle battle = 1;
+}
+
+// Request to get active battles
+message GetActiveBattlesRequest {
+  string side = 1; // "light" or "dark" (optional filter)
+}
+
+// Response with active battles
+message GetActiveBattlesResponse {
+  repeated Battle battles = 1;
+}
+
+// Request to get battle participants
+message GetBattleParticipantsRequest {
+  string battle_id = 1;
+  string side = 2; // "light" or "dark" (optional filter)
+}
+
+// Response with participants
+message GetBattleParticipantsResponse {
+  repeated BattleParticipant participants = 1;
+}
+
+// Request to update participant stats
+message UpdateParticipantStatsRequest {
+  string battle_id = 1;
+  string participant_id = 2;
+  int32 hp = 3;
+  int32 max_hp = 4;
+  int32 attack_power = 5;
+  int32 defense = 6;
+  bool is_alive = 7;
+}
+
+// Response after updating stats
+message UpdateParticipantStatsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request to cast spell
+message CastSpellRequest {
+  string battle_id = 1;
+  string spell_type = 2;
+  string caster_username = 3;
+  string caster_user_id = 4;
+  string caster_role = 5;
+  string target_dragon_id = 6;
+  string target_dark_emperor_id = 7;
+}
+
+// Response after casting spell
+message CastSpellResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Battle model
+message Battle {
+  string id = 1;
+  string battle_type = 2;
+  string light_side_name = 3;
+  string dark_side_name = 4;
+  int32 current_turn = 5;
+  int32 current_participant_index = 6;
+  int32 max_turns = 7;
+  string status = 8;
+  string result = 9;
+  string winner_side = 10;
+  string created_by = 11;
+  google.protobuf.Timestamp started_at = 12;
+  google.protobuf.Timestamp completed_at = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+}
+
+// BattleParticipant model
+message BattleParticipant {
+  string id = 1;
+  string battle_id = 2;
+  string participant_id = 3;
+  string name = 4;
+  string type = 5;
+  string side = 6;
+  int32 hp = 7;
+  int32 max_hp = 8;
+  int32 attack_power = 9;
+  int32 defense = 10;
+  bool is_alive = 11;
+  bool is_defeated = 12;
+  google.protobuf.Timestamp defeated_at = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+}
+
