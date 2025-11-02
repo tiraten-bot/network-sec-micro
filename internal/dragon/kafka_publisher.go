@@ -37,3 +37,20 @@ func PublishDragonDeathEvent(event DragonDeathEvent) error {
 		event.KillerUsername, event.DragonName, event.DragonLevel)
 	return nil
 }
+
+// PublishDragonRevivalEvent publishes dragon revival event
+func PublishDragonRevivalEvent(event *kafka.DragonRevivalEvent) error {
+	publisher := GetKafkaPublisher()
+	if publisher == nil {
+		return fmt.Errorf("kafka publisher not initialized")
+	}
+
+	topic := kafka.TopicDragonRevival
+	if err := publisher.Publish(topic, event); err != nil {
+		return fmt.Errorf("failed to publish dragon revival event: %w", err)
+	}
+
+	log.Printf("Published dragon revival event: %s revived (revival count: %d/%d)", 
+		event.DragonName, event.RevivalCount, 3)
+	return nil
+}
