@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -86,7 +87,7 @@ func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.Ob
 		updateData := bson.M{
 			"attack_power": newAttackPower,
 			"defense":      newDefense,
-			"updated_at":   battle.UpdatedAt,
+			"updated_at":   time.Now(),
 		}
 
 		_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{"_id": warrior.ID}, bson.M{"$set": updateData})
@@ -109,9 +110,9 @@ func (s *Service) CastDestroyTheLight(ctx context.Context, battleID primitive.Ob
 		CasterRole:    "dark_king",
 		StackCount:    newStackCount,
 		IsActive:      true,
-		CastAt:        battle.UpdatedAt,
-		CreatedAt:     battle.UpdatedAt,
-		UpdatedAt:     battle.UpdatedAt,
+		CastAt:        time.Now(),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	_, err = SpellColl.InsertOne(ctx, spell)
