@@ -167,6 +167,7 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		damage = int(float64(damage) * 1.5)
 	}
 
+	targetHPBefore := battle.OpponentHP
 	battle.OpponentHP -= damage
 	if battle.OpponentHP < 0 {
 		battle.OpponentHP = 0
@@ -176,7 +177,7 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	battle.CurrentTurn++
 	battle.UpdatedAt = time.Now()
 
-	// Create turn record
+	// Create turn record for warrior attack
 	turn := &BattleTurn{
 		BattleID:     battle.ID,
 		TurnNumber:   battle.CurrentTurn,
@@ -197,47 +198,118 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		return nil, nil, fmt.Errorf("failed to record turn: %w", err)
 	}
 
+	// Log warrior attack to Redis
+	eventType := "warrior_attack"
+	message := fmt.Sprintf("%s attacks %s for %d damage", battle.WarriorName, battle.OpponentName, damage)
+	if isCritical {
+		eventType = "critical_hit"
+		message = fmt.Sprintf("⚔️ CRITICAL HIT! %s attacks %s for %d damage!", battle.WarriorName, battle.OpponentName, damage)
+	}
+	
+	// Create a temp battle object with HP before attack for logging
+	tempBattle := battle
+	tempBattle.OpponentHP = targetHPBefore
+	if err := LogBattleTurn(ctx, battle.ID, turn, &tempBattle, eventType, message); err != nil {
+		log.Printf("Warning: failed to log battle turn to Redis: %v", err)
+	}
+
 	// Check if opponent is defeated
 	if battle.OpponentHP <= 0 {
 		return s.completeBattle(ctx, &battle, BattleResultVictory, battle.WarriorName, battle.WarriorID)
 	}
 
-	// Opponent counter-attacks (if not defeated)
-	opponentDamage := s.calculateOpponentDamage(&battle)
-	battle.WarriorHP -= opponentDamage
-	if battle.WarriorHP < 0 {
-		battle.WarriorHP = 0
-	}
+	// Opponent counter-attacks asynchronously (non-blocking)
+	// This simulates real-time combat where opponent responds
+	go func(battleCopy Battle) {
+		// Small delay to simulate opponent thinking/reacting (500ms - 1s)
+		delay := time.Duration(500+rand.Intn(500)) * time.Millisecond
+		time.Sleep(delay)
 
-	// Record opponent turn
-	opponentTurn := &BattleTurn{
-		BattleID:      battle.ID,
-		TurnNumber:    battle.CurrentTurn,
-		AttackerID:    battle.OpponentID,
-		AttackerName:  battle.OpponentName,
-		AttackerType:  battle.OpponentType,
-		TargetID:      fmt.Sprintf("%d", battle.WarriorID),
-		TargetName:    battle.WarriorName,
-		TargetType:    "warrior",
-		DamageDealt:   opponentDamage,
-		CriticalHit:   rand.Float64() < 0.05, // 5% crit for opponent
-		TargetHPAfter: battle.WarriorHP,
-		CreatedAt:     time.Now(),
-	}
+		oppCtx := context.Background()
+		
+		// Re-fetch battle to get latest state
+		var currentBattle Battle
+		err := BattleColl.FindOne(oppCtx, bson.M{"_id": battleCopy.ID}).Decode(&currentBattle)
+		if err != nil {
+			log.Printf("Failed to fetch battle for opponent attack: %v", err)
+			return
+		}
 
-	_, err = BattleTurnColl.InsertOne(ctx, opponentTurn)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to record opponent turn: %w", err)
-	}
+		// Check if battle is still in progress
+		if currentBattle.Status != BattleStatusInProgress {
+			return
+		}
 
-	// Check if warrior is defeated
-	if battle.WarriorHP <= 0 {
-		return s.completeBattle(ctx, &battle, BattleResultDefeat, battle.OpponentName, 0)
-	}
+		// Opponent attacks
+		opponentDamage := s.calculateOpponentDamage(&currentBattle)
+		opponentCritical := rand.Float64() < 0.05 // 5% crit for opponent
+		if opponentCritical {
+			opponentDamage = int(float64(opponentDamage) * 1.5)
+		}
 
-	// Update battle
+		warriorHPBefore := currentBattle.WarriorHP
+		currentBattle.WarriorHP -= opponentDamage
+		if currentBattle.WarriorHP < 0 {
+			currentBattle.WarriorHP = 0
+		}
+
+		// Record opponent turn
+		opponentTurn := &BattleTurn{
+			BattleID:      currentBattle.ID,
+			TurnNumber:    currentBattle.CurrentTurn,
+			AttackerID:    currentBattle.OpponentID,
+			AttackerName:  currentBattle.OpponentName,
+			AttackerType:  currentBattle.OpponentType,
+			TargetID:      fmt.Sprintf("%d", currentBattle.WarriorID),
+			TargetName:    currentBattle.WarriorName,
+			TargetType:    "warrior",
+			DamageDealt:   opponentDamage,
+			CriticalHit:   opponentCritical,
+			TargetHPAfter: currentBattle.WarriorHP,
+			CreatedAt:     time.Now(),
+		}
+
+		_, err = BattleTurnColl.InsertOne(oppCtx, opponentTurn)
+		if err != nil {
+			log.Printf("Failed to record opponent turn: %v", err)
+			return
+		}
+
+		// Log opponent attack to Redis
+		oppEventType := "opponent_attack"
+		oppMessage := fmt.Sprintf("%s counter-attacks %s for %d damage", currentBattle.OpponentName, currentBattle.WarriorName, opponentDamage)
+		if opponentCritical {
+			oppEventType = "critical_hit"
+			oppMessage = fmt.Sprintf("💥 CRITICAL HIT! %s counter-attacks %s for %d damage!", currentBattle.OpponentName, currentBattle.WarriorName, opponentDamage)
+		}
+
+		tempBattleForLog := currentBattle
+		tempBattleForLog.WarriorHP = warriorHPBefore
+		if err := LogBattleTurn(oppCtx, currentBattle.ID, opponentTurn, &tempBattleForLog, oppEventType, oppMessage); err != nil {
+			log.Printf("Warning: failed to log opponent turn to Redis: %v", err)
+		}
+
+		// Check if warrior is defeated
+		if currentBattle.WarriorHP <= 0 {
+			s.completeBattle(oppCtx, &currentBattle, BattleResultDefeat, currentBattle.OpponentName, 0)
+			return
+		}
+
+		// Update battle
+		updateData := bson.M{
+			"warrior_hp":  currentBattle.WarriorHP,
+			"opponent_hp": currentBattle.OpponentHP,
+			"updated_at":  time.Now(),
+		}
+
+		_, err = BattleColl.UpdateOne(oppCtx, bson.M{"_id": currentBattle.ID}, bson.M{"$set": updateData})
+		if err != nil {
+			log.Printf("Failed to update battle after opponent attack: %v", err)
+		}
+	}(battle)
+
+	// Update battle (warrior attack only, opponent will update async)
 	updateData := bson.M{
-		"warrior_hp":  battle.WarriorHP,
 		"opponent_hp": battle.OpponentHP,
 		"current_turn": battle.CurrentTurn,
 		"updated_at":   time.Now(),
