@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: battle
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicas.battle }}
+  selector:
+    matchLabels:
+      app: battle
+  template:
+    metadata:
+      labels:
+        app: battle
+    spec:
+      containers:
+        - name: battle
+          image: {{ .Values.images.battle.repository }}:{{ .Values.images.battle.tag }}
+          imagePullPolicy: {{ .Values.images.battle.pullPolicy }}
+          env:
+            - { name: MONGODB_URI, value: {{ .Values.env.mongo.uri | quote }} }
+            - { name: MONGODB_DB, value: {{ .Values.env.mongo.battleDB | quote }} }
+            - { name: WARRIOR_GRPC_ADDR, value: "warrior:50052" }
+            - { name: COIN_GRPC_ADDR, value: "coin:50051" }
+            - { name: KAFKA_BROKERS, value: {{ .Values.env.kafkaBrokers | quote }} }
+            - { name: GIN_MODE, value: "release" }
+            - { name: PORT, value: "8085" }
+          ports:
+            - containerPort: 8085
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8085
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8085
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: battle
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: battle
+  ports:
+    - port: 8085
+      targetPort: 8085
+
