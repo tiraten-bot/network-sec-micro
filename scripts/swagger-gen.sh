@@ -27,10 +27,17 @@ cd cmd/dragon
 swag init --parseDependency --parseInternal
 cd ../..
 
+# Battle service
+echo "Generating docs for battle service..."
+cd cmd/battle
+swag init --parseDependency --parseInternal
+cd ../..
+
 echo "Swagger documentation generated successfully!"
 echo ""
 echo "Access Swagger UI at:"
 echo "  Warrior: http://localhost:8080/swagger/index.html"
 echo "  Weapon:  http://localhost:8081/swagger/index.html"
 echo "  Dragon:  http://localhost:8084/swagger/index.html"
+echo "  Battle:  http://localhost:8085/swagger/index.html"
 
