@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: battlespell
+  namespace: network-sec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: battlespell
+  template:
+    metadata:
+      labels:
+        app: battlespell
+    spec:
+      containers:
+        - name: battlespell
+          image: battlespell:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MONGODB_URI
+              value: mongodb://mongodb:27017
+            - name: MONGODB_DB
+              value: battlespell_db
+            - name: BATTLE_GRPC_ADDR
+              value: battle:50053
+            - name: GIN_MODE
+              value: release
+            - name: PORT
+              value: "8086"
+            - name: GRPC_PORT
+              value: "50054"
+          ports:
+            - containerPort: 8086
+              name: http
+            - containerPort: 50054
+              name: grpc
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8086
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8086
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: battlespell
+  namespace: network-sec
+spec:
+  selector:
+    app: battlespell
+  ports:
+    - port: 8086
+      targetPort: 8086
+      name: http
+    - port: 50054
+      targetPort: 50054
+      name: grpc
+  type: ClusterIP
+
