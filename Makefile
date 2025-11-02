@@ -6,6 +6,7 @@ install:
 
 wire:
 	cd cmd/warrior && wire
+	cd cmd/battle && wire
 
 # Generate protobuf code
 proto:
