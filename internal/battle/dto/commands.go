@@ -1,28 +1,50 @@
 package dto
 
-// StartBattleCommand represents a command to start a new battle
+// ParticipantInfo represents a participant to be added to battle
+type ParticipantInfo struct {
+	ParticipantID string `json:"participant_id" binding:"required"` // Warrior ID, Enemy ID, or Dragon ID
+	Name          string `json:"name" binding:"required"`
+	Type          string `json:"type" binding:"required"` // "warrior", "enemy", "dragon", "dark_king", "dark_emperor"
+	Side          string `json:"side" binding:"required,oneof=light dark"` // light or dark
+	HP            int    `json:"hp"`
+	MaxHP         int    `json:"max_hp"`
+	AttackPower   int    `json:"attack_power"`
+	Defense       int    `json:"defense"`
+}
+
+// StartBattleCommand represents a command to start a new team-based battle
 type StartBattleCommand struct {
-	BattleType    string `json:"battle_type" binding:"required,oneof=enemy dragon"`
-	WarriorID     uint   `json:"warrior_id"`
-	WarriorName   string `json:"warrior_name"`
-	OpponentID    string `json:"opponent_id" binding:"required"`
-	OpponentType  string `json:"opponent_type"`
-	OpponentName  string `json:"opponent_name"`
-	OpponentHP    int    `json:"opponent_hp"` // Opponent health points
-	OpponentMaxHP int    `json:"opponent_max_hp"` // Opponent max health
-	MaxTurns      int    `json:"max_turns"` // Maximum turns before draw
+	LightSideName string           `json:"light_side_name"` // Optional: e.g., "Light Alliance"
+	DarkSideName  string           `json:"dark_side_name"`  // Optional: e.g., "Dark Forces"
+	LightParticipants []ParticipantInfo `json:"light_participants" binding:"required,min=1"` // At least 1 participant
+	DarkParticipants  []ParticipantInfo `json:"dark_participants" binding:"required,min=1"`  // At least 1 participant
+	MaxTurns      int              `json:"max_turns"` // Maximum turns before draw (default 100)
+	CreatedBy     string           `json:"created_by"` // Creator username
 }
 
 // AttackCommand represents a command to perform an attack in battle
 type AttackCommand struct {
 	BattleID      string `json:"battle_id" binding:"required"`
-	WarriorID     uint   `json:"warrior_id"`
-	WarriorName   string `json:"warrior_name"`
+	AttackerID    string `json:"attacker_id" binding:"required"` // Participant ID making the attack
+	TargetID      string `json:"target_id" binding:"required"`   // Participant ID being attacked
+	AttackerName  string `json:"attacker_name"` // For validation
+	TargetName    string `json:"target_name"`   // For validation
+}
+
+// AddParticipantCommand represents a command to add a participant to an existing battle (if still pending)
+type AddParticipantCommand struct {
+	BattleID      string           `json:"battle_id" binding:"required"`
+	Participant   ParticipantInfo `json:"participant" binding:"required"`
+}
+
+// RemoveParticipantCommand represents a command to remove a participant from a pending battle
+type RemoveParticipantCommand struct {
+	BattleID      string `json:"battle_id" binding:"required"`
+	ParticipantID string `json:"participant_id" binding:"required"`
 }
 
 // CompleteBattleCommand represents a command to manually complete/cancel a battle
 type CompleteBattleCommand struct {
 	BattleID      string `json:"battle_id" binding:"required"`
-	Reason        string `json:"reason"` // "victory", "defeat", "timeout", "cancelled"
+	Reason        string `json:"reason"` // "light_victory", "dark_victory", "draw", "cancelled"
 }
-
