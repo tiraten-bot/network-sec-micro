@@ -1,0 +1,233 @@
+package battle
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"math/rand"
+	"time"
+
+	"network-sec-micro/internal/battle/dto"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+// StartBattle creates and starts a new team-based battle
+func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattleParticipant, error) {
+	ctx := context.Background()
+
+	// Validate that we have participants on both sides
+	if len(cmd.LightParticipants) == 0 {
+		return nil, nil, errors.New("light side must have at least one participant")
+	}
+	if len(cmd.DarkParticipants) == 0 {
+		return nil, nil, errors.New("dark side must have at least one participant")
+	}
+
+	// Set defaults
+	lightSideName := cmd.LightSideName
+	if lightSideName == "" {
+		lightSideName = "Light Alliance"
+	}
+	darkSideName := cmd.DarkSideName
+	if darkSideName == "" {
+		darkSideName = "Dark Forces"
+	}
+
+	maxTurns := cmd.MaxTurns
+	if maxTurns <= 0 {
+		maxTurns = 100 // Default for team battles
+	}
+
+	// Create battle
+	now := time.Now()
+	battle := &Battle{
+		BattleType:            BattleTypeTeam,
+		LightSideName:         lightSideName,
+		DarkSideName:          darkSideName,
+		CurrentTurn:           0,
+		CurrentParticipantIndex: 0,
+		MaxTurns:              maxTurns,
+		Status:                BattleStatusPending,
+		CreatedBy:             cmd.CreatedBy,
+		CreatedAt:             now,
+		UpdatedAt:             now,
+	}
+
+	result, err := BattleColl.InsertOne(ctx, battle)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create battle: %w", err)
+	}
+
+	battle.ID = result.InsertedID.(primitive.ObjectID)
+
+	// Create participants
+	participants := make([]*BattleParticipant, 0, len(cmd.LightParticipants)+len(cmd.DarkParticipants))
+
+	// Add light participants
+	for _, pInfo := range cmd.LightParticipants {
+		participant := &BattleParticipant{
+			BattleID:      battle.ID,
+			ParticipantID: pInfo.ParticipantID,
+			Name:         pInfo.Name,
+			Type:         ParticipantType(pInfo.Type),
+			Side:         TeamSideLight,
+			HP:           pInfo.HP,
+			MaxHP:        pInfo.MaxHP,
+			AttackPower:  pInfo.AttackPower,
+			Defense:      pInfo.Defense,
+			IsAlive:      true,
+			IsDefeated:   false,
+			CreatedAt:    now,
+			UpdatedAt:    now,
+		}
+
+		// Set defaults if not provided
+		if participant.HP <= 0 {
+			participant.HP = participant.MaxHP
+		}
+		if participant.MaxHP <= 0 {
+			participant.MaxHP = participant.HP
+		}
+		if participant.HP == 0 && participant.MaxHP == 0 {
+			participant.MaxHP = 100 // Default
+			participant.HP = participant.MaxHP
+		}
+
+		participants = append(participants, participant)
+	}
+
+	// Add dark participants
+	for _, pInfo := range cmd.DarkParticipants {
+		participant := &BattleParticipant{
+			BattleID:      battle.ID,
+			ParticipantID: pInfo.ParticipantID,
+			Name:         pInfo.Name,
+			Type:         ParticipantType(pInfo.Type),
+			Side:         TeamSideDark,
+			HP:           pInfo.HP,
+			MaxHP:        pInfo.MaxHP,
+			AttackPower:  pInfo.AttackPower,
+			Defense:      pInfo.Defense,
+			IsAlive:      true,
+			IsDefeated:   false,
+			CreatedAt:    now,
+			UpdatedAt:    now,
+		}
+
+		// Set defaults if not provided
+		if participant.HP <= 0 {
+			participant.HP = participant.MaxHP
+		}
+		if participant.MaxHP <= 0 {
+			participant.MaxHP = participant.HP
+		}
+		if participant.HP == 0 && participant.MaxHP == 0 {
+			participant.MaxHP = 100 // Default
+			participant.HP = participant.MaxHP
+		}
+
+		participants = append(participants, participant)
+	}
+
+	// Insert all participants
+	if len(participants) > 0 {
+		docs := make([]interface{}, len(participants))
+		for i, p := range participants {
+			docs[i] = p
+		}
+		_, err = BattleParticipantColl.InsertMany(ctx, docs)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create participants: %w", err)
+		}
+	}
+
+	// Start the battle
+	battle.Status = BattleStatusInProgress
+	battle.StartedAt = &now
+
+	updateData := bson.M{
+		"status":     battle.Status,
+		"started_at": battle.StartedAt,
+		"updated_at": time.Now(),
+	}
+
+	_, err = BattleColl.UpdateOne(ctx, bson.M{"_id": battle.ID}, bson.M{"$set": updateData})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to start battle: %w", err)
+	}
+
+	// Log battle start to Redis
+	go func() {
+		message := fmt.Sprintf("Team Battle started: %s vs %s (%d vs %d participants)", 
+			lightSideName, darkSideName, len(cmd.LightParticipants), len(cmd.DarkParticipants))
+		if err := LogBattleStart(ctx, battle, message); err != nil {
+			log.Printf("Failed to log battle start: %v", err)
+		}
+	}()
+
+	// Publish battle started event
+	go PublishBattleStartedEvent(
+		battle.ID.Hex(),
+		string(battle.BattleType),
+		0, // No single warrior ID in team battles
+		"Team Battle",
+		"",
+		"",
+		"",
+	)
+
+	return battle, participants, nil
+}
+
+// GetNextParticipant gets the next alive participant in turn order
+func (s *Service) GetNextParticipant(ctx context.Context, battle *Battle) (*BattleParticipant, int, error) {
+	// Get all alive participants ordered by creation (turn order)
+	filter := bson.M{
+		"battle_id": battle.ID,
+		"is_alive":  true,
+	}
+
+	opts := options.Find().SetSort(bson.M{"created_at": 1}) // Oldest first = turn order
+	cursor, err := BattleParticipantColl.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to find participants: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var participants []BattleParticipant
+	if err := cursor.All(ctx, &participants); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode participants: %w", err)
+	}
+
+	if len(participants) == 0 {
+		return nil, 0, errors.New("no alive participants found")
+	}
+
+	// Get participant at current index (with wrap-around)
+	index := battle.CurrentParticipantIndex % len(participants)
+	participant := participants[index]
+
+	return &participant, index, nil
+}
+
+// CheckTeamStatus checks if a team has any alive participants
+func (s *Service) CheckTeamStatus(ctx context.Context, battleID primitive.ObjectID, side TeamSide) (bool, error) {
+	filter := bson.M{
+		"battle_id": battleID,
+		"side":      side,
+		"is_alive":  true,
+	}
+
+	count, err := BattleParticipantColl.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, fmt.Errorf("failed to count team participants: %w", err)
+	}
+
+	return count > 0, nil
+}
+
