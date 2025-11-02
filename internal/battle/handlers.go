@@ -120,8 +120,8 @@ func (h *Handler) StartBattle(c *gin.Context) {
 }
 
 // Attack godoc
-// @Summary Perform an attack in battle
-// @Description Warrior attacks opponent in an active battle
+// @Summary Perform an attack in team battle
+// @Description A participant attacks another participant in an active team battle. Attacker and target must be on different sides.
 // @Tags battles
 // @Accept json
 // @Produce json
@@ -151,9 +151,11 @@ func (h *Handler) Attack(c *gin.Context) {
 	}
 
 	cmd := dto.AttackCommand{
-		BattleID:    req.BattleID,
-		WarriorID:   user.UserID,
-		WarriorName: user.Username,
+		BattleID:     req.BattleID,
+		AttackerID:   req.AttackerID,
+		TargetID:     req.TargetID,
+		AttackerName: user.Username, // For validation
+		TargetName:   "",            // Will be fetched from participant
 	}
 
 	battle, turn, err := h.Service.Attack(cmd)
@@ -165,23 +167,17 @@ func (h *Handler) Attack(c *gin.Context) {
 		return
 	}
 
+	// Get participants for response
+	battleID, _ := primitive.ObjectIDFromHex(req.BattleID)
+	lightParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battleID, "light")
+	darkParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battleID, "dark")
+
 	response := gin.H{
-		"battle": dto.ToBattleResponse(battle),
+		"battle": dto.ToBattleResponse(battle, lightParts, darkParts),
 	}
 
 	if turn != nil {
-		response["turn"] = &dto.BattleTurnResponse{
-			ID:            turn.ID.Hex(),
-			BattleID:      turn.BattleID.Hex(),
-			TurnNumber:    turn.TurnNumber,
-			AttackerName:  turn.AttackerName,
-			AttackerType:  turn.AttackerType,
-			TargetName:    turn.TargetName,
-			DamageDealt:   turn.DamageDealt,
-			CriticalHit:   turn.CriticalHit,
-			TargetHPAfter: turn.TargetHPAfter,
-			CreatedAt:     turn.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		}
+		response["turn"] = dto.ToBattleTurnResponse(turn)
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -223,7 +219,7 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		BattleID: objectID,
 	}
 
-	battle, err := h.Service.GetBattle(query)
+	battle, lightParts, darkParts, err := h.Service.GetBattle(query)
 	if err != nil {
 		if err.Error() == "battle not found" {
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{
@@ -239,8 +235,29 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		return
 	}
 
-	// RBAC check: Can user access this battle?
-	if !CheckBattleAccess(c, battle.WarriorID) {
+	// RBAC check: Check if user is a participant or has admin access
+	user, _ := GetCurrentUser(c)
+	userIDStr := fmt.Sprintf("%d", user.UserID)
+	hasAccess := false
+	
+	// Check if user is a participant
+	for _, p := range lightParts {
+		if p.ParticipantID == userIDStr {
+			hasAccess = true
+			break
+		}
+	}
+	if !hasAccess {
+		for _, p := range darkParts {
+			if p.ParticipantID == userIDStr {
+				hasAccess = true
+				break
+			}
+		}
+	}
+
+	// Admin/emperor access
+	if !hasAccess && !CheckBattleAccess(c, 0) {
 		c.JSON(http.StatusForbidden, dto.ErrorResponse{
 			Error:   "forbidden",
 			Message: "You do not have permission to view this battle",
@@ -248,7 +265,7 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.ToBattleResponse(battle))
+	c.JSON(http.StatusOK, dto.ToBattleResponse(battle, lightParts, darkParts))
 }
 
 // GetMyBattles godoc
