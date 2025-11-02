@@ -30,11 +30,15 @@ docker build -f dockerfiles/dragon.dockerfile -t dragon:latest .
 echo "🐳 Building battle service..."
 docker build -f dockerfiles/battle.dockerfile -t battle:latest .
 
+# Build battlespell service
+echo "🐳 Building battlespell service..."
+docker build -f dockerfiles/battlespell.dockerfile -t battlespell:latest .
+
 # Build fiber-gateway
 echo "🐳 Building fiber-gateway..."
 docker build -f dockerfiles/fibergateway.dockerfile -t fiber-gateway:latest .
 
 echo "✅ All Docker images built successfully!"
-echo "📦 Images: warrior:latest, weapon:latest, coin:latest, enemy:latest, dragon:latest, battle:latest, fiber-gateway:latest"
+echo "📦 Images: warrior:latest, weapon:latest, coin:latest, enemy:latest, dragon:latest, battle:latest, battlespell:latest, fiber-gateway:latest"
 echo ""
 echo "🚀 To run with Docker Compose: docker-compose up -d"
