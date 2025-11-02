@@ -204,7 +204,17 @@ func (h *Handler) BuyWeapon(c *gin.Context) {
 	})
 }
 
-// GetMyWeapons handles getting weapons owned by current user
+// GetMyWeapons godoc
+// @Summary Get my weapons
+// @Description Get list of weapons owned by the authenticated warrior
+// @Tags weapons
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.WeaponsListResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /weapons/my-weapons [get]
 func (h *Handler) GetMyWeapons(c *gin.Context) {
 	user, err := GetCurrentUser(c)
 	if err != nil {
