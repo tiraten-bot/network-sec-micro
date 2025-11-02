@@ -1,4 +1,4 @@
-package battlespellspell
+package battlespell
 
 import (
 	"context"
