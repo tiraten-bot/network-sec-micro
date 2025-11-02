@@ -234,7 +234,17 @@ func (h *Handler) GetDragon(c *gin.Context) {
 	})
 }
 
-// GetDragonsByType handles getting dragons by type
+// GetDragonsByType godoc
+// @Summary Get dragons by type
+// @Description Get list of dragons filtered by type, optionally only alive ones
+// @Tags dragons
+// @Accept json
+// @Produce json
+// @Param type path string true "Dragon type (fire, ice, earth, air)"
+// @Param alive query bool false "Filter only alive dragons"
+// @Success 200 {object} dto.GetDragonsByTypeResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /dragons/type/{type} [get]
 func (h *Handler) GetDragonsByType(c *gin.Context) {
 	dragonType := c.Param("type")
 	if dragonType == "" {
@@ -293,7 +303,17 @@ func (h *Handler) GetDragonsByType(c *gin.Context) {
 	})
 }
 
-// GetDragonsByCreator handles getting dragons by creator
+// GetDragonsByCreator godoc
+// @Summary Get dragons by creator
+// @Description Get list of dragons created by a specific warrior, optionally only alive ones
+// @Tags dragons
+// @Accept json
+// @Produce json
+// @Param creator path string true "Creator username"
+// @Param alive query bool false "Filter only alive dragons"
+// @Success 200 {object} dto.GetDragonsByCreatorResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /dragons/creator/{creator} [get]
 func (h *Handler) GetDragonsByCreator(c *gin.Context) {
 	creatorUsername := c.Param("creator")
 	if creatorUsername == "" {
