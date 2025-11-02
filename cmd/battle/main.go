@@ -23,13 +23,18 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
+	pb "network-sec-micro/api/proto/battle"
 	"network-sec-micro/internal/battle"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -69,19 +74,43 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize service and handler using Wire
-	service, handler, err := InitializeApp()
+	// Initialize service, handler, and gRPC server using Wire
+	service, handler, grpcServer, err := InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize app with Wire: %v", err)
 	}
 
 	// Setup graceful shutdown
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
 	defer func() {
 		log.Println("Shutting down...")
 		battle.CloseKafkaPublisher()
 		battle.CloseWarriorClient()
 		battle.CloseCoinClient()
 		battle.CloseRedisClient()
+	}()
+
+	// Start gRPC server in a goroutine
+	go func() {
+		grpcPort := os.Getenv("GRPC_PORT")
+		if grpcPort == "" {
+			grpcPort = "50053"
+		}
+
+		lis, err := net.Listen("tcp", ":"+grpcPort)
+		if err != nil {
+			log.Fatalf("Failed to listen for gRPC: %v", err)
+		}
+
+		s := grpc.NewServer()
+		pb.RegisterBattleServiceServer(s, grpcServer)
+
+		log.Printf("Battle gRPC service starting on port %s", grpcPort)
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
 	}()
 
 	// Create Gin router
