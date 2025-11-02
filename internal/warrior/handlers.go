@@ -20,7 +20,17 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
-// Login handles warrior login
+// Login godoc
+// @Summary Login warrior
+// @Description Authenticate warrior and return JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "Login credentials"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -59,7 +69,16 @@ func (h *Handler) Login(c *gin.Context) {
 	})
 }
 
-// GetProfile returns the current warrior's profile
+// GetProfile godoc
+// @Summary Get current warrior profile
+// @Description Get the authenticated warrior's profile information
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.WarriorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /profile [get]
 func (h *Handler) GetProfile(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
