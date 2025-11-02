@@ -23,10 +23,7 @@ spec:
           imagePullPolicy: {{ .Values.battlespell.image.pullPolicy | default "IfNotPresent" }}
           env:
             - name: MONGODB_URI
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Values.configMapName | default "battlespell-config" }}
-                  key: mongodb_uri
+              value: {{ .Values.env.mongo.uri | quote }}
             - name: MONGODB_DB
               value: {{ .Values.battlespell.mongodb.database | default "battlespell_db" }}
             - name: BATTLE_GRPC_ADDR
