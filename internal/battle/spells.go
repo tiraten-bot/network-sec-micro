@@ -86,30 +86,3 @@ func (st SpellType) IsLightSpell() bool {
 func (st SpellType) IsDarkSpell() bool {
 	return st.Side() == TeamSideDark
 }
-
-// BattleSpellEffect represents active spell effects on a battle
-type BattleSpellEffect struct {
-	BattleID           primitive.ObjectID `bson:"battle_id" json:"battle_id"`
-	
-	// Light spell effects
-	LightAttackMultiplier float64 `bson:"light_attack_multiplier" json:"light_attack_multiplier"` // Default 1.0
-	LightDefenseMultiplier float64 `bson:"light_defense_multiplier" json:"light_defense_multiplier"` // Default 1.0
-	
-	// Dark spell effects
-	DarkAttackReduction   float64 `bson:"dark_attack_reduction" json:"dark_attack_reduction"` // Percentage reduction (0.0 to 1.0)
-	DarkDefenseReduction  float64 `bson:"dark_defense_reduction" json:"dark_defense_reduction"` // Percentage reduction (0.0 to 1.0)
-	
-	// Dragon enhancements (from Dragon Emperor spell)
-	DragonStatBonus       map[string]int `bson:"dragon_stat_bonus,omitempty" json:"dragon_stat_bonus,omitempty"` // dragon_id -> {attack_bonus, defense_bonus, hp_bonus}
-	
-	// Wraith of Dragon tracking
-	WraithKillsRemaining  int `bson:"wraith_kills_remaining" json:"wraith_kills_remaining"` // Max 25
-	
-	UpdatedAt             time.Time `bson:"updated_at" json:"updated_at"`
-}
-
-// CollectionName returns the MongoDB collection name
-func (BattleSpellEffect) CollectionName() string {
-	return "battle_spell_effects"
-}
-
