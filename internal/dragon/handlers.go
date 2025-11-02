@@ -371,9 +371,76 @@ func (h *Handler) GetDragonsByCreator(c *gin.Context) {
 		dtoDragons = append(dtoDragons, dtoDragon)
 	}
 
-	c.JSON(200, dto.GetDragonsByCreatorResponse{
-		Success: true,
-		Dragons: dtoDragons,
-		Count:   len(dtoDragons),
-	})
+		c.JSON(200, dto.GetDragonsByCreatorResponse{
+			Success: true,
+			Dragons: dtoDragons,
+			Count:   len(dtoDragons),
+		})
+	}
 }
+
+// ReviveDragon godoc
+// @Summary Revive dragon
+// @Description Revives a dead dragon and increments revival count (used by battle service)
+// @Tags dragons
+// @Accept json
+// @Produce json
+// @Param id path string true "Dragon ID"
+// @Success 200 {object} dto.GetDragonResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /dragons/{id}/revive [post]
+func (h *Handler) ReviveDragon(c *gin.Context) {
+	dragonID := c.Param("id")
+	if dragonID == "" {
+		c.JSON(400, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "dragon ID is required",
+		})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(dragonID)
+	if err != nil {
+		c.JSON(400, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid dragon ID format",
+		})
+		return
+	}
+
+	dragon, err := h.Service.ReviveDragon(objectID)
+	if err != nil {
+		c.JSON(400, dto.ErrorResponse{
+			Error:   "revival_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Convert Dragon to dto.Dragon
+	dtoDragon := &dto.Dragon{
+		ID:                        dragon.ID,
+		Name:                      dragon.Name,
+		Type:                      string(dragon.Type),
+		Level:                     dragon.Level,
+		Health:                    dragon.Health,
+		MaxHealth:                 dragon.MaxHealth,
+		AttackPower:               dragon.AttackPower,
+		Defense:                   dragon.Defense,
+		CreatedBy:                 dragon.CreatedBy,
+		IsAlive:                   dragon.IsAlive,
+		KilledBy:                  dragon.KilledBy,
+		RevivalCount:              dragon.RevivalCount,
+		AwaitingCrisisIntervention: dragon.AwaitingCrisisIntervention,
+		CreatedAt:                 dragon.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:                 dragon.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if dragon.KilledAt != nil {
+		killedAtStr := dragon.KilledAt.Format("2006-01-02T15:04:05Z07:00")
+		dtoDragon.KilledAt = &killedAtStr
+	}
+
+	c.JSON(200, dto.GetDragonResponse{
+		Success: true,
+		Dragon:  dtoDragon,
+	})
