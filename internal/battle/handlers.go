@@ -53,13 +53,13 @@ type User struct {
 }
 
 // StartBattle godoc
-// @Summary Start a new battle
-// @Description Start a battle against an enemy or dragon
+// @Summary Start a new team battle
+// @Description Start a team battle between Light and Dark sides. Light side can have warriors (knight, archer, mage, light_emperor, light_king). Dark side can have enemies, dragons, dark_king, dark_emperor.
 // @Tags battles
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body dto.StartBattleRequest true "Battle start data"
+// @Param request body dto.StartBattleRequest true "Team battle start data"
 // @Success 201 {object} dto.BattleResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
@@ -83,36 +83,21 @@ func (h *Handler) StartBattle(c *gin.Context) {
 		return
 	}
 
-	// TODO: Fetch opponent info from enemy/dragon service
-	// For now, we'll use placeholder values
-	// In production, make HTTP/gRPC calls to get opponent details
-
 	maxTurns := req.MaxTurns
 	if maxTurns <= 0 {
-		maxTurns = 20
+		maxTurns = 100 // Default for team battles
 	}
 
 	cmd := dto.StartBattleCommand{
-		BattleType:    req.BattleType,
-		WarriorID:     user.UserID,
-		WarriorName:   user.Username,
-		OpponentID:     req.OpponentID,
-		OpponentType:  req.BattleType, // enemy or dragon
-		OpponentName:  "Opponent",    // Should fetch from service
-		MaxTurns:      maxTurns,
+		LightSideName:      req.LightSideName,
+		DarkSideName:       req.DarkSideName,
+		LightParticipants:  req.LightParticipants,
+		DarkParticipants:   req.DarkParticipants,
+		MaxTurns:           maxTurns,
+		CreatedBy:          user.Username,
 	}
 
-	// Get opponent HP (placeholder - should fetch from enemy/dragon service)
-	// TODO: Make HTTP/gRPC calls to enemy/dragon service to get opponent stats
-	if req.BattleType == "dragon" {
-		cmd.OpponentHP = 500
-		cmd.OpponentMaxHP = 500
-	} else {
-		cmd.OpponentHP = 200
-		cmd.OpponentMaxHP = 200
-	}
-
-	battle, err := h.Service.StartBattle(cmd)
+	battle, participants, err := h.Service.StartBattle(cmd)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "battle_start_failed",
@@ -121,7 +106,17 @@ func (h *Handler) StartBattle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, dto.ToBattleResponse(battle))
+	// Separate participants by side
+	var lightParts, darkParts []*BattleParticipant
+	for _, p := range participants {
+		if p.Side == TeamSideLight {
+			lightParts = append(lightParts, p)
+		} else {
+			darkParts = append(darkParts, p)
+		}
+	}
+
+	c.JSON(http.StatusCreated, dto.ToBattleResponse(battle, lightParts, darkParts))
 }
 
 // Attack godoc
