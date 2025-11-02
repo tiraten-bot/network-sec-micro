@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: battlespell
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: battlespell
+    component: battlespell
+spec:
+  replicas: {{ .Values.battlespell.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: battlespell
+  template:
+    metadata:
+      labels:
+        app: battlespell
+        component: battlespell
+    spec:
+      containers:
+        - name: battlespell
+          image: {{ .Values.battlespell.image.repository }}:{{ .Values.battlespell.image.tag | default "latest" }}
+          imagePullPolicy: {{ .Values.battlespell.image.pullPolicy | default "IfNotPresent" }}
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.configMapName | default "battlespell-config" }}
+                  key: mongodb_uri
+            - name: MONGODB_DB
+              value: {{ .Values.battlespell.mongodb.database | default "battlespell_db" }}
+            - name: BATTLE_GRPC_ADDR
+              value: {{ .Values.battlespell.battleGrpcAddr | default "battle:50053" }}
+            - name: GIN_MODE
+              value: {{ .Values.battlespell.ginMode | default "release" }}
+            - name: PORT
+              value: "{{ .Values.battlespell.port | default 8086 }}"
+            - name: GRPC_PORT
+              value: "{{ .Values.battlespell.grpcPort | default 50054 }}"
+          ports:
+            - containerPort: {{ .Values.battlespell.port | default 8086 }}
+              name: http
+              protocol: TCP
+            - containerPort: {{ .Values.battlespell.grpcPort | default 50054 }}
+              name: grpc
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.battlespell.port | default 8086 }}
+            initialDelaySeconds: {{ .Values.battlespell.readinessProbe.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.battlespell.readinessProbe.periodSeconds | default 5 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.battlespell.port | default 8086 }}
+            initialDelaySeconds: {{ .Values.battlespell.livenessProbe.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.battlespell.livenessProbe.periodSeconds | default 10 }}
+          resources:
+            {{- toYaml .Values.battlespell.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: battlespell
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: battlespell
+    component: battlespell
+spec:
+  type: {{ .Values.battlespell.service.type | default "ClusterIP" }}
+  ports:
+    - port: {{ .Values.battlespell.service.port | default 8086 }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.battlespell.service.grpcPort | default 50054 }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: battlespell
+
