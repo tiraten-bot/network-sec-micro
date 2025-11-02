@@ -386,18 +386,7 @@ func (h *Handler) GetBattleTurns(c *gin.Context) {
 
 	responses := make([]*dto.BattleTurnResponse, len(turns))
 	for i, turn := range turns {
-		responses[i] = &dto.BattleTurnResponse{
-			ID:            turn.ID.Hex(),
-			BattleID:      turn.BattleID.Hex(),
-			TurnNumber:    turn.TurnNumber,
-			AttackerName:  turn.AttackerName,
-			AttackerType:  turn.AttackerType,
-			TargetName:    turn.TargetName,
-			DamageDealt:   turn.DamageDealt,
-			CriticalHit:   turn.CriticalHit,
-			TargetHPAfter: turn.TargetHPAfter,
-			CreatedAt:     turn.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		}
+		responses[i] = dto.ToBattleTurnResponse(&turn)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
