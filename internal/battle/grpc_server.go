@@ -146,28 +146,13 @@ func (s *BattleServiceServer) UpdateParticipantStats(ctx context.Context, req *p
 	}, nil
 }
 
-// CastSpell casts a spell via gRPC
+// CastSpell casts a spell via gRPC - delegates to battlespell service
 func (s *BattleServiceServer) CastSpell(ctx context.Context, req *pb.CastSpellRequest) (*pb.CastSpellResponse, error) {
-	cmd := dto.CastSpellCommand{
-		BattleID:            req.BattleId,
-		SpellType:           req.SpellType,
-		CasterUsername:      req.CasterUsername,
-		CasterUserID:        req.CasterUserId,
-		CasterRole:          req.CasterRole,
-		TargetDragonID:      req.TargetDragonId,
-		TargetDarkEmperorID: req.TargetDarkEmperorId,
-	}
-
-	if err := s.service.CastSpell(ctx, cmd); err != nil {
-		return &pb.CastSpellResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
+	// Battle service now delegates spell casting to battlespell service
+	// This endpoint can be removed or kept for backward compatibility
 	return &pb.CastSpellResponse{
-		Success: true,
-		Message: fmt.Sprintf("spell %s cast successfully", req.SpellType),
+		Success: false,
+		Message: "spell casting has been moved to battlespell service, please use battlespell service gRPC endpoint",
 	}, nil
 }
 
