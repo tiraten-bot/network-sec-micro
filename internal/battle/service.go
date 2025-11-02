@@ -353,3 +353,144 @@ func (b *Battle) OpponentDefense() int {
 	return 50
 }
 
+// ==================== QUERIES (READ OPERATIONS) ====================
+
+// GetBattle gets a battle by ID
+func (s *Service) GetBattle(query dto.GetBattleQuery) (*Battle, error) {
+	ctx := context.Background()
+
+	var battle Battle
+	err := BattleColl.FindOne(ctx, bson.M{"_id": query.BattleID}).Decode(&battle)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("battle not found")
+		}
+		return nil, fmt.Errorf("failed to get battle: %w", err)
+	}
+
+	return &battle, nil
+}
+
+// GetBattlesByWarrior gets battles for a warrior
+func (s *Service) GetBattlesByWarrior(query dto.GetBattlesByWarriorQuery) ([]Battle, int64, error) {
+	ctx := context.Background()
+
+	filter := bson.M{"warrior_id": query.WarriorID}
+	if query.Status != "all" && query.Status != "" {
+		filter["status"] = query.Status
+	}
+
+	// Count total
+	total, err := BattleColl.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count battles: %w", err)
+	}
+
+	// Apply pagination
+	opts := options.Find()
+	if query.Limit > 0 {
+		opts.SetLimit(int64(query.Limit))
+	}
+	if query.Offset > 0 {
+		opts.SetSkip(int64(query.Offset))
+	}
+	opts.SetSort(bson.M{"created_at": -1}) // Latest first
+
+	cursor, err := BattleColl.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to find battles: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var battles []Battle
+	if err := cursor.All(ctx, &battles); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode battles: %w", err)
+	}
+
+	return battles, total, nil
+}
+
+// GetBattleTurns gets turns for a battle
+func (s *Service) GetBattleTurns(query dto.GetBattleTurnsQuery) ([]BattleTurn, error) {
+	ctx := context.Background()
+
+	filter := bson.M{"battle_id": query.BattleID}
+
+	opts := options.Find()
+	if query.Limit > 0 {
+		opts.SetLimit(int64(query.Limit))
+	}
+	if query.Offset > 0 {
+		opts.SetSkip(int64(query.Offset))
+	}
+	opts.SetSort(bson.M{"turn_number": 1}) // Ascending order
+
+	cursor, err := BattleTurnColl.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find turns: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var turns []BattleTurn
+	if err := cursor.All(ctx, &turns); err != nil {
+		return nil, fmt.Errorf("failed to decode turns: %w", err)
+	}
+
+	return turns, nil
+}
+
+// GetBattleStats gets battle statistics for a warrior
+func (s *Service) GetBattleStats(query dto.GetBattleStatsQuery) (*dto.BattleStatsResponse, error) {
+	ctx := context.Background()
+
+	filter := bson.M{"warrior_id": query.WarriorID, "status": "completed"}
+	if query.BattleType != "all" && query.BattleType != "" {
+		filter["battle_type"] = query.BattleType
+	}
+
+	cursor, err := BattleColl.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find battles: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	stats := &dto.BattleStatsResponse{
+		WarriorID: query.WarriorID,
+	}
+
+	var battles []Battle
+	if err := cursor.All(ctx, &battles); err != nil {
+		return nil, fmt.Errorf("failed to decode battles: %w", err)
+	}
+
+	for _, battle := range battles {
+		stats.TotalBattles++
+
+		switch battle.Result {
+		case BattleResultVictory:
+			stats.Wins++
+		case BattleResultDefeat:
+			stats.Losses++
+		case BattleResultDraw:
+			stats.Draws++
+		}
+
+		switch battle.BattleType {
+		case BattleTypeEnemy:
+			stats.EnemyBattles++
+		case BattleTypeDragon:
+			stats.DragonBattles++
+		}
+
+		stats.TotalCoinsEarned += battle.CoinsEarned
+		stats.TotalExperience += battle.ExperienceGained
+	}
+
+	// Calculate win rate
+	if stats.TotalBattles > 0 {
+		stats.WinRate = float64(stats.Wins) / float64(stats.TotalBattles) * 100
+	}
+
+	return stats, nil
+}
+
