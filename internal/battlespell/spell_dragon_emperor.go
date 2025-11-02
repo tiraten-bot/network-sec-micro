@@ -1,4 +1,4 @@
-package battle
+package battlespell
 
 import (
 	"context"
@@ -7,44 +7,48 @@ import (
 	"log"
 	"time"
 
+	pbBattle "network-sec-micro/api/proto/battle"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // CastDragonEmperor adds Dark Emperor's stats to dragon for the entire battle duration
 func (s *Service) CastDragonEmperor(ctx context.Context, battleID primitive.ObjectID, dragonParticipantID string, darkEmperorParticipantID string, casterUsername string, casterUserID string) error {
-	// Get battle
-	var battle Battle
-	err := BattleColl.FindOne(ctx, bson.M{"_id": battleID}).Decode(&battle)
+	// Get battle via gRPC
+	battleIDStr := battleID.Hex()
+	battle, err := GetBattleByID(ctx, battleIDStr)
 	if err != nil {
 		return errors.New("battle not found")
 	}
 
-	if battle.Status != BattleStatusInProgress {
+	if battle.Status != "in_progress" {
 		return errors.New("battle must be in progress to cast spell")
 	}
 
-	// Get dragon participant
-	var dragonParticipant BattleParticipant
-	err = BattleParticipantColl.FindOne(ctx, bson.M{
-		"battle_id":      battleID,
-		"participant_id": dragonParticipantID,
-		"type":          ParticipantTypeDragon,
-	}).Decode(&dragonParticipant)
-
+	// Get all participants via gRPC
+	participants, err := GetBattleParticipants(ctx, battleIDStr, "")
 	if err != nil {
-		return errors.New("dragon participant not found")
+		return fmt.Errorf("failed to get battle participants: %w", err)
 	}
 
-	// Get Dark Emperor participant
-	var darkEmperorParticipant BattleParticipant
-	err = BattleParticipantColl.FindOne(ctx, bson.M{
-		"battle_id":      battleID,
-		"participant_id": darkEmperorParticipantID,
-		"type":          ParticipantTypeDarkEmperor,
-	}).Decode(&darkEmperorParticipant)
+	// Find dragon and dark emperor participants
+	var dragonParticipant *pbBattle.BattleParticipant
+	var darkEmperorParticipant *pbBattle.BattleParticipant
 
-	if err != nil {
+	for _, p := range participants {
+		if p.ParticipantId == dragonParticipantID && p.Type == "dragon" {
+			dragonParticipant = p
+		}
+		if p.ParticipantId == darkEmperorParticipantID && p.Type == "dark_emperor" {
+			darkEmperorParticipant = p
+		}
+	}
+
+	if dragonParticipant == nil {
+		return errors.New("dragon participant not found")
+	}
+	if darkEmperorParticipant == nil {
 		return errors.New("dark emperor participant not found in battle")
 	}
 
@@ -62,30 +66,16 @@ func (s *Service) CastDragonEmperor(ctx context.Context, battleID primitive.Obje
 	}
 
 	// Add Dark Emperor stats to dragon
-	originalAttack := dragonParticipant.AttackPower
-	originalDefense := dragonParticipant.Defense
-	originalMaxHP := dragonParticipant.MaxHP
-	originalHP := dragonParticipant.HP
-
 	newAttackPower := dragonParticipant.AttackPower + darkEmperorParticipant.AttackPower
 	newDefense := dragonParticipant.Defense + darkEmperorParticipant.Defense
-	newMaxHP := dragonParticipant.MaxHP + darkEmperorParticipant.MaxHP
-	// Add HP bonus proportionally
-	hpBonus := darkEmperorParticipant.MaxHP
-	newHP := dragonParticipant.HP + hpBonus
+	newMaxHP := dragonParticipant.MaxHp + darkEmperorParticipant.MaxHp
+	hpBonus := darkEmperorParticipant.MaxHp
+	newHP := dragonParticipant.Hp + hpBonus
 	if newHP > newMaxHP {
 		newHP = newMaxHP
 	}
 
-	updateData := bson.M{
-		"attack_power": newAttackPower,
-		"defense":      newDefense,
-		"max_hp":       newMaxHP,
-		"hp":           newHP,
-		"updated_at":   time.Now(),
-	}
-
-	_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{"_id": dragonParticipant.ID}, bson.M{"$set": updateData})
+	err = UpdateParticipantStats(ctx, battleIDStr, dragonParticipantID, int32(newHP), int32(newMaxHP), newAttackPower, newDefense, dragonParticipant.IsAlive)
 	if err != nil {
 		return fmt.Errorf("failed to enhance dragon: %w", err)
 	}
@@ -111,16 +101,6 @@ func (s *Service) CastDragonEmperor(ctx context.Context, battleID primitive.Obje
 		log.Printf("Warning: failed to record spell cast: %v", err)
 	}
 
-	// Log to Redis
-	go func() {
-		message := fmt.Sprintf("🐉 SPELL CAST: Dragon Emperor! %s enhanced by Dark Emperor stats! (Attack: %d→%d, Defense: %d→%d, HP: %d→%d)",
-			dragonParticipant.Name, originalAttack, newAttackPower, originalDefense, newDefense, originalMaxHP, newMaxHP)
-		if err := LogBattleEvent(ctx, battleID, "spell_cast", message); err != nil {
-			log.Printf("Failed to log spell cast: %v", err)
-		}
-	}()
-
-	log.Printf("Dragon Emperor spell cast by %s in battle %s - Dragon %s enhanced", casterUsername, battleID.Hex(), dragonParticipant.Name)
+	log.Printf("Dragon Emperor spell cast by %s in battle %s - Dragon enhanced", casterUsername, battleID.Hex())
 	return nil
 }
-
