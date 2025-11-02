@@ -156,7 +156,17 @@ func (h *Handler) AttackDragon(c *gin.Context) {
 	})
 }
 
-// GetDragon handles getting dragon by ID
+// GetDragon godoc
+// @Summary Get dragon by ID
+// @Description Get dragon details by ID
+// @Tags dragons
+// @Accept json
+// @Produce json
+// @Param id path string true "Dragon ID"
+// @Success 200 {object} dto.GetDragonResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Router /dragons/{id} [get]
 func (h *Handler) GetDragon(c *gin.Context) {
 	dragonID := c.Param("id")
 	if dragonID == "" {
