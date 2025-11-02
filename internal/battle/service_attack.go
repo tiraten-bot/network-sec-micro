@@ -98,6 +98,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		target.HP = 0
 	}
 
+	// Track damage for kill attribution
+	killTracker.AddDamage(battleID, target.ParticipantID, attacker.ParticipantID)
+
 	// Check if target is defeated
 	targetDefeated := target.HP <= 0
 	if targetDefeated {
@@ -105,6 +108,17 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		target.IsDefeated = true
 		now := time.Now()
 		target.DefeatedAt = &now
+
+		// Get all participants who damaged this target before it died
+		killerIDs := killTracker.GetKillers(battleID, target.ParticipantID)
+		killerParticipants, _ := GetParticipantObjects(ctx, battleID, killerIDs)
+
+		// Log simplified death event to Redis
+		go func() {
+			if err := LogParticipantDefeated(ctx, battleID, &target, killerParticipants); err != nil {
+				log.Printf("Warning: failed to log participant death: %v", err)
+			}
+		}()
 	}
 
 	// Update target participant
@@ -156,27 +170,8 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		return nil, nil, fmt.Errorf("failed to record turn: %w", err)
 	}
 
-	// Log attack to Redis
-	eventType := "warrior_attack"
-	if attacker.Type != ParticipantTypeWarrior {
-		eventType = "opponent_attack"
-	}
-	message := fmt.Sprintf("%s attacks %s for %d damage", attacker.Name, target.Name, damage)
-	if isCritical {
-		eventType = "critical_hit"
-		message = fmt.Sprintf("⚔️ CRITICAL HIT! %s attacks %s for %d damage!", attacker.Name, target.Name, damage)
-	}
-	if targetDefeated {
-		message = fmt.Sprintf("%s ⚰️ %s has been defeated!", message, target.Name)
-	}
-
-	// Get all participants for logging
-	allParticipants, _ := s.GetBattleParticipants(ctx, battleID, "all")
-	
-	// Log to Redis (battle object not needed for team battles)
-	if err := LogBattleTurn(ctx, battle.ID, turn, battle, eventType, message); err != nil {
-		log.Printf("Warning: failed to log battle turn to Redis: %v", err)
-	}
+	// Note: We only log to Redis when a participant is defeated (see above)
+	// No need to log every attack, only deaths are logged in simplified format
 
 	// Check if a team has been eliminated
 	lightAlive, err := s.CheckTeamStatus(ctx, battleID, TeamSideLight)
@@ -286,12 +281,19 @@ func (s *Service) completeTeamBattle(ctx context.Context, battle *Battle, result
 		return nil, nil, fmt.Errorf("failed to complete battle: %w", err)
 	}
 
-	// Log battle end to Redis
+	// Log battle end to Redis (simplified)
 	go func() {
-		endMessage := fmt.Sprintf("Team Battle completed. Result: %s. Winner: %s", result, winnerSide)
+		var endMessage string
+		if result == BattleResultDraw {
+			endMessage = fmt.Sprintf("Savaş berabere bitti")
+		} else {
+			endMessage = fmt.Sprintf("Savaş bitti. Kazanan: %s", winnerSide)
+		}
 		if err := LogBattleEnd(ctx, battle, endMessage); err != nil {
 			log.Printf("Failed to log battle end: %v", err)
 		}
+		// Clear kill tracker for this battle
+		killTracker.ClearKills(battle.ID)
 	}()
 
 	// Publish battle completed event
