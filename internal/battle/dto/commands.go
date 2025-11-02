@@ -61,6 +61,7 @@ type DarkEmperorJoinBattleCommand struct {
 	BattleID            string `json:"battle_id" binding:"required"`
 	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
 	DarkEmperorUserID   string `json:"dark_emperor_user_id" binding:"required"`
+	DragonParticipantID string `json:"dragon_participant_id" binding:"required"` // Required to check dragon status
 }
 
 // SacrificeDragonCommand represents a command to sacrifice dragon and revive enemies
