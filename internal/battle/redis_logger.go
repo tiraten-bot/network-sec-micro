@@ -26,6 +26,7 @@ type BattleLogEntry struct {
 	DamageDealt   int       `json:"damage_dealt"`
 	CriticalHit   bool      `json:"critical_hit"`
 	TargetHPBefore int       `json:"target_hp_before"`
+	TargetHPBefore int       `json:"target_hp_before"`
 	TargetHPAfter  int       `json:"target_hp_after"`
 	WarriorHP      int       `json:"warrior_hp"`
 	OpponentHP     int       `json:"opponent_hp"`
@@ -51,6 +52,7 @@ func LogBattleTurn(ctx context.Context, battleID primitive.ObjectID, turn *Battl
 		TargetType:     turn.TargetType,
 		DamageDealt:    turn.DamageDealt,
 		CriticalHit:    turn.CriticalHit,
+		TargetHPBefore: battle.OpponentHP + turn.DamageDealt, // Calculate HP before
 		TargetHPAfter:  turn.TargetHPAfter,
 		WarriorHP:      battle.WarriorHP,
 		OpponentHP:     battle.OpponentHP,
