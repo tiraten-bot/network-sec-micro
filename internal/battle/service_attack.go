@@ -172,10 +172,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 
 	// Get all participants for logging
 	allParticipants, _ := s.GetBattleParticipants(ctx, battleID, "all")
-	var tempBattle Battle
-	tempBattle = battle
-	// Create a simplified battle object for logging (we'll use participant data)
-	if err := LogBattleTurn(ctx, battle.ID, turn, &tempBattle, eventType, message); err != nil {
+	
+	// Log to Redis (battle object not needed for team battles)
+	if err := LogBattleTurn(ctx, battle.ID, turn, battle, eventType, message); err != nil {
 		log.Printf("Warning: failed to log battle turn to Redis: %v", err)
 	}
 
