@@ -162,7 +162,16 @@ func (h *Handler) GetWarriors(c *gin.Context) {
 	})
 }
 
-// GetKnightWarriors returns all knights (accessible by Knight and King)
+// GetKnightWarriors godoc
+// @Summary Get knights
+// @Description List all knights (accessible by Knight and King)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.WarriorsListResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /warriors/knights [get]
 func (h *Handler) GetKnightWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
@@ -206,7 +215,16 @@ func (h *Handler) GetKnightWarriors(c *gin.Context) {
 	})
 }
 
-// GetArcherWarriors returns all archers (accessible by Archer and King)
+// GetArcherWarriors godoc
+// @Summary Get archers
+// @Description List all archers (accessible by Archer and King)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.WarriorsListResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /warriors/archers [get]
 func (h *Handler) GetArcherWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
@@ -250,7 +268,16 @@ func (h *Handler) GetArcherWarriors(c *gin.Context) {
 	})
 }
 
-// GetMageWarriors returns all mages (accessible by Mage and King)
+// GetMageWarriors godoc
+// @Summary Get mages
+// @Description List all mages (accessible by Mage and King)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.WarriorsListResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /warriors/mages [get]
 func (h *Handler) GetMageWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
