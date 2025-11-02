@@ -380,6 +380,7 @@ func MakeDefaultHandler() fiber.Handler {
     enemyUp := getEnv("UPSTREAM_ENEMY", "http://localhost:8083")
     dragonUp := getEnv("UPSTREAM_DRAGON", "http://localhost:8084")
     weaponUp := getEnv("UPSTREAM_WEAPON", "http://localhost:8081")
+    battleUp := getEnv("UPSTREAM_BATTLE", "http://localhost:8085")
     return func(c *fiber.Ctx) error {
         path := c.OriginalURL()
         if hasPrefix(path, "/api/warrior/") {
@@ -406,6 +407,10 @@ func MakeDefaultHandler() fiber.Handler {
         }
         if hasPrefix(path, "/api/weapon/") {
             target := weaponUp + path[len("/api/weapon"):]
+            return proxy.Do(c, target)
+        }
+        if hasPrefix(path, "/api/battles") {
+            target := battleUp + path
             return proxy.Do(c, target)
         }
         return c.SendStatus(fiber.StatusNotFound)
