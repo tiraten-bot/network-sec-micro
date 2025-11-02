@@ -89,6 +89,8 @@ const (
 	TopicWeaponPurchase = "weapon.purchase"
 	TopicCoinDeduct     = "coin.deduct"
 	TopicDragonDeath    = "dragon.death"
-    TopicEnemyDestroyed = "enemy.destroyed"
+	TopicEnemyDestroyed = "enemy.destroyed"
+	TopicBattleStarted  = "battle.started"
+	TopicBattleCompleted = "battle.completed"
 )
 
