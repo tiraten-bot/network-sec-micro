@@ -13,6 +13,7 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 			// Dragon CRUD operations
 			dragons.POST("", handler.CreateDragon)                    // Create dragon
 			dragons.POST("/:id/attack", handler.AttackDragon)         // Attack dragon
+			dragons.POST("/:id/revive", handler.ReviveDragon)         // Revive dragon (for battle service)
 			dragons.GET("/:id", handler.GetDragon)                    // Get dragon by ID
 			dragons.GET("/type/:type", handler.GetDragonsByType)      // Get dragons by type
 			dragons.GET("/creator/:creator", handler.GetDragonsByCreator) // Get dragons by creator
