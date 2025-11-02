@@ -40,6 +40,7 @@ type DarkEmperorJoinBattleRequest struct {
 	BattleID            string `json:"battle_id" binding:"required"`
 	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
 	DarkEmperorUserID   string `json:"dark_emperor_user_id" binding:"required"`
+	DragonParticipantID string `json:"dragon_participant_id" binding:"required"` // Required to check dragon status
 }
 
 // SacrificeDragonRequest represents a request to sacrifice dragon and revive enemies
@@ -47,4 +48,12 @@ type SacrificeDragonRequest struct {
 	BattleID            string `json:"battle_id" binding:"required"`
 	DragonParticipantID string `json:"dragon_participant_id" binding:"required"`
 	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
+}
+
+// CastSpellRequest represents a request to cast a spell in battle
+type CastSpellRequest struct {
+	BattleID            string `json:"battle_id" binding:"required"`
+	SpellType           string `json:"spell_type" binding:"required"` // call_of_the_light_king, resistance, rebirth, dragon_emperor, destroy_the_light, wraith_of_dragon
+	TargetDragonID      string `json:"target_dragon_id,omitempty"`     // Required for Dragon Emperor spell
+	TargetDarkEmperorID string `json:"target_dark_emperor_id,omitempty"` // Required for Dragon Emperor spell
 }
