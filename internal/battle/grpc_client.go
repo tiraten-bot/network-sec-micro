@@ -8,6 +8,7 @@ import (
 
 	pbWarrior "network-sec-micro/api/proto/warrior"
 	pbCoin "network-sec-micro/api/proto/coin"
+	pbBattleSpell "network-sec-micro/api/proto/battlespell"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -62,6 +63,39 @@ func InitCoinClient(addr string) error {
 
 	log.Printf("Connected to Coin gRPC service at %s", addr)
 	return nil
+}
+
+// InitBattlespellClient initializes the gRPC client connection to battlespell service
+func InitBattlespellClient(addr string) error {
+	if addr == "" {
+		addr = os.Getenv("BATTLESPELL_GRPC_ADDR")
+		if addr == "" {
+			addr = "localhost:50054"
+		}
+	}
+
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to connect to battlespell gRPC: %w", err)
+	}
+
+	battlespellGrpcClient = pbBattleSpell.NewBattleSpellServiceClient(conn)
+	battlespellGrpcConn = conn
+
+	log.Printf("Connected to BattleSpell gRPC service at %s", addr)
+	return nil
+}
+
+// CloseBattlespellClient closes the battlespell gRPC connection
+func CloseBattlespellClient() {
+	if battlespellGrpcConn != nil {
+		battlespellGrpcConn.Close()
+	}
+}
+
+// GetBattlespellClient returns the battlespell gRPC client
+func GetBattlespellClient() pbBattleSpell.BattleSpellServiceClient {
+	return battlespellGrpcClient
 }
 
 // CloseWarriorClient closes the gRPC connection
