@@ -673,6 +673,13 @@ Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
 - Filtering: Get by type, Get by creator
 - Events: Dragon death events published to Kafka
 
+#### Battle Service
+- Battle Management: Start battle, Attack, Get battle details
+- Battle History: Get battles with RBAC (Emperors see all, Kings see faction, Warriors see own)
+- Battle Statistics: Win rate, total battles, coins/experience earned
+- Turn-based Combat: Turn history, damage tracking
+- Rewards: Automatic coin rewards/penalties via gRPC
+
 ### Notlar
 
 - **Coin Service**: gRPC servis olduğu için protobuf dosyalarından dokümantasyon oluşturulabilir (`api/proto/coin/coin.proto`)
