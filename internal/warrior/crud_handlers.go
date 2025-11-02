@@ -236,7 +236,18 @@ func (h *Handler) DeleteWarrior(c *gin.Context) {
 	})
 }
 
-// ChangePassword handles password change
+// ChangePassword godoc
+// @Summary Change password
+// @Description Change authenticated warrior's password
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.ChangePasswordRequest true "Password change data"
+// @Success 200 {object} map[string]string "message: string"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /profile/password [put]
 func (h *Handler) ChangePassword(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
