@@ -246,8 +246,8 @@ func (h *Handler) GetBattle(c *gin.Context) {
 }
 
 // GetMyBattles godoc
-// @Summary Get my battles
-// @Description Get list of battles for authenticated warrior
+// @Summary Get battles
+// @Description Get list of battles. Emperors see all battles. Kings see battles in their faction. Warriors see only their own battles.
 // @Tags battles
 // @Accept json
 // @Produce json
@@ -255,6 +255,7 @@ func (h *Handler) GetBattle(c *gin.Context) {
 // @Param status query string false "Filter by status (all, pending, in_progress, completed)"
 // @Param limit query int false "Limit (default 20)"
 // @Param offset query int false "Offset (default 0)"
+// @Param warrior_id query int false "Warrior ID filter (emperors/kings only)"
 // @Success 200 {object} dto.BattlesListResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Router /battles/my-battles [get]
@@ -273,10 +274,28 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	query := dto.GetBattlesByWarriorQuery{
-		WarriorID: user.UserID,
-		Status:    status,
-		Limit:     limit,
-		Offset:    offset,
+		Status: status,
+		Limit:  limit,
+		Offset: offset,
+	}
+
+	// Apply RBAC: Emperors see all, Kings see faction, Warriors see only their own
+	if err := GetBattlesWithRBAC(c, &query); err != nil {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// If emperor/king wants to filter by specific warrior
+	if warriorIDStr := c.Query("warrior_id"); warriorIDStr != "" {
+		canViewAll, _ := c.Get("can_view_all_battles")
+		if canViewAll != nil && canViewAll.(bool) {
+			if warriorIDFilter, err := strconv.ParseUint(warriorIDStr, 10, 32); err == nil {
+				query.WarriorID = uint(warriorIDFilter)
+			}
+		}
 	}
 
 	battles, total, err := h.Service.GetBattlesByWarrior(query)
