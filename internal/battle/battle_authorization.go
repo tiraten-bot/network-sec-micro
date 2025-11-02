@@ -146,20 +146,12 @@ func countKingsOnSide(ctx context.Context, side string) (int, error) {
 
 // validateKingOnSide validates if a warrior ID is a king on the specified side
 func validateKingOnSide(ctx context.Context, warriorID uint, side string) (bool, error) {
-	warriorClient := GetWarriorClient()
-	if warriorClient == nil {
-		return false, errors.New("warrior gRPC client not available")
-	}
-
-	// Get warrior by ID
-	resp, err := warriorClient.GetWarriorByID(ctx, &pbWarrior.GetWarriorByIDRequest{
-		WarriorId: uint32(warriorID),
-	})
+	warrior, err := GetWarriorByID(ctx, warriorID)
 	if err != nil {
 		return false, fmt.Errorf("failed to get warrior: %w", err)
 	}
 
-	if resp.Warrior == nil {
+	if warrior == nil {
 		return false, errors.New("warrior not found")
 	}
 
@@ -169,6 +161,6 @@ func validateKingOnSide(ctx context.Context, warriorID uint, side string) (bool,
 		expectedRole = "dark_king"
 	}
 
-	return resp.Warrior.Role == expectedRole, nil
+	return warrior.Role == expectedRole, nil
 }
 
