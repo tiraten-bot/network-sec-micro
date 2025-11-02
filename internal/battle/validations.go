@@ -150,31 +150,37 @@ func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
 	}
 
 	// Validate: Enemy level cannot exceed dragon level
-	// This requires level information in participant info
-	// For now, we check if both exist and validate hierarchy
+	// Check if any enemy has a higher level than any dragon
 	if hasEnemy && hasDragon {
-		// Check that enemy level <= dragon level
-		// We need level information in ParticipantInfo
+		// Get all dragon levels
+		dragonLevels := make([]int, 0)
 		for _, p := range cmd.DarkParticipants {
-			if p.Type == "enemy" {
-				// Enemy level should be lower than dragon level
-				// This will be validated based on type hierarchy
-				enemyLevel := GetParticipantLevel(ParticipantTypeEnemy)
-				dragonLevel := GetParticipantLevel(ParticipantTypeDragon)
-				if enemyLevel > dragonLevel {
-					return errors.New("enemy level cannot exceed dragon level")
+			if p.Type == "dragon" {
+				if p.Level > 0 {
+					dragonLevels = append(dragonLevels, p.Level)
+				} else {
+					// Default dragon level if not specified
+					dragonLevels = append(dragonLevels, 50) // Default dragon level
 				}
 			}
 		}
-	}
 
-	// Validate: Enemy and dragon hierarchy
-	// Dragons are higher level than enemies by definition
-	if hasEnemy && hasDragon {
-		// Type-based validation: LevelEnemy (1) < LevelDragon (2)
-		// This is satisfied by the level constants
-		// But we check that no enemy has higher stats than dragons
-		// This would be validated when fetching actual enemy/dragon data
+		// Check enemy levels
+		for _, p := range cmd.DarkParticipants {
+			if p.Type == "enemy" {
+				enemyLevel := p.Level
+				if enemyLevel == 0 {
+					enemyLevel = 10 // Default enemy level
+				}
+
+				// Enemy level must be less than or equal to all dragon levels
+				for _, dragonLevel := range dragonLevels {
+					if enemyLevel > dragonLevel {
+						return fmt.Errorf("enemy level (%d) cannot exceed dragon level (%d)", enemyLevel, dragonLevel)
+					}
+				}
+			}
+		}
 	}
 
 	return nil
