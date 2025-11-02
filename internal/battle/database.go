@@ -112,6 +112,21 @@ func createIndexes() error {
 		return fmt.Errorf("failed to create battle_participant indexes: %w", err)
 	}
 
+	// Spell indexes
+	spellIndexes := []mongo.IndexModel{
+		{
+			Keys: map[string]interface{}{"battle_id": 1, "spell_type": 1, "is_active": 1},
+		},
+		{
+			Keys: map[string]interface{}{"battle_id": 1, "is_active": 1},
+		},
+	}
+
+	_, err = SpellColl.Indexes().CreateMany(ctx, spellIndexes)
+	if err != nil {
+		return fmt.Errorf("failed to create spell indexes: %w", err)
+	}
+
 	log.Println("Indexes created successfully")
 	return nil
 }
