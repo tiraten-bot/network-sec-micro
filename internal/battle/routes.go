@@ -14,13 +14,17 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 		{
 			// Battle CRUD operations
 			protected.POST("/battles", handler.StartBattle)
-			protected.GET("/battles/:id", handler.GetBattle)
-			protected.GET("/battles/my-battles", handler.GetMyBattles)
-			protected.GET("/battles/stats", handler.GetBattleStats)
-			protected.GET("/battles/:id/turns", handler.GetBattleTurns)
-
-			// Battle actions
 			protected.POST("/battles/attack", handler.Attack)
+
+			// RBAC protected routes
+			rbac := protected.Group("")
+			rbac.Use(RBACMiddleware())
+			{
+				rbac.GET("/battles/:id", handler.GetBattle)
+				rbac.GET("/battles/my-battles", handler.GetMyBattles)
+				rbac.GET("/battles/stats", handler.GetBattleStats)
+				rbac.GET("/battles/:id/turns", handler.GetBattleTurns)
+			}
 		}
 	}
 }
