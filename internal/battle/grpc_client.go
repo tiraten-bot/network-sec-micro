@@ -77,6 +77,10 @@ func CloseCoinClient() {
 
 // GetWarriorByUsername gets warrior info via gRPC
 func GetWarriorByUsername(ctx context.Context, username string) (*pbWarrior.Warrior, error) {
+	if warriorGrpcClient == nil {
+		return nil, fmt.Errorf("warrior gRPC client not initialized")
+	}
+
 	req := &pbWarrior.GetWarriorByUsernameRequest{
 		Username: username,
 	}
@@ -92,32 +96,6 @@ func GetWarriorByUsername(ctx context.Context, username string) (*pbWarrior.Warr
 // GetWarriorClient returns the warrior gRPC client
 func GetWarriorClient() pbWarrior.WarriorServiceClient {
 	return warriorGrpcClient
-}
-
-// GetAllKings gets all kings of a specific side (light or dark)
-func GetAllKings(ctx context.Context, side string) ([]*pbWarrior.Warrior, error) {
-	// This would require a new gRPC method in warrior service
-	// For now, we'll need to implement a workaround
-	// Let's query all warriors and filter (inefficient but works)
-	
-	// Note: This is a placeholder - in production, add GetWarriorsByRole gRPC method
-	// For now, we'll use a different approach
-	return nil, fmt.Errorf("GetAllKings not yet implemented - requires warrior service enhancement")
-} (*pbWarrior.Warrior, error) {
-	if warriorGrpcClient == nil {
-		return nil, fmt.Errorf("warrior gRPC client not initialized")
-	}
-
-	req := &pbWarrior.GetWarriorByUsernameRequest{
-		Username: username,
-	}
-
-	resp, err := warriorGrpcClient.GetWarriorByUsername(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get warrior: %w", err)
-	}
-
-	return resp.Warrior, nil
 }
 
 // GetWarriorByID gets warrior info by ID via gRPC
