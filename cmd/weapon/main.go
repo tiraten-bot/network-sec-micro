@@ -82,6 +82,9 @@ func main() {
 	// Setup routes
 	weapon.SetupRoutes(r, handler)
 
+	// Swagger docs
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
