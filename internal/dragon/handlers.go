@@ -21,7 +21,16 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
-// CreateDragon handles dragon creation
+// CreateDragon godoc
+// @Summary Create dragon
+// @Description Create a new dragon. Creator info is extracted from JWT token.
+// @Tags dragons
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateDragonRequest true "Dragon creation data"
+// @Success 201 {object} dto.CreateDragonResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /dragons [post]
 func (h *Handler) CreateDragon(c *gin.Context) {
 	var req dto.CreateDragonRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -81,7 +90,17 @@ func (h *Handler) CreateDragon(c *gin.Context) {
 	})
 }
 
-// AttackDragon handles dragon attack
+// AttackDragon godoc
+// @Summary Attack dragon
+// @Description Attack a dragon. When health reaches 0, death event is published to Kafka.
+// @Tags dragons
+// @Accept json
+// @Produce json
+// @Param id path string true "Dragon ID"
+// @Param request body dto.AttackDragonRequest true "Attack data"
+// @Success 200 {object} dto.AttackDragonResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /dragons/{id}/attack [post]
 func (h *Handler) AttackDragon(c *gin.Context) {
 	var req dto.AttackDragonRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
