@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -68,6 +69,16 @@ func (s *Service) CastWraithOfDragon(ctx context.Context, battleID primitive.Obj
 	return nil
 }
 
+// GetBattle retrieves battle - helper for wraith trigger
+func getBattleForSpell(ctx context.Context, battleID primitive.ObjectID) (*Battle, error) {
+	var battle Battle
+	err := BattleColl.FindOne(ctx, bson.M{"_id": battleID}).Decode(&battle)
+	if err != nil {
+		return nil, err
+	}
+	return &battle, nil
+}
+
 // TriggerWraithOfDragon triggers the wraith effect when dragon kills a warrior
 // Returns the additional warrior ID that was destroyed, or empty string if none
 func (s *Service) TriggerWraithOfDragon(ctx context.Context, battleID primitive.ObjectID) (string, error) {
@@ -84,10 +95,15 @@ func (s *Service) TriggerWraithOfDragon(ctx context.Context, battleID primitive.
 		return "", nil
 	}
 
+	// Get battle for timestamp
+	battle, err := getBattleForSpell(ctx, battleID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get battle: %w", err)
+	}
+
 	// Check if max wraith count reached
 	if spell.WraithCount >= 25 {
 		// Deactivate spell
-		spell.IsActive = false
 		_, err = SpellColl.UpdateOne(ctx, bson.M{"_id": spell.ID}, bson.M{"$set": bson.M{
 			"is_active": false,
 			"updated_at": battle.UpdatedAt,
@@ -127,7 +143,7 @@ func (s *Service) TriggerWraithOfDragon(ctx context.Context, battleID primitive.
 	targetWarrior.HP = 0
 	targetWarrior.IsAlive = false
 	targetWarrior.IsDefeated = true
-	now := battle.UpdatedAt
+	now := time.Now()
 	targetWarrior.DefeatedAt = &now
 	targetWarrior.UpdatedAt = battle.UpdatedAt
 
