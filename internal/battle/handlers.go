@@ -856,17 +856,28 @@ func (h *Handler) CastSpell(c *gin.Context) {
 		return
 	}
 
-	cmd := dto.CastSpellCommand{
-		BattleID:            req.BattleID,
-		SpellType:           req.SpellType,
-		CasterUsername:      user.Username,
-		CasterUserID:        fmt.Sprintf("%d", user.UserID),
-		CasterRole:          user.Role,
-		TargetDragonID:      req.TargetDragonID,
-		TargetDarkEmperorID: req.TargetDarkEmperorID,
+	// Call battlespell service via gRPC
+	battlespellClient := GetBattlespellClient()
+	if battlespellClient == nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "service_unavailable",
+			Message: "battlespell service not available",
+		})
+		return
 	}
 
-	if err := h.Service.CastSpell(c.Request.Context(), cmd); err != nil {
+	grpcReq := &pbBattleSpell.CastSpellRequest{
+		BattleId:         req.BattleID,
+		SpellType:        req.SpellType,
+		CasterUsername:   user.Username,
+		CasterUserId:     fmt.Sprintf("%d", user.UserID),
+		CasterRole:       user.Role,
+		TargetDragonId:   req.TargetDragonID,
+		TargetDarkEmperorId: req.TargetDarkEmperorID,
+	}
+
+	resp, err := battlespellClient.CastSpell(c.Request.Context(), grpcReq)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "spell_cast_failed",
 			Message: err.Error(),
@@ -874,9 +885,18 @@ func (h *Handler) CastSpell(c *gin.Context) {
 		return
 	}
 
+	if !resp.Success {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "spell_cast_failed",
+			Message: resp.Message,
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": fmt.Sprintf("Spell %s cast successfully!", req.SpellType),
+		"success":        true,
+		"affected_count": resp.AffectedCount,
+		"message":        resp.Message,
 	})
 }
 
