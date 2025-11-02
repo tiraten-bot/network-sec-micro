@@ -395,14 +395,16 @@ func (h *Handler) GetBattleTurns(c *gin.Context) {
 
 // GetBattleStats godoc
 // @Summary Get battle statistics
-// @Description Get battle statistics for authenticated warrior
+// @Description Get battle statistics. Warriors see only their own stats. Emperors/Kings can view any warrior's stats via warrior_id query param.
 // @Tags battles
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param type query string false "Filter by battle type (all, enemy, dragon)"
+// @Param warrior_id query int false "Warrior ID (emperors/kings only - to view other warrior's stats)"
 // @Success 200 {object} dto.BattleStatsResponse
 // @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
 // @Router /battles/stats [get]
 func (h *Handler) GetBattleStats(c *gin.Context) {
 	user, err := GetCurrentUser(c)
@@ -415,9 +417,26 @@ func (h *Handler) GetBattleStats(c *gin.Context) {
 	}
 
 	battleType := c.DefaultQuery("type", "all")
+	warriorID := user.UserID
+
+	// RBAC: Emperors/Kings can view any warrior's stats
+	if warriorIDStr := c.Query("warrior_id"); warriorIDStr != "" {
+		canViewAll, _ := c.Get("can_view_all_battles")
+		if canViewAll != nil && canViewAll.(bool) {
+			if warriorIDFilter, err := strconv.ParseUint(warriorIDStr, 10, 32); err == nil {
+				warriorID = uint(warriorIDFilter)
+			}
+		} else {
+			c.JSON(http.StatusForbidden, dto.ErrorResponse{
+				Error:   "forbidden",
+				Message: "Only emperors and kings can view other warriors' statistics",
+			})
+			return
+		}
+	}
 
 	query := dto.GetBattleStatsQuery{
-		WarriorID:  user.UserID,
+		WarriorID:  warriorID,
 		BattleType: battleType,
 	}
 
