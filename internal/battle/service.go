@@ -259,6 +259,25 @@ func (s *Service) completeBattle(ctx context.Context, battle *Battle, result Bat
 		// Base rewards
 		battle.CoinsEarned = 50 + (battle.CurrentTurn * 5)
 		battle.ExperienceGained = 100 + (int(battle.OpponentMaxHP) / 10)
+
+		// Add coins to warrior via gRPC
+		ctx := context.Background()
+		go func() {
+			if err := AddCoins(ctx, battle.WarriorID, int64(battle.CoinsEarned), fmt.Sprintf("battle_victory_%s", battle.ID.Hex())); err != nil {
+				log.Printf("Failed to add coins to warrior %d after battle victory: %v", battle.WarriorID, err)
+			}
+		}()
+	} else if result == BattleResultDefeat {
+		// Deduct coins from warrior if lost (penalty)
+		penalty := 25 // Base penalty
+		ctx := context.Background()
+		go func() {
+			if err := DeductCoins(ctx, battle.WarriorID, int64(penalty), fmt.Sprintf("battle_defeat_penalty_%s", battle.ID.Hex())); err != nil {
+				// Log but don't fail - penalty might fail if insufficient balance
+				log.Printf("Failed to deduct penalty coins from warrior %d after battle defeat: %v", battle.WarriorID, err)
+			}
+		}()
+		battle.CoinsEarned = -penalty // Negative to indicate loss
 	}
 
 	updateData := bson.M{
