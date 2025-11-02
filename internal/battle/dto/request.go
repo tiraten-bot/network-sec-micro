@@ -28,3 +28,23 @@ type RemoveParticipantRequest struct {
 	BattleID     string `json:"battle_id" binding:"required"`
 	ParticipantID string `json:"participant_id" binding:"required"`
 }
+
+// ReviveDragonRequest represents a request to revive a dragon in battle
+type ReviveDragonRequest struct {
+	BattleID           string `json:"battle_id" binding:"required"`
+	DragonParticipantID string `json:"dragon_participant_id" binding:"required"`
+}
+
+// DarkEmperorJoinBattleRequest represents a request for Dark Emperor to join battle during crisis
+type DarkEmperorJoinBattleRequest struct {
+	BattleID            string `json:"battle_id" binding:"required"`
+	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
+	DarkEmperorUserID   string `json:"dark_emperor_user_id" binding:"required"`
+}
+
+// SacrificeDragonRequest represents a request to sacrifice dragon and revive enemies
+type SacrificeDragonRequest struct {
+	BattleID            string `json:"battle_id" binding:"required"`
+	DragonParticipantID string `json:"dragon_participant_id" binding:"required"`
+	DarkEmperorUsername string `json:"dark_emperor_username" binding:"required"`
+}
