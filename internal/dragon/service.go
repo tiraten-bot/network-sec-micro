@@ -202,6 +202,83 @@ func (s *Service) GetDragonsByCreator(query dto.GetDragonsByCreatorQuery) ([]Dra
 	return dragons, nil
 }
 
+// ReviveDragon revives a dead dragon if it hasn't exceeded revival limit
+func (s *Service) ReviveDragon(dragonID primitive.ObjectID) (*Dragon, error) {
+	ctx := context.Background()
+
+	// Get dragon
+	var dragon Dragon
+	err := DragonColl.FindOne(ctx, bson.M{"_id": dragonID}).Decode(&dragon)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("dragon not found")
+		}
+		return nil, fmt.Errorf("failed to get dragon: %w", err)
+	}
+
+	// Check if dragon is dead
+	if dragon.IsAlive {
+		return nil, errors.New("dragon is already alive")
+	}
+
+	// Check if dragon can still revive
+	if !dragon.CanRevive() {
+		return nil, errors.New("dragon has exceeded maximum revival count (3)")
+	}
+
+	// Check if crisis intervention is needed before 3rd revival
+	if dragon.NeedsCrisisIntervention() && !dragon.AwaitingCrisisIntervention {
+		return nil, errors.New("dark emperor crisis intervention required before 3rd revival")
+	}
+
+	// Revive the dragon
+	dragon.Revive()
+
+	// Update dragon in database
+	updateData := bson.M{
+		"health":     dragon.Health,
+		"is_alive":   dragon.IsAlive,
+		"revival_count": dragon.RevivalCount,
+		"awaiting_crisis_intervention": false,
+		"killed_by":  "",
+		"killed_at":  nil,
+		"updated_at": time.Now(),
+	}
+
+	_, err = DragonColl.UpdateOne(ctx, bson.M{"_id": dragonID}, bson.M{"$set": updateData})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update dragon: %w", err)
+	}
+
+	return &dragon, nil
+}
+
+// GetDragonForCrisisIntervention gets a dragon that needs crisis intervention
+func (s *Service) GetDragonForCrisisIntervention(dragonID primitive.ObjectID, darkEmperorUsername string) (*Dragon, error) {
+	ctx := context.Background()
+
+	var dragon Dragon
+	err := DragonColl.FindOne(ctx, bson.M{"_id": dragonID}).Decode(&dragon)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("dragon not found")
+		}
+		return nil, fmt.Errorf("failed to get dragon: %w", err)
+	}
+
+	// Verify dragon was created by this dark emperor
+	if dragon.CreatedBy != darkEmperorUsername {
+		return nil, errors.New("only the dragon's creator can perform crisis intervention")
+	}
+
+	// Check if crisis intervention is needed
+	if !dragon.NeedsCrisisIntervention() && !dragon.AwaitingCrisisIntervention {
+		return nil, errors.New("dragon does not need crisis intervention at this time")
+	}
+
+	return &dragon, nil
+}
+
 // ==================== HELPER METHODS ====================
 
 // generateDragonStats generates dragon stats based on type and level
