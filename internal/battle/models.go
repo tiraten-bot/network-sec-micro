@@ -20,49 +20,91 @@ const (
 type BattleResult string
 
 const (
-	BattleResultVictory BattleResult = "victory" // Warrior won
-	BattleResultDefeat  BattleResult = "defeat"  // Warrior lost
-	BattleResultDraw     BattleResult = "draw"    // Draw (if applicable)
+	BattleResultLightVictory BattleResult = "light_victory" // Light side won
+	BattleResultDarkVictory  BattleResult = "dark_victory"  // Dark side won
+	BattleResultDraw         BattleResult = "draw"          // Draw
 )
 
 // BattleType represents the type of battle
 type BattleType string
 
 const (
-	BattleTypeEnemy  BattleType = "enemy"  // Battle against enemy
-	BattleTypeDragon BattleType = "dragon" // Battle against dragon
-	BattleTypeArena  BattleType = "arena"  // PvP arena battle (future)
+	BattleTypeTeam BattleType = "team" // Team battle (light vs dark)
 )
 
-// Battle represents a battle record
+// TeamSide represents which side a participant is on
+type TeamSide string
+
+const (
+	TeamSideLight TeamSide = "light" // Light side (good)
+	TeamSideDark  TeamSide = "dark"   // Dark side (evil)
+)
+
+// ParticipantType represents the type of participant
+type ParticipantType string
+
+const (
+	ParticipantTypeWarrior ParticipantType = "warrior" // Warrior (knight, archer, mage, light_emperor, light_king)
+	ParticipantTypeEnemy    ParticipantType = "enemy"   // Enemy (goblin, pirate, orc, etc.)
+	ParticipantTypeDragon   ParticipantType = "dragon"  // Dragon (fire, ice, lightning, shadow)
+	ParticipantTypeDarkKing  ParticipantType = "dark_king"
+	ParticipantTypeDarkEmperor ParticipantType = "dark_emperor"
+)
+
+// BattleParticipant represents a single participant in a battle
+type BattleParticipant struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	BattleID      primitive.ObjectID `bson:"battle_id" json:"battle_id"`
+	ParticipantID string             `bson:"participant_id" json:"participant_id"` // Warrior ID, Enemy ID, or Dragon ID
+	Name          string             `bson:"name" json:"name"`
+	Type          ParticipantType    `bson:"type" json:"type"`
+	Side          TeamSide           `bson:"side" json:"side"` // light or dark
+	
+	// Stats
+	HP            int                `bson:"hp" json:"hp"`
+	MaxHP         int                `bson:"max_hp" json:"max_hp"`
+	AttackPower   int                `bson:"attack_power" json:"attack_power"`
+	Defense       int                `bson:"defense" json:"defense"`
+	
+	// Status
+	IsAlive       bool               `bson:"is_alive" json:"is_alive"`
+	IsDefeated   bool               `bson:"is_defeated" json:"is_defeated"`
+	DefeatedAt   *time.Time         `bson:"defeated_at,omitempty" json:"defeated_at,omitempty"`
+	
+	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt    time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
+// CollectionName returns the MongoDB collection name
+func (BattleParticipant) CollectionName() string {
+	return "battle_participants"
+}
+
+// Battle represents a team-based battle
 type Battle struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	BattleType    BattleType         `bson:"battle_type" json:"battle_type"`
-	WarriorID     uint               `bson:"warrior_id" json:"warrior_id"`
-	WarriorName   string             `bson:"warrior_name" json:"warrior_name"`
-	OpponentID    string             `bson:"opponent_id" json:"opponent_id"` // Enemy or Dragon ID
-	OpponentName  string             `bson:"opponent_name" json:"opponent_name"`
-	OpponentType  string             `bson:"opponent_type" json:"opponent_type"`
 	
-	// Battle stats
-	WarriorHP     int                `bson:"warrior_hp" json:"warrior_hp"`
-	WarriorMaxHP  int                `bson:"warrior_max_hp" json:"warrior_max_hp"`
-	OpponentHP    int                `bson:"opponent_hp" json:"opponent_hp"`
-	OpponentMaxHP int                `bson:"opponent_max_hp" json:"opponent_max_hp"`
+	// Team information
+	LightSideName string             `bson:"light_side_name" json:"light_side_name"` // e.g., "Light Alliance"
+	DarkSideName  string             `bson:"dark_side_name" json:"dark_side_name"`   // e.g., "Dark Forces"
 	
 	// Turn information
 	CurrentTurn   int                `bson:"current_turn" json:"current_turn"`
+	CurrentParticipantIndex int     `bson:"current_participant_index" json:"current_participant_index"` // Index in turn order
 	MaxTurns      int                `bson:"max_turns" json:"max_turns"`
 	
 	// Battle result
 	Status        BattleStatus       `bson:"status" json:"status"`
 	Result        BattleResult       `bson:"result,omitempty" json:"result,omitempty"`
-	WinnerID      string             `bson:"winner_id,omitempty" json:"winner_id,omitempty"`
-	WinnerName    string             `bson:"winner_name,omitempty" json:"winner_name,omitempty"`
+	WinnerSide    TeamSide           `bson:"winner_side,omitempty" json:"winner_side,omitempty"`
 	
-	// Rewards (if won)
-	CoinsEarned   int                `bson:"coins_earned,omitempty" json:"coins_earned,omitempty"`
-	ExperienceGained int            `bson:"experience_gained,omitempty" json:"experience_gained,omitempty"`
+	// Rewards (calculated after battle)
+	CoinsEarned   map[string]int     `bson:"coins_earned,omitempty" json:"coins_earned,omitempty"` // participant_id -> coins
+	ExperienceGained map[string]int  `bson:"experience_gained,omitempty" json:"experience_gained,omitempty"` // participant_id -> exp
+	
+	// Metadata
+	CreatedBy     string             `bson:"created_by" json:"created_by"` // Creator username
 	
 	// Timestamps
 	StartedAt     *time.Time         `bson:"started_at,omitempty" json:"started_at,omitempty"`
@@ -88,21 +130,27 @@ type BattleTurn struct {
 	TurnNumber    int                `bson:"turn_number" json:"turn_number"`
 	
 	// Attacker info
-	AttackerID    string             `bson:"attacker_id" json:"attacker_id"`
+	AttackerID    string             `bson:"attacker_id" json:"attacker_id"` // Participant ID
 	AttackerName  string             `bson:"attacker_name" json:"attacker_name"`
-	AttackerType  string             `bson:"attacker_type" json:"attacker_type"` // "warrior" or "opponent"
+	AttackerType  ParticipantType    `bson:"attacker_type" json:"attacker_type"`
+	AttackerSide  TeamSide           `bson:"attacker_side" json:"attacker_side"`
 	
 	// Target info
-	TargetID      string             `bson:"target_id" json:"target_id"`
+	TargetID      string             `bson:"target_id" json:"target_id"` // Participant ID
 	TargetName    string             `bson:"target_name" json:"target_name"`
-	TargetType    string             `bson:"target_type" json:"target_type"`
+	TargetType    ParticipantType    `bson:"target_type" json:"target_type"`
+	TargetSide    TeamSide           `bson:"target_side" json:"target_side"`
 	
 	// Damage dealt
 	DamageDealt   int                `bson:"damage_dealt" json:"damage_dealt"`
 	CriticalHit   bool               `bson:"critical_hit" json:"critical_hit"`
 	
-	// HP after attack
+	// HP before and after attack
+	TargetHPBefore int               `bson:"target_hp_before" json:"target_hp_before"`
 	TargetHPAfter int                `bson:"target_hp_after" json:"target_hp_after"`
+	
+	// Was target defeated in this attack?
+	TargetDefeated bool              `bson:"target_defeated" json:"target_defeated"`
 	
 	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
 }
@@ -111,4 +159,3 @@ type BattleTurn struct {
 func (BattleTurn) CollectionName() string {
 	return "battle_turns"
 }
-
