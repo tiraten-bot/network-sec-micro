@@ -1,3 +1,19 @@
+// @title Dragon Service API
+// @version 1.0
+// @description Dragon service handles dragon creation, attack management, and death events. Dragons can be attacked by warriors, and death events are published to Kafka.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8084
+// @BasePath /api/v1
+// @schemes http https
+
 package main
 
 import (
@@ -5,6 +21,8 @@ import (
 	"os"
 
 	"network-sec-micro/internal/dragon"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
 )
