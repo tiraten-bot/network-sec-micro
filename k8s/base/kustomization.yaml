@@ -16,6 +16,7 @@ resources:
   - enemy.yaml
   - dragon.yaml
   - coin.yaml
+  - battle.yaml
   - gateway.yaml
 
 
