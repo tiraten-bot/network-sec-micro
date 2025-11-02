@@ -8,8 +8,9 @@ type GetBattleQuery struct {
 }
 
 // GetBattlesByWarriorQuery represents a query to get battles for a warrior
+// If WarriorID is 0, returns all battles (for emperors/kings)
 type GetBattlesByWarriorQuery struct {
-	WarriorID uint
+	WarriorID uint   // 0 means "all battles" (for emperors)
 	Status    string // "all", "pending", "in_progress", "completed"
 	Limit     int
 	Offset    int
