@@ -111,11 +111,15 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 
 		// Get all participants who damaged this target before it died
 		killerIDs := killTracker.GetKillers(battleID, target.ParticipantID)
-		killerParticipants, _ := GetParticipantObjects(ctx, battleID, killerIDs)
-
-		// Log simplified death event to Redis
+		
+		// Create target copy for async logging
+		targetCopy := target
+		battleIDCopy := battleID
+		
+		// Log simplified death event to Redis (async)
 		go func() {
-			if err := LogParticipantDefeated(ctx, battleID, &target, killerParticipants); err != nil {
+			killerParticipants, _ := GetParticipantObjects(context.Background(), battleIDCopy, killerIDs)
+			if err := LogParticipantDefeated(context.Background(), battleIDCopy, &targetCopy, killerParticipants); err != nil {
 				log.Printf("Warning: failed to log participant death: %v", err)
 			}
 		}()
