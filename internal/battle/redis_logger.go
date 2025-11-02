@@ -19,16 +19,16 @@ type BattleLogEntry struct {
 	EventType     string    `json:"event_type"` // "warrior_attack", "opponent_attack", "critical_hit", "battle_start", "battle_end"
 	AttackerID    string    `json:"attacker_id"`
 	AttackerName  string    `json:"attacker_name"`
-	AttackerType  string    `json:"attacker_type"` // "warrior" or "opponent"
+	AttackerType  string    `json:"attacker_type"` // "warrior", "enemy", "dragon", etc.
+	AttackerSide  string    `json:"attacker_side"` // "light" or "dark"
 	TargetID      string    `json:"target_id"`
 	TargetName    string    `json:"target_name"`
 	TargetType    string    `json:"target_type"`
+	TargetSide    string    `json:"target_side"` // "light" or "dark"
 	DamageDealt    int       `json:"damage_dealt"`
 	CriticalHit    bool      `json:"critical_hit"`
 	TargetHPBefore int       `json:"target_hp_before"`
 	TargetHPAfter  int       `json:"target_hp_after"`
-	WarriorHP      int       `json:"warrior_hp"`
-	OpponentHP     int       `json:"opponent_hp"`
 	Message        string    `json:"message,omitempty"`
 }
 
