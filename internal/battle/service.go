@@ -25,9 +25,11 @@ func NewService() *Service {
 }
 
 // ==================== COMMANDS (WRITE OPERATIONS) ====================
+// StartBattle is now in service_team.go
+// Attack is now in service_attack.go
 
-// StartBattle creates and starts a new battle
-func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, error) {
+// OLD FUNCTIONS BELOW - TO BE REMOVED AFTER MIGRATION
+func (s *Service) oldStartBattle(cmd dto.StartBattleCommand) (*Battle, error) {
 	ctx := context.Background()
 
 	// Validate battle type
