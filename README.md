@@ -53,11 +53,13 @@ graph TB
     WP --> MG
     E --> MG
     D --> MG
+    B --> MG
     C --> MY
     
     WP -->|Events| K
     E -->|Events| K
     D -->|Events| K
+    B -->|Events| K
     C -->|Consume| K
     WP -->|Consume| K
     
@@ -71,6 +73,7 @@ graph TB
     style C fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style D fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style PG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style MG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style MY fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
