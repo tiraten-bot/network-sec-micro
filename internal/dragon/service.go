@@ -231,8 +231,12 @@ func (s *Service) ReviveDragon(dragonID primitive.ObjectID) (*Dragon, error) {
 		return nil, errors.New("dark emperor crisis intervention required before 3rd revival")
 	}
 
-	// Revive the dragon
-	dragon.Revive()
+	// Simply update HP to full and increment revival count
+	dragon.Health = dragon.MaxHealth
+	dragon.IsAlive = true
+	dragon.RevivalCount++
+	dragon.KilledBy = ""
+	dragon.KilledAt = nil
 
 	// Update dragon in database
 	updateData := bson.M{
