@@ -133,11 +133,21 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 			}()
 		}
 
-		// If attacker is a dragon and killed a warrior, trigger Wraith of Dragon spell
+		// If attacker is a dragon and killed a warrior, trigger Wraith of Dragon spell via battlespell service
 		if attacker.Type == ParticipantTypeDragon && target.Type == ParticipantTypeWarrior && targetDefeated {
 			go func() {
-				if _, err := s.TriggerWraithOfDragon(ctx, battleID); err != nil {
-					log.Printf("Warning: failed to trigger wraith of dragon: %v", err)
+				// Call battlespell service via gRPC
+				battlespellClient := GetBattlespellClient()
+				if battlespellClient != nil {
+					req := &pbBattleSpell.TriggerWraithOfDragonRequest{
+						BattleId: battleID.Hex(),
+					}
+					resp, err := battlespellClient.TriggerWraithOfDragon(context.Background(), req)
+					if err != nil {
+						log.Printf("Warning: failed to trigger wraith of dragon via battlespell: %v", err)
+					} else if resp.Triggered {
+						log.Printf("Wraith of Dragon triggered: %s destroyed (count: %d/25)", resp.DestroyedWarriorId, resp.WraithCount)
+					}
 				}
 			}()
 		}
