@@ -805,17 +805,18 @@ func (h *Handler) SacrificeDragon(c *gin.Context) {
 }
 
 // CastSpell godoc
-// @Summary Cast a spell in battle
-// @Description Casts a spell in an ongoing battle. Only kings can cast spells for their side.
+// @Summary Cast a spell in battle (DEPRECATED - Use battlespell service)
+// @Description Casts a spell in an ongoing battle via battlespell service. Only kings can cast spells for their side.
 // @Tags battles
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param request body dto.CastSpellRequest true "Spell casting data"
-// @Success 200 {object} map[string]interface{} "success: bool, message: string"
+// @Success 200 {object} map[string]interface{} "success: bool, affected_count: int, message: string"
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 403 {object} dto.ErrorResponse
 // @Router /battles/cast-spell [post]
+// @Deprecated This endpoint is deprecated. Use battlespell service directly.
 func (h *Handler) CastSpell(c *gin.Context) {
 	user, err := GetCurrentUser(c)
 	if err != nil {
