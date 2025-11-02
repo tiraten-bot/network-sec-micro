@@ -22,7 +22,19 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
-// CreateWeapon handles weapon creation (Light Emperor/King only)
+// CreateWeapon godoc
+// @Summary Create weapon
+// @Description Create a new weapon (Light Emperor/King only). Legendary weapons cannot be created.
+// @Tags weapons
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateWeaponRequest true "Weapon creation data"
+// @Success 201 {object} dto.WeaponResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /weapons [post]
 func (h *Handler) CreateWeapon(c *gin.Context) {
 	user, err := GetCurrentUser(c)
 	if err != nil {
@@ -90,7 +102,17 @@ func (h *Handler) CreateWeapon(c *gin.Context) {
 	})
 }
 
-// GetWeapons handles getting all weapons
+// GetWeapons godoc
+// @Summary List all weapons
+// @Description Get list of all available weapons, optionally filtered by type
+// @Tags weapons
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param type query string false "Weapon type filter (sword, bow, staff)"
+// @Success 200 {object} dto.WeaponsListResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /weapons [get]
 func (h *Handler) GetWeapons(c *gin.Context) {
 	query := dto.GetWeaponsByTypeRequest{}
 	if err := c.ShouldBindQuery(&query); err == nil {
@@ -132,7 +154,18 @@ func (h *Handler) GetWeapons(c *gin.Context) {
 	})
 }
 
-// BuyWeapon handles weapon purchase
+// BuyWeapon godoc
+// @Summary Buy weapon
+// @Description Purchase a weapon. Triggers Kafka event for coin deduction via gRPC.
+// @Tags weapons
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.BuyWeaponRequest true "Weapon purchase data"
+// @Success 200 {object} map[string]string "message: string"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /weapons/buy [post]
 func (h *Handler) BuyWeapon(c *gin.Context) {
 	user, err := GetCurrentUser(c)
 	if err != nil {
