@@ -712,7 +712,7 @@ func (h *Handler) DarkEmperorJoinBattle(c *gin.Context) {
 		return
 	}
 
-	participant, err := h.Service.DarkEmperorJoinBattle(c.Request.Context(), battleID, req.DarkEmperorUsername, req.DarkEmperorUserID)
+	participant, err := h.Service.DarkEmperorJoinBattle(c.Request.Context(), battleID, req.DarkEmperorUsername, req.DarkEmperorUserID, req.DragonParticipantID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "join_failed",
