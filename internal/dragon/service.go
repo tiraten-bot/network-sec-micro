@@ -119,7 +119,14 @@ func (s *Service) AttackDragon(cmd dto.AttackDragonCommand) (*Dragon, error) {
 		dragon.KilledBy = cmd.AttackerUsername
 		dragon.KilledAt = &now
 
-		// Publish dragon death event for weapon loot
+		// If dragon can still revive and this would be before 3rd revival, mark for crisis intervention
+		if dragon.CanRevive() && dragon.RevivalCount == 2 {
+			dragon.AwaitingCrisisIntervention = true
+			updateData["awaiting_crisis_intervention"] = true
+		}
+
+		// Publish dragon death event for weapon loot (only if truly dead, not revivable)
+		// Note: In battle context, revival happens through battle service
 		go s.publishDragonDeathEvent(dragon, cmd.AttackerUsername)
 	}
 
