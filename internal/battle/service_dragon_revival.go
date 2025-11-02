@@ -203,7 +203,8 @@ func (s *Service) HandleDragonDeathInBattle(ctx context.Context, battleID primit
 }
 
 // DarkEmperorJoinBattle allows Dark Emperor to join battle during crisis
-func (s *Service) DarkEmperorJoinBattle(ctx context.Context, battleID primitive.ObjectID, darkEmperorUsername string, darkEmperorUserID string) (*BattleParticipant, error) {
+// Dark Emperor can only join when dragon has exactly 1 life left (revival_count = 2, still alive)
+func (s *Service) DarkEmperorJoinBattle(ctx context.Context, battleID primitive.ObjectID, darkEmperorUsername string, darkEmperorUserID string, dragonParticipantID string) (*BattleParticipant, error) {
 	// Verify user is Dark Emperor
 	warrior, err := GetWarriorByUsername(ctx, darkEmperorUsername)
 	if err != nil {
@@ -238,6 +239,36 @@ func (s *Service) DarkEmperorJoinBattle(ctx context.Context, battleID primitive.
 	}
 	if err != mongo.ErrNoDocuments {
 		return nil, fmt.Errorf("failed to check existing participant: %w", err)
+	}
+
+	// CRITICAL: Dark Emperor can only join when dragon has exactly 1 life left (revival_count = 2)
+	// Get dragon participant to check its status
+	var dragonParticipant BattleParticipant
+	err = BattleParticipantColl.FindOne(ctx, bson.M{
+		"battle_id":      battleID,
+		"participant_id": dragonParticipantID,
+		"type":          ParticipantTypeDragon,
+	}).Decode(&dragonParticipant)
+
+	if err != nil {
+		return nil, errors.New("dragon participant not found in battle")
+	}
+
+	// Get dragon ID
+	dragonID, err := primitive.ObjectIDFromHex(dragonParticipantID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid dragon ID: %w", err)
+	}
+
+	// Check dragon's revival count - must be exactly 2 (1 life left) and still alive
+	_, revivalCount, _, err := s.CheckDragonRevival(ctx, dragonID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check dragon status: %w", err)
+	}
+
+	// Dark Emperor can only join when dragon has 1 life left (revival_count = 2) and is still alive
+	if revivalCount != 2 || !dragonParticipant.IsAlive {
+		return nil, errors.New("dark emperor can only join battle when dragon has exactly 1 life left (revival_count = 2 and still alive)")
 	}
 
 	// Calculate Dark Emperor stats (high stats as crisis intervention)
