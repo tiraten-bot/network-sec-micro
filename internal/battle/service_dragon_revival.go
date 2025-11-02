@@ -200,14 +200,18 @@ func (s *Service) DarkEmperorJoinBattle(ctx context.Context, battleID primitive.
 	}
 
 	// Check if Dark Emperor is already in battle
-	existingParticipant, err := BattleParticipantColl.FindOne(ctx, bson.M{
+	var existingParticipant BattleParticipant
+	err = BattleParticipantColl.FindOne(ctx, bson.M{
 		"battle_id":      battleID,
 		"participant_id": darkEmperorUserID,
 		"type":          ParticipantTypeDarkEmperor,
-	}).Decode(&BattleParticipant{})
+	}).Decode(&existingParticipant)
 
-	if existingParticipant != nil {
+	if err == nil {
 		return nil, errors.New("dark emperor is already in this battle")
+	}
+	if err != mongo.ErrNoDocuments {
+		return nil, fmt.Errorf("failed to check existing participant: %w", err)
 	}
 
 	// Calculate Dark Emperor stats (high stats as crisis intervention)
@@ -383,16 +387,9 @@ func LogBattleEvent(ctx context.Context, battleID primitive.ObjectID, eventType 
 
 // getEnvOrDefault gets environment variable or returns default
 func getEnvOrDefault(key, defaultValue string) string {
-	value := getEnv(key)
-	if value == "" {
-		return defaultValue
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-	return value
-}
-
-// getEnv gets environment variable
-func getEnv(key string) string {
-	// Simplified - in production would use os.Getenv
-	return ""
+	return defaultValue
 }
 
