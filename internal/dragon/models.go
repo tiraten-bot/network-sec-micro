@@ -58,6 +58,16 @@ func (d *Dragon) IsDead() bool {
 	return !d.IsAlive
 }
 
+// CanRevive checks if dragon can still be revived (max 3 revivals)
+func (d *Dragon) CanRevive() bool {
+	return d.RevivalCount < 3
+}
+
+// NeedsCrisisIntervention checks if dragon needs dark emperor intervention before 3rd revival
+func (d *Dragon) NeedsCrisisIntervention() bool {
+	return d.RevivalCount == 2 && !d.IsAlive
+}
+
 // TakeDamage reduces dragon's health
 func (d *Dragon) TakeDamage(damage int) {
 	if d.Health > damage {
@@ -65,5 +75,20 @@ func (d *Dragon) TakeDamage(damage int) {
 	} else {
 		d.Health = 0
 		d.IsAlive = false
+	}
+}
+
+// Revive revives the dragon with full health and increments revival count
+func (d *Dragon) Revive() {
+	if d.CanRevive() {
+		d.Health = d.MaxHealth
+		d.IsAlive = true
+		d.RevivalCount++
+		d.KilledBy = ""
+		d.KilledAt = nil
+		// If this is the 2nd revival, mark for crisis intervention before 3rd
+		if d.RevivalCount == 2 {
+			d.AwaitingCrisisIntervention = false // Will be set when it dies again
+		}
 	}
 }
