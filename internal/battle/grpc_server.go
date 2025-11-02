@@ -3,9 +3,12 @@ package battle
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pb "network-sec-micro/api/proto/battle"
+	"network-sec-micro/internal/battle/dto"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,7 +36,7 @@ func (s *BattleServiceServer) GetBattleByID(ctx context.Context, req *pb.GetBatt
 	}
 
 	var battle Battle
-	err = BattleColl.FindOne(ctx, primitive.M{"_id": battleID}).Decode(&battle)
+	err = BattleColl.FindOne(ctx, bson.M{"_id": battleID}).Decode(&battle)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "battle not found")
 	}
@@ -46,7 +49,7 @@ func (s *BattleServiceServer) GetBattleByID(ctx context.Context, req *pb.GetBatt
 
 // GetActiveBattles gets active battles
 func (s *BattleServiceServer) GetActiveBattles(ctx context.Context, req *pb.GetActiveBattlesRequest) (*pb.GetActiveBattlesResponse, error) {
-	filter := primitive.M{
+	filter := bson.M{
 		"status": BattleStatusInProgress,
 	}
 
