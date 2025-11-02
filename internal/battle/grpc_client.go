@@ -19,6 +19,9 @@ var warriorGrpcConn *grpc.ClientConn
 var coinGrpcClient pbCoin.CoinServiceClient
 var coinGrpcConn *grpc.ClientConn
 
+var battlespellGrpcClient pbBattleSpell.BattleSpellServiceClient
+var battlespellGrpcConn *grpc.ClientConn
+
 // InitWarriorClient initializes the gRPC client connection to warrior service
 func InitWarriorClient(addr string) error {
 	if addr == "" {
