@@ -132,6 +132,15 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 				}
 			}()
 		}
+
+		// If attacker is a dragon and killed a warrior, trigger Wraith of Dragon spell
+		if attacker.Type == ParticipantTypeDragon && target.Type == ParticipantTypeWarrior && targetDefeated {
+			go func() {
+				if _, err := s.TriggerWraithOfDragon(ctx, battleID); err != nil {
+					log.Printf("Warning: failed to trigger wraith of dragon: %v", err)
+				}
+			}()
+		}
 	}
 
 	// Update target participant
