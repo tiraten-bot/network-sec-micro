@@ -100,7 +100,17 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	})
 }
 
-// GetWarriors returns all warriors (King only)
+// GetWarriors godoc
+// @Summary List all warriors
+// @Description Get list of all warriors (Light Emperor/King only)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "warriors: []WarriorResponse, count: int64"
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /warriors [get]
 func (h *Handler) GetWarriors(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
@@ -284,7 +294,16 @@ func (h *Handler) GetMageWarriors(c *gin.Context) {
 	})
 }
 
-// GetMyKilledMonsters lists current warrior's killed monsters
+// GetMyKilledMonsters godoc
+// @Summary Get warrior's killed monsters
+// @Description List all monsters killed by the authenticated warrior
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "kills: []KilledMonster, count: int64"
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /profile/kills [get]
 func (h *Handler) GetMyKilledMonsters(c *gin.Context) {
     warrior, err := GetCurrentWarrior(c)
     if err != nil {
