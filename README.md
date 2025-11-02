@@ -88,6 +88,7 @@ sequenceDiagram
     participant Coin as Coin Service
     participant Enemy as Enemy Service
     participant Dragon as Dragon Service
+    participant Battle as Battle Service
     participant Kafka as Kafka Events
     
     Note over Client,Dragon: Warrior Weapon Purchase Flow
