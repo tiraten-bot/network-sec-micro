@@ -8,7 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateWarrior handles warrior creation (Light Emperor/King only)
+// CreateWarrior godoc
+// @Summary Create warrior
+// @Description Create a new warrior (Light Emperor/King only)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateWarriorRequest true "Warrior creation data"
+// @Success 201 {object} dto.WarriorResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /warriors [post]
 func (h *Handler) CreateWarrior(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
