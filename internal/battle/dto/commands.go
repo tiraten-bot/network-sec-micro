@@ -4,8 +4,9 @@ package dto
 type ParticipantInfo struct {
 	ParticipantID string `json:"participant_id" binding:"required"` // Warrior ID, Enemy ID, or Dragon ID
 	Name          string `json:"name" binding:"required"`
-	Type          string `json:"type" binding:"required"` // "warrior", "enemy", "dragon", "dark_king", "dark_emperor"
+	Type          string `json:"type" binding:"required"` // "warrior", "enemy", "dragon", "dark_king", "dark_emperor", "light_king", "light_emperor"
 	Side          string `json:"side" binding:"required,oneof=light dark"` // light or dark
+	Level         int    `json:"level"` // Level for hierarchy validation
 	HP            int    `json:"hp"`
 	MaxHP         int    `json:"max_hp"`
 	AttackPower   int    `json:"attack_power"`
