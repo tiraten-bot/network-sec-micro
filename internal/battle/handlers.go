@@ -730,13 +730,13 @@ func (h *Handler) DarkEmperorJoinBattle(c *gin.Context) {
 
 // SacrificeDragon godoc
 // @Summary Sacrifice dragon and revive all dead enemies
-// @Description Dark Emperor can sacrifice a dragon (before 3rd revival) to revive all defeated enemies in battle
+// @Description Dark Emperor can sacrifice a dragon at ANY time (any revival count) to revive all defeated enemies and multiply enemy population
 // @Tags battles
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param request body dto.SacrificeDragonRequest true "Sacrifice dragon data"
-// @Success 200 {object} map[string]interface{} "revived_count: int, message: string"
+// @Success 200 {object} map[string]interface{} "revived_count: int, multiplied_count: int, total_affected: int, message: string"
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 403 {object} dto.ErrorResponse
 // @Router /battles/sacrifice-dragon [post]
