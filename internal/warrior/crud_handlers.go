@@ -285,7 +285,20 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 	})
 }
 
-// GetWarriorById handles getting a single warrior by ID
+// GetWarriorById godoc
+// @Summary Get warrior by ID
+// @Description Get warrior details by ID (own profile or King can view any)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Warrior ID"
+// @Success 200 {object} dto.WarriorResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Router /warriors/{id} [get]
 func (h *Handler) GetWarriorById(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
