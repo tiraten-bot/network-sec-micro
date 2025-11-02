@@ -7,6 +7,7 @@ type StartBattleRequest struct {
 	LightParticipants  []ParticipantInfo `json:"light_participants" binding:"required,min=1,dive"`
 	DarkParticipants   []ParticipantInfo `json:"dark_participants" binding:"required,min=1,dive"`
 	MaxTurns           int              `json:"max_turns"` // Default 100 if not specified
+	KingApprovals      []uint           `json:"king_approvals,omitempty"` // List of king IDs who approved (required if creator is a king)
 }
 
 // AttackRequest represents a request to perform an attack
