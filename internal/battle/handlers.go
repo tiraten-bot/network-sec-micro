@@ -330,9 +330,12 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
 		return
 	}
 
+	// Get participants for each battle
 	responses := make([]*dto.BattleResponse, len(battles))
 	for i, battle := range battles {
-		responses[i] = dto.ToBattleResponse(&battle)
+		lightParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battle.ID, "light")
+		darkParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battle.ID, "dark")
+		responses[i] = dto.ToBattleResponse(&battle, lightParts, darkParts)
 	}
 
 	c.JSON(http.StatusOK, dto.BattlesListResponse{
