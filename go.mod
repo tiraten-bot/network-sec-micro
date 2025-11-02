@@ -10,6 +10,9 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/wire v0.5.0
+	github.com/swaggo/files v1.0.1
+	github.com/swaggo/gin-swagger v1.6.0
+	github.com/swaggo/swag v1.16.3
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.43.0
 	google.golang.org/grpc v1.76.0
