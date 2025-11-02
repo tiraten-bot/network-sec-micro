@@ -278,16 +278,16 @@ func (s *Service) DarkEmperorJoinBattle(ctx context.Context, battleID primitive.
 	return participant, nil
 }
 
-// SacrificeDragonAndReviveEnemies sacrifices a dragon to revive all dead enemies in battle
-func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID primitive.ObjectID, dragonParticipantID string, darkEmperorUsername string) (int, error) {
+// SacrificeDragonAndReviveEnemies sacrifices a dragon to revive all dead enemies and multiply enemy population
+func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID primitive.ObjectID, dragonParticipantID string, darkEmperorUsername string) (int, int, error) {
 	// Verify user is Dark Emperor
 	warrior, err := GetWarriorByUsername(ctx, darkEmperorUsername)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get warrior info: %w", err)
+		return 0, 0, fmt.Errorf("failed to get warrior info: %w", err)
 	}
 
 	if warrior.Role != "dark_emperor" {
-		return 0, errors.New("only dark emperor can sacrifice dragon")
+		return 0, 0, errors.New("only dark emperor can sacrifice dragon")
 	}
 
 	// Get dragon participant
@@ -299,58 +299,96 @@ func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID 
 	}).Decode(&dragonParticipant)
 
 	if err != nil {
-		return 0, errors.New("dragon participant not found in battle")
+		return 0, 0, errors.New("dragon participant not found in battle")
 	}
 
 	// Get dragon ID
 	dragonID, err := primitive.ObjectIDFromHex(dragonParticipantID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid dragon ID: %w", err)
+		return 0, 0, fmt.Errorf("invalid dragon ID: %w", err)
 	}
 
-	// Verify dragon was created by this dark emperor (would need to check via dragon service)
-	// For now, we'll skip this check or make HTTP call to dragon service
-
-	// Mark dragon as permanently dead (sacrificed)
-	dragonParticipant.HP = 0
-	dragonParticipant.IsAlive = false
-	dragonParticipant.IsDefeated = true
-	dragonParticipant.UpdatedAt = time.Now()
-
-	updateDragon := bson.M{
-		"hp":         dragonParticipant.HP,
-		"is_alive":   false,
-		"is_defeated": true,
-		"updated_at": dragonParticipant.UpdatedAt,
-	}
-
-	_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{"_id": dragonParticipant.ID}, bson.M{"$set": updateDragon})
+	// Get dragon's revival count from dragon service to determine multiplier
+	_, revivalCount, _, err := s.CheckDragonRevival(ctx, dragonID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to sacrifice dragon: %w", err)
+		log.Printf("Warning: failed to check dragon revival status: %v, assuming revival_count = 0", err)
+		revivalCount = 0
 	}
 
-	// Get all defeated enemy participants in this battle
-	filter := bson.M{
-		"battle_id":   battleID,
-		"type":        ParticipantTypeEnemy,
-		"is_defeated": true,
-		"side":        TeamSideDark,
+	// Determine multiplier based on dragon state:
+	// - revival_count = 0 (never died, full HP): 3x multiplier, dragon stays alive
+	// - revival_count = 1 (died once, 2 lives left): 2x multiplier, dragon sacrificed
+	// - revival_count >= 2 (2 lives left or less): 1x multiplier (just revive), dragon sacrificed
+	var multiplier int
+	var dragonSacrificed bool
+	
+	if revivalCount == 0 && dragonParticipant.IsAlive {
+		// Dragon never died - 3x multiplier, dragon stays alive
+		multiplier = 3
+		dragonSacrificed = false
+	} else if revivalCount == 1 && dragonParticipant.IsAlive {
+		// Dragon has 2 lives left - 2x multiplier, dragon sacrificed
+		multiplier = 2
+		dragonSacrificed = true
+	} else {
+		// Dragon already dead or has less than 2 lives - just revive defeated enemies
+		multiplier = 1
+		dragonSacrificed = true
 	}
 
-	cursor, err := BattleParticipantColl.Find(ctx, filter)
+	// Mark dragon as sacrificed if needed
+	if dragonSacrificed {
+		dragonParticipant.HP = 0
+		dragonParticipant.IsAlive = false
+		dragonParticipant.IsDefeated = true
+		dragonParticipant.UpdatedAt = time.Now()
+
+		updateDragon := bson.M{
+			"hp":          dragonParticipant.HP,
+			"is_alive":    false,
+			"is_defeated": true,
+			"updated_at":  dragonParticipant.UpdatedAt,
+		}
+
+		_, err = BattleParticipantColl.UpdateOne(ctx, bson.M{"_id": dragonParticipant.ID}, bson.M{"$set": updateDragon})
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to sacrifice dragon: %w", err)
+		}
+	}
+
+	// Get all enemy participants (alive + defeated) to use as templates for multiplication
+	enemyFilter := bson.M{
+		"battle_id": battleID,
+		"type":      ParticipantTypeEnemy,
+		"side":      TeamSideDark,
+	}
+
+	enemyCursor, err := BattleParticipantColl.Find(ctx, enemyFilter)
 	if err != nil {
-		return 0, fmt.Errorf("failed to find defeated enemies: %w", err)
+		return 0, 0, fmt.Errorf("failed to find enemies: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer enemyCursor.Close(ctx)
 
-	var enemies []BattleParticipant
-	if err := cursor.All(ctx, &enemies); err != nil {
-		return 0, fmt.Errorf("failed to decode enemies: %w", err)
+	var allEnemies []BattleParticipant
+	if err := enemyCursor.All(ctx, &allEnemies); err != nil {
+		return 0, 0, fmt.Errorf("failed to decode enemies: %w", err)
+	}
+
+	// Separate defeated and alive enemies
+	var defeatedEnemies []BattleParticipant
+	var aliveEnemies []BattleParticipant
+	
+	for _, enemy := range allEnemies {
+		if enemy.IsDefeated {
+			defeatedEnemies = append(defeatedEnemies, enemy)
+		} else {
+			aliveEnemies = append(aliveEnemies, enemy)
+		}
 	}
 
 	// Revive all defeated enemies
 	revivedCount := 0
-	for _, enemy := range enemies {
+	for _, enemy := range defeatedEnemies {
 		enemy.HP = enemy.MaxHP
 		enemy.IsAlive = true
 		enemy.IsDefeated = false
@@ -374,20 +412,63 @@ func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID 
 		revivedCount++
 	}
 
+	// Multiply enemy population: add (multiplier - 1) copies of each enemy
+	// Use all enemies (alive + revived) as templates
+	templateEnemies := append(aliveEnemies, defeatedEnemies...)
+	multipliedCount := 0
+	newParticipants := []interface{}{}
+
+	now := time.Now()
+	for _, template := range templateEnemies {
+		// Create (multiplier - 1) new copies
+		for i := 0; i < multiplier-1; i++ {
+			newEnemy := &BattleParticipant{
+				BattleID:      battleID,
+				ParticipantID: fmt.Sprintf("%s_copy_%d_%d", template.ParticipantID, time.Now().Unix(), i), // Unique ID
+				Name:          fmt.Sprintf("%s (Clone %d)", template.Name, i+1),
+				Type:          ParticipantTypeEnemy,
+				Side:          TeamSideDark,
+				HP:            template.MaxHP, // Full HP
+				MaxHP:         template.MaxHP,
+				AttackPower:   template.AttackPower,
+				Defense:       template.Defense,
+				IsAlive:       true,
+				IsDefeated:    false,
+				CreatedAt:     now,
+				UpdatedAt:     now,
+			}
+			newParticipants = append(newParticipants, newEnemy)
+			multipliedCount++
+		}
+	}
+
+	// Insert new enemy participants if any
+	if len(newParticipants) > 0 {
+		_, err = BattleParticipantColl.InsertMany(ctx, newParticipants)
+		if err != nil {
+			log.Printf("Warning: failed to add multiplied enemies: %v", err)
+			// Continue anyway - at least revived enemies
+		}
+	}
+
 	// Log to Redis
 	go func() {
-		message := fmt.Sprintf("💀 DRAGON FEDAKARLIĞI: Dark Emperor %s tarafından %s feda edildi! %d düşman yeniden canlandı!",
-			darkEmperorUsername, dragonParticipant.Name, revivedCount)
+		sacrificeStatus := "korundu"
+		if dragonSacrificed {
+			sacrificeStatus = "feda edildi"
+		}
+		message := fmt.Sprintf("💀 DRAGON FEDAKARLIĞI: Dark Emperor %s tarafından %s %s! %d düşman canlandı, %d yeni düşman oluşturuldu (Toplam: %dx çarpan)",
+			darkEmperorUsername, dragonParticipant.Name, sacrificeStatus, revivedCount, multipliedCount, multiplier)
 		if err := LogBattleEvent(ctx, battleID, "dragon_sacrifice", message); err != nil {
 			log.Printf("Failed to log dragon sacrifice: %v", err)
 		}
 	}()
 
-	log.Printf("Dark Emperor %s sacrificed dragon %s and revived %d enemies in battle %s",
-		darkEmperorUsername, dragonParticipant.Name, revivedCount, battleID.Hex())
+	totalAffected := revivedCount + multipliedCount
+	log.Printf("Dark Emperor %s sacrificed dragon %s (revival_count=%d, sacrificed=%v) - Revived: %d, Multiplied: %d (multiplier=%dx) in battle %s",
+		darkEmperorUsername, dragonParticipant.Name, revivalCount, dragonSacrificed, revivedCount, multipliedCount, multiplier, battleID.Hex())
 
-	return revivedCount, nil
-}
+	return revivedCount, multipliedCount, nil
 
 // LogBattleEvent logs a battle event to Redis (simplified helper)
 func LogBattleEvent(ctx context.Context, battleID primitive.ObjectID, eventType string, message string) error {
