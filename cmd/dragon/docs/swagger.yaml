@@ -1,0 +1,21 @@
+basePath: /api/v1
+host: localhost:8084
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Dragon service handles dragon creation, attack management, and death
+    events. Dragons can be attacked by warriors, and death events are published to
+    Kafka.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Dragon Service API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+- https
+swagger: "2.0"
