@@ -74,8 +74,10 @@ func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
 
 		// Track specific types
 		if pType == ParticipantTypeWarrior {
-			// Warrior level check: warriors cannot exceed king level
-			// This is automatic since LevelWarrior < LevelLightKing
+			// Validate warrior level
+			if p.Level > 1 {
+				return fmt.Errorf("warriors cannot exceed level 1, found level %d for %s", p.Level, p.Name)
+			}
 		} else if p.Type == "light_king" {
 			hasLightKing = true
 		} else if p.Type == "light_emperor" {
@@ -83,13 +85,13 @@ func ValidateBattleParticipants(cmd dto.StartBattleCommand) error {
 		}
 	}
 
-	// Validate: Warriors cannot be at a level higher than king
-	// Since LevelWarrior (1) < LevelLightKing (2), this is always satisfied
-	// But we check explicitly: if there's a king, warriors must be level 1
-	if hasLightKing || hasLightEmperor {
-		for _, p := range cmd.LightParticipants {
-			if p.Type == "warrior" && GetParticipantLevel(ParticipantTypeWarrior) >= LevelLightKing {
-				return errors.New("warriors cannot be at king level or higher")
+	// Validate: Warriors cannot be at king level or higher
+	// Warriors (knight, archer, mage) are always level 1
+	// If there's a light_king or light_emperor in the team, warriors must still be level 1
+	for _, p := range cmd.LightParticipants {
+		if p.Type == "warrior" {
+			if p.Level > 1 {
+				return fmt.Errorf("warrior %s has level %d, but warriors cannot exceed level 1", p.Name, p.Level)
 			}
 		}
 	}
