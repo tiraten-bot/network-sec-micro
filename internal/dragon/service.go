@@ -55,6 +55,8 @@ func (s *Service) CreateDragon(cmd dto.CreateDragonCommand) (*Dragon, error) {
 		Defense:     defense,
 		CreatedBy:   cmd.CreatedBy,
 		IsAlive:     true,
+		RevivalCount: 0,
+		AwaitingCrisisIntervention: false,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
