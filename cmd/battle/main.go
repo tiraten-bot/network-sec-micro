@@ -58,6 +58,12 @@ func main() {
 		log.Fatalf("Failed to connect to Coin gRPC: %v", err)
 	}
 
+	// Initialize Redis client for battle logs
+	if err := battle.InitRedisClient(); err != nil {
+		log.Printf("Warning: Failed to connect to Redis (battle logs will not be available): %v", err)
+		// Don't fail startup if Redis is not available
+	}
+
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
@@ -75,6 +81,7 @@ func main() {
 		battle.CloseKafkaPublisher()
 		battle.CloseWarriorClient()
 		battle.CloseCoinClient()
+		battle.CloseRedisClient()
 	}()
 
 	// Create Gin router
