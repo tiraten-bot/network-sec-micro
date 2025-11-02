@@ -237,6 +237,10 @@ func (s *Service) ReviveDragon(dragonID primitive.ObjectID) (*Dragon, error) {
 	dragon.RevivalCount++
 	dragon.KilledBy = ""
 	dragon.KilledAt = nil
+	
+	// Check if next death will need crisis intervention
+	needsCrisisNext := dragon.RevivalCount == 2
+	dragon.AwaitingCrisisIntervention = false
 
 	// Update dragon in database
 	updateData := bson.M{
@@ -253,6 +257,23 @@ func (s *Service) ReviveDragon(dragonID primitive.ObjectID) (*Dragon, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to update dragon: %w", err)
 	}
+
+	// Publish dragon revival event to Kafka
+	go func() {
+		event := kafka.NewDragonRevivalEvent(
+			dragon.ID.Hex(),
+			dragon.Name,
+			string(dragon.Type),
+			dragon.Level,
+			dragon.MaxHealth,
+			dragon.RevivalCount,
+			"", // battle_id - can be set by battle service if needed
+			needsCrisisNext,
+		)
+		if err := PublishDragonRevivalEvent(event); err != nil {
+			fmt.Printf("Failed to publish dragon revival event: %v", err)
+		}
+	}()
 
 	return &dragon, nil
 }
