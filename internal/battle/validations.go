@@ -37,6 +37,13 @@ func GetParticipantLevel(pType ParticipantType) ParticipantLevel {
 	case ParticipantTypeEnemy:
 		return LevelEnemy
 	default:
+		// Check for light_king and light_emperor by string comparison
+		if string(pType) == "light_king" {
+			return LevelLightKing
+		}
+		if string(pType) == "light_emperor" {
+			return LevelLightEmperor
+		}
 		return 0
 	}
 }
