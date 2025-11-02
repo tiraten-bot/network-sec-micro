@@ -452,3 +452,110 @@ func (h *Handler) GetBattleStats(c *gin.Context) {
 	c.JSON(http.StatusOK, stats)
 }
 
+// GetBattleLogs godoc
+// @Summary Get battle logs from Redis
+// @Description Get real-time battle logs stored in Redis. Returns all battle events including attacks, critical hits, and battle state changes.
+// @Tags battles
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Battle ID"
+// @Param limit query int false "Limit number of logs (default 100, max 1000)"
+// @Param from_turn query int false "Start turn number"
+// @Param to_turn query int false "End turn number"
+// @Success 200 {object} map[string]interface{} "logs: []BattleLogEntry, count: int"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Router /battles/{id}/logs [get]
+func (h *Handler) GetBattleLogs(c *gin.Context) {
+	battleID := c.Param("id")
+	if battleID == "" {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "battle ID is required",
+		})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(battleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid battle ID format",
+		})
+		return
+	}
+
+	// Check if battle exists and user has access
+	query := dto.GetBattleQuery{
+		BattleID: objectID,
+	}
+
+	battle, err := h.Service.GetBattle(query)
+	if err != nil {
+		if err.Error() == "battle not found" {
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{
+				Error:   "not_found",
+				Message: "Battle not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// RBAC check
+	if !CheckBattleAccess(c, battle.WarriorID) {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "You do not have permission to view this battle's logs",
+		})
+		return
+	}
+
+	ctx := c.Request.Context()
+	var logs []BattleLogEntry
+
+	// Check if turn range query is provided
+	fromTurnStr := c.Query("from_turn")
+	toTurnStr := c.Query("to_turn")
+	
+	if fromTurnStr != "" && toTurnStr != "" {
+		fromTurn, _ := strconv.Atoi(fromTurnStr)
+		toTurn, _ := strconv.Atoi(toTurnStr)
+		
+		if fromTurn >= 0 && toTurn >= fromTurn {
+			logs, err = GetBattleLogsByTurnRange(ctx, objectID, fromTurn, toTurn)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+					Error:   "internal_error",
+					Message: fmt.Sprintf("Failed to retrieve battle logs: %v", err),
+				})
+				return
+			}
+		}
+	}
+
+	// If no turn range or if range query failed, get all logs
+	if logs == nil {
+		limit, _ := strconv.ParseInt(c.DefaultQuery("limit", "100"), 10, 64)
+		logs, err = GetBattleLogs(ctx, objectID, limit)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+				Error:   "internal_error",
+				Message: fmt.Sprintf("Failed to retrieve battle logs: %v", err),
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"battle_id": battleID,
+		"logs":      logs,
+		"count":     len(logs),
+	})
+}
+
