@@ -40,17 +40,42 @@ func (s *Service) ReviveDragonInBattle(ctx context.Context, battleID primitive.O
 		return nil, fmt.Errorf("invalid dragon ID format: %w", err)
 	}
 
-	// Call dragon service to check if dragon can revive and get current revival count
-	// Since dragon service is HTTP, we'll need to make HTTP call
-	// For now, we'll assume we can check revival through a direct call
-	// In production, we'd make HTTP call to dragon service
-	// For simplicity, we'll add logic to check revival in battle context
+	// Check dragon's revival status via HTTP call to dragon service
+	canRevive, revivalCount, needsCrisisIntervention, err := s.CheckDragonRevival(ctx, dragonObjectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check dragon revival status: %w", err)
+	}
+
+	if !canRevive {
+		return nil, fmt.Errorf("dragon has exceeded maximum revival count (3), current: %d", revivalCount)
+	}
+
+	if needsCrisisIntervention {
+		return nil, errors.New("dark emperor crisis intervention required before 3rd revival")
+	}
+
+	// Update dragon's revival count in dragon service
+	// Make HTTP PATCH/PUT call to dragon service to increment revival count
+	dragonServiceURL := getEnvOrDefault("DRAGON_SERVICE_URL", "http://localhost:8084")
+	updateURL := fmt.Sprintf("%s/api/v1/dragons/%s/revive", dragonServiceURL, dragonObjectID.Hex())
 	
-	// Check revival count - we'll store this in participant metadata or query dragon service
-	// Since we can't easily make HTTP calls here, we'll add a field to track revival in battle participant
-	// For now, let's assume we need to call dragon service via HTTP
+	req, err := http.NewRequestWithContext(ctx, "POST", updateURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create revive request: %w", err)
+	}
 	
-	// Revive the participant
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Warning: failed to update dragon revival count in dragon service: %v", err)
+		// Continue anyway - battle participant will be revived
+	} else {
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Warning: dragon service returned status %d for revival", resp.StatusCode)
+		}
+	}
+
+	// Simply revive the participant - set HP to full
 	participant.HP = participant.MaxHP
 	participant.IsAlive = true
 	participant.IsDefeated = false
