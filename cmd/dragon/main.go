@@ -79,6 +79,9 @@ func main() {
 	// Setup routes
 	dragon.SetupRoutes(r, handler)
 
+	// Swagger docs
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
