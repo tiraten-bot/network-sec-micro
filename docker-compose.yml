@@ -235,6 +235,7 @@ services:
       WARRIOR_GRPC_ADDR: warrior:50052
       COIN_GRPC_ADDR: coin:50051
       KAFKA_BROKERS: kafka:9092
+      REDIS_ADDR: redis:6379
       GIN_MODE: release
       PORT: 8085
     ports:
@@ -246,6 +247,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - warrior-network
     restart: unless-stopped
