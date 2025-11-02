@@ -37,6 +37,7 @@ build:
 	go build -o bin/enemy cmd/enemy/main.go
 	go build -o bin/dragon cmd/dragon/main.go
 	go build -o bin/battle cmd/battle/main.go
+	go build -o bin/battlespell cmd/battlespell/main.go
 
 run:
 	go run cmd/warrior/main.go
