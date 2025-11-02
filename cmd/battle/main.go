@@ -63,9 +63,11 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize service and handler
-	service := battle.NewService()
-	handler := battle.NewHandler(service)
+	// Initialize service and handler using Wire
+	service, handler, err := InitializeApp()
+	if err != nil {
+		log.Fatalf("Failed to initialize app with Wire: %v", err)
+	}
 
 	// Setup graceful shutdown
 	defer func() {
