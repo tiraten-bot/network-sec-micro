@@ -15,6 +15,9 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 			// Battle CRUD operations
 			protected.POST("/battles", handler.StartBattle)
 			protected.POST("/battles/attack", handler.Attack)
+			protected.POST("/battles/revive-dragon", handler.ReviveDragon)
+			protected.POST("/battles/dark-emperor-join", handler.DarkEmperorJoinBattle)
+			protected.POST("/battles/sacrifice-dragon", handler.SacrificeDragon)
 
 			// RBAC protected routes
 			rbac := protected.Group("")
