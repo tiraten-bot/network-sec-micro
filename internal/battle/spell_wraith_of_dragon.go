@@ -47,9 +47,9 @@ func (s *Service) CastWraithOfDragon(ctx context.Context, battleID primitive.Obj
 		CasterRole:    "dark_king",
 		WraithCount:   0, // Start at 0, max 25
 		IsActive:      true,
-		CastAt:        battle.UpdatedAt,
-		CreatedAt:     battle.UpdatedAt,
-		UpdatedAt:     battle.UpdatedAt,
+		CastAt:        time.Now(),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	_, err = SpellColl.InsertOne(ctx, spell)
