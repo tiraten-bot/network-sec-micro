@@ -307,6 +307,8 @@ services:
         condition: service_started
       weapon:
         condition: service_started
+      battlespell:
+        condition: service_started
     networks:
       - warrior-network
     restart: unless-stopped
