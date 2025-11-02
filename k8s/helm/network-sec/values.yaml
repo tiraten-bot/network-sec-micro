@@ -6,6 +6,7 @@ images:
   enemy:   { repository: enemy,   tag: latest, pullPolicy: IfNotPresent }
   dragon:  { repository: dragon,  tag: latest, pullPolicy: IfNotPresent }
   coin:    { repository: coin,    tag: latest, pullPolicy: IfNotPresent }
+  battle:  { repository: battle,  tag: latest, pullPolicy: IfNotPresent }
   gateway: { repository: fiber-gateway, tag: latest, pullPolicy: IfNotPresent }
 
 replicas:
@@ -14,6 +15,7 @@ replicas:
   enemy: 1
   dragon: 1
   coin: 1
+  battle: 1
   gateway: 1
 
 env:
@@ -36,6 +38,7 @@ env:
     dragonDB: dragon_db
     enemyDB: enemy_db
     weaponDB: weapon_db
+    battleDB: battle_db
 
 ingress:
   enabled: true
