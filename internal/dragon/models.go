@@ -77,18 +77,3 @@ func (d *Dragon) TakeDamage(damage int) {
 		d.IsAlive = false
 	}
 }
-
-// Revive revives the dragon with full health and increments revival count
-func (d *Dragon) Revive() {
-	if d.CanRevive() {
-		d.Health = d.MaxHealth
-		d.IsAlive = true
-		d.RevivalCount++
-		d.KilledBy = ""
-		d.KilledAt = nil
-		// If this is the 2nd revival, mark for crisis intervention before 3rd
-		if d.RevivalCount == 2 {
-			d.AwaitingCrisisIntervention = false // Will be set when it dies again
-		}
-	}
-}
