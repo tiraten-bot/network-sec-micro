@@ -30,6 +30,14 @@ go build -o bin/enemy cmd/enemy/main.go
 echo "🐉 Building dragon service..."
 go build -o bin/dragon cmd/dragon/main.go
 
+# Build battle service
+echo "⚔️ Building battle service..."
+go build -o bin/battle cmd/battle/main.go
+
+# Build fiber-gateway
+echo "🌐 Building fiber-gateway..."
+go build -o bin/fiber-gateway ./fiber-gateway
+
 echo "✅ All services built successfully!"
 echo "📦 Binaries location: ./bin/"
 echo "   - warrior (HTTP API)"
@@ -37,3 +45,5 @@ echo "   - weapon (HTTP API)"
 echo "   - coin (gRPC API)"
 echo "   - enemy (HTTP API)"
 echo "   - dragon (HTTP API)"
+echo "   - battle (HTTP API)"
+echo "   - fiber-gateway (API Gateway)"
