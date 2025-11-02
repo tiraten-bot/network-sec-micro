@@ -56,7 +56,10 @@ func (s *Service) CastSpell(ctx context.Context, cmd dto.CastSpellCommand) (int,
 			return 0, errors.New("dragon_participant_id and dark_emperor_participant_id are required for Dragon Emperor spell")
 		}
 		err := s.CastDragonEmperor(ctx, battleID, cmd.TargetDragonID, cmd.TargetDarkEmperorID, cmd.CasterUsername, cmd.CasterUserID)
-		return 1, err
+		if err != nil {
+			return 0, err
+		}
+		return 1, nil
 
 	case SpellDestroyTheLight:
 		count, err := s.CastDestroyTheLight(ctx, battleID, cmd.CasterUsername, cmd.CasterUserID)
@@ -64,7 +67,10 @@ func (s *Service) CastSpell(ctx context.Context, cmd dto.CastSpellCommand) (int,
 
 	case SpellWraithOfDragon:
 		err := s.CastWraithOfDragon(ctx, battleID, cmd.CasterUsername, cmd.CasterUserID)
-		return 1, err
+		if err != nil {
+			return 0, err
+		}
+		return 1, nil
 
 	default:
 		return 0, errors.New("spell not implemented")
