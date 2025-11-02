@@ -97,13 +97,14 @@ func (s *Service) ReviveDragonInBattle(ctx context.Context, battleID primitive.O
 
 	// Log revival to Redis
 	go func() {
-		message := fmt.Sprintf("🐉 %s revived! HP: %d/%d", participant.Name, participant.HP, participant.MaxHP)
+		message := fmt.Sprintf("🐉 %s revived! HP: %d/%d (Revival: %d/3)", participant.Name, participant.HP, participant.MaxHP, revivalCount+1)
 		if err := LogBattleEvent(ctx, battleID, "dragon_revival", message); err != nil {
 			log.Printf("Failed to log dragon revival: %v", err)
 		}
 	}()
 
-	log.Printf("Dragon %s (participant %s) revived in battle %s", participant.Name, dragonParticipantID, battleID.Hex())
+	log.Printf("Dragon %s (participant %s) revived in battle %s - revival count: %d/3", 
+		participant.Name, dragonParticipantID, battleID.Hex(), revivalCount+1)
 	return &participant, nil
 }
 
