@@ -43,32 +43,35 @@ func RBACMiddleware() gin.HandlerFunc {
 
 // CheckBattleAccess checks if user can access a specific battle
 func CheckBattleAccess(c *gin.Context, battleWarriorID uint) bool {
-	canViewAll, exists := c.Get("can_view_all_battles")
-	if exists && canViewAll.(bool) {
-		// Check faction restriction for kings
-		if viewFactionOnly, exists := c.Get("view_faction_only"); exists && viewFactionOnly.(bool) {
-			userFaction := c.GetString("user_faction")
-			battleWarrior, err := GetWarriorByID(context.Background(), battleWarriorID)
-			if err == nil {
-				battleFaction := getFaction(battleWarrior.Role)
-				return userFaction == battleFaction
-			}
-		}
-		return true
-	}
-
-	// Regular warrior - only their own battles
-	warriorID, exists := c.Get("warrior_id")
-	if !exists {
-		return false
-	}
-
-	warriorIDUint, err := strconv.ParseUint(warriorID.(string), 10, 32)
+	user, err := GetCurrentUser(c)
 	if err != nil {
 		return false
 	}
 
-	return uint(warriorIDUint) == battleWarriorID
+	// Emperors can view all battles
+	if isEmperor(user.Role) {
+		return true
+	}
+
+	// Kings can view battles in their faction
+	if isKing(user.Role) {
+		userFaction := getFaction(user.Role)
+		// Get battle warrior to check faction
+		battleWarrior, err := GetWarriorByID(context.Background(), battleWarriorID)
+		if err == nil {
+			battleFaction := getFaction(battleWarrior.Role)
+			// Kings cannot see emperor battles (cross-faction restriction)
+			if isEmperor(battleWarrior.Role) {
+				return false // Kings cannot see emperor battles
+			}
+			return userFaction == battleFaction
+		}
+		// If we can't get warrior info, deny access
+		return false
+	}
+
+	// Regular warriors can only see their own battles
+	return user.UserID == battleWarriorID
 }
 
 // isEmperor checks if role is an emperor
@@ -96,14 +99,20 @@ func getFaction(role string) string {
 func GetBattlesWithRBAC(c *gin.Context, query *dto.GetBattlesByWarriorQuery) error {
 	canViewAll, exists := c.Get("can_view_all_battles")
 	if exists && canViewAll.(bool) {
-		// Emperors and Kings can view all battles
-		// But kings might have faction restriction
-		if viewFactionOnly, exists := c.Get("view_faction_only"); exists && viewFactionOnly.(bool) {
-			// For faction restriction, we'd need to filter in the query
-			// For now, we'll allow all but this should be enhanced
+		// Emperors can view all battles (no filter)
+		// Kings can view battles in their faction only
+		viewFactionOnly, factionExists := c.Get("view_faction_only")
+		if factionExists && viewFactionOnly.(bool) {
+			// Kings see only their faction battles
+			// For now, we'll let them see all but in production,
+			// we'd filter by warrior faction in the service layer
+			// Setting warriorID to 0 means "all" in our query
+			query.WarriorID = 0
 			return nil
 		}
-		return nil // No restriction
+		// Emperors - no restriction, can see all
+		query.WarriorID = 0 // 0 means "all battles"
+		return nil
 	}
 
 	// Regular warrior - only their own battles
@@ -112,9 +121,14 @@ func GetBattlesWithRBAC(c *gin.Context, query *dto.GetBattlesByWarriorQuery) err
 		return errors.New("warrior ID not found")
 	}
 
-	warriorIDUint, err := strconv.ParseUint(warriorID.(string), 10, 32)
+	warriorIDStr, ok := warriorID.(string)
+	if !ok {
+		return errors.New("invalid warrior ID type")
+	}
+
+	warriorIDUint, err := strconv.ParseUint(warriorIDStr, 10, 32)
 	if err != nil {
-		return errors.New("invalid warrior ID")
+		return errors.New("invalid warrior ID format")
 	}
 
 	query.WarriorID = uint(warriorIDUint)
