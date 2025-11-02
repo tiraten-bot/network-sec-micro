@@ -123,7 +123,7 @@ func PublishBattleStartedEvent(battleID string, battleType BattleType, warriorID
 		OpponentType:  opponentType,
 	}
 
-	topic := "battle.started"
+	topic := kafka.TopicBattleStarted
 	if err := publisher.Publish(topic, event); err != nil {
 		return fmt.Errorf("failed to publish battle started event: %w", err)
 	}
@@ -154,7 +154,7 @@ func PublishBattleCompletedEvent(battleID string, battleType BattleType, warrior
 		TotalTurns:       totalTurns,
 	}
 
-	topic := "battle.completed"
+	topic := kafka.TopicBattleCompleted
 	if err := publisher.Publish(topic, event); err != nil {
 		return fmt.Errorf("failed to publish battle completed event: %w", err)
 	}
