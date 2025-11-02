@@ -7,11 +7,12 @@ install:
 wire:
 	cd cmd/warrior && wire
 	cd cmd/battle && wire
+	cd cmd/battlespell && wire
 
 # Generate protobuf code
 proto:
 	@echo "🔨 Generating protobuf code..."
-	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior api/proto/battle
+	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior api/proto/battle api/proto/battlespell
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/coin/coin.proto
@@ -24,6 +25,9 @@ proto:
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/battle/battle.proto
+	@protoc --go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		api/proto/battlespell/battlespell.proto
 	@echo "✅ Protobuf code generated!"
 
 build:
