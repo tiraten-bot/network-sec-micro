@@ -838,7 +838,6 @@ func (h *Handler) CastSpell(c *gin.Context) {
 		return
 	}
 
-	// Additional validation: Check if spell type matches user's side
 	var req dto.CastSpellRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
@@ -848,17 +847,7 @@ func (h *Handler) CastSpell(c *gin.Context) {
 		return
 	}
 
-	spellType := SpellType(req.SpellType)
-	if !spellType.CanBeCastBy(user.Role) {
-		c.JSON(http.StatusForbidden, dto.ErrorResponse{
-			Error:   "forbidden",
-			Message: fmt.Sprintf("spell %s cannot be cast by role %s", req.SpellType, user.Role),
-		})
-		c.Abort()
-		return
-	}
-
-	// Call battlespell service via gRPC
+	// Call battlespell service via gRPC (spell type validation will be done by battlespell service)
 	battlespellClient := GetBattlespellClient()
 	if battlespellClient == nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
