@@ -8,9 +8,9 @@ import (
 	"network-sec-micro/internal/battle"
 )
 
-// InitializeApp initializes the application using Wire
-func InitializeApp() (*battle.Service, *battle.Handler, error) {
+// InitializeApp initializes the application using Wire (CQRS pattern)
+func InitializeApp() (*battle.Service, *battle.Handler, *battle.BattleServiceServer, error) {
 	wire.Build(battle.ProviderSet)
-	return nil, nil, nil
+	return nil, nil, nil, nil
 }
 
