@@ -52,6 +52,38 @@ type DragonDeathEvent struct {
 	LootWeaponName  string `json:"loot_weapon_name"`
 }
 
+// DragonRevivalEvent represents dragon revival event
+type DragonRevivalEvent struct {
+	Event
+	DragonID            string `json:"dragon_id"`
+	DragonName          string `json:"dragon_name"`
+	DragonType          string `json:"dragon_type"`
+	DragonLevel         int    `json:"dragon_level"`
+	DragonMaxHealth     int    `json:"dragon_max_health"`
+	RevivalCount        int    `json:"revival_count"`
+	BattleID            string `json:"battle_id,omitempty"` // Optional: if revived in battle context
+	AwaitingCrisisIntervention bool `json:"awaiting_crisis_intervention"` // True if next death needs crisis intervention
+}
+
+// NewDragonRevivalEvent creates a new dragon revival event
+func NewDragonRevivalEvent(dragonID, dragonName, dragonType string, dragonLevel, dragonMaxHealth, revivalCount int, battleID string, awaitingCrisisIntervention bool) *DragonRevivalEvent {
+	return &DragonRevivalEvent{
+		Event: Event{
+			EventType:     "dragon_revival",
+			Timestamp:     time.Now(),
+			SourceService: "dragon",
+		},
+		DragonID:                  dragonID,
+		DragonName:                dragonName,
+		DragonType:                dragonType,
+		DragonLevel:               dragonLevel,
+		DragonMaxHealth:           dragonMaxHealth,
+		RevivalCount:              revivalCount,
+		BattleID:                  battleID,
+		AwaitingCrisisIntervention: awaitingCrisisIntervention,
+	}
+}
+
 // EnemyDestroyedEvent represents when a warrior destroys an enemy
 type EnemyDestroyedEvent struct {
     Event
@@ -89,6 +121,7 @@ const (
 	TopicWeaponPurchase = "weapon.purchase"
 	TopicCoinDeduct     = "coin.deduct"
 	TopicDragonDeath    = "dragon.death"
+	TopicDragonRevival  = "dragon.revival"
 	TopicEnemyDestroyed = "enemy.destroyed"
 	TopicBattleStarted  = "battle.started"
 	TopicBattleCompleted = "battle.completed"
