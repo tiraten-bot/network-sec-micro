@@ -544,10 +544,10 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		}
 	}
 
-	// If no turn range or if range query failed, get all logs
+	// If no turn range or if range query failed, get all logs (simplified)
 	if logs == nil {
 		limit, _ := strconv.ParseInt(c.DefaultQuery("limit", "100"), 10, 64)
-		logs, err = GetBattleLogs(ctx, objectID, limit)
+		simpleLogs, err := GetSimpleBattleLogs(ctx, objectID, limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 				Error:   "internal_error",
@@ -555,6 +555,19 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 			})
 			return
 		}
+		
+		// Convert to generic format for response
+		logsArray := make([]interface{}, len(simpleLogs))
+		for i, logEntry := range simpleLogs {
+			logsArray[i] = logEntry
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"battle_id": battleID,
+			"logs":      logsArray,
+			"count":     len(logsArray),
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
