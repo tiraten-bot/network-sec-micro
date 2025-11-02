@@ -376,6 +376,14 @@ func (s *Service) completeBattle(ctx context.Context, battle *Battle, result Bat
 		return nil, nil, fmt.Errorf("failed to complete battle: %w", err)
 	}
 
+	// Log battle end to Redis
+	go func() {
+		endMessage := fmt.Sprintf("Battle completed. Result: %s. Winner: %s", result, battle.WinnerName)
+		if err := LogBattleEnd(ctx, battle, endMessage); err != nil {
+			log.Printf("Failed to log battle end: %v", err)
+		}
+	}()
+
 	// Publish battle completed event
 	go PublishBattleCompletedEvent(
 		battle.ID.Hex(),
