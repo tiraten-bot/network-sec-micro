@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	pbBattleSpell "network-sec-micro/api/proto/battlespell"
 	"network-sec-micro/internal/battle/dto"
 
 	"github.com/gin-gonic/gin"
