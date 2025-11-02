@@ -166,10 +166,9 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 		return nil, nil, fmt.Errorf("failed to start battle: %w", err)
 	}
 
-	// Log battle start to Redis
+	// Log battle start to Redis (simplified)
 	go func() {
-		message := fmt.Sprintf("Team Battle started: %s vs %s (%d vs %d participants)", 
-			lightSideName, darkSideName, len(cmd.LightParticipants), len(cmd.DarkParticipants))
+		message := fmt.Sprintf("Savaş başladı: %s vs %s", lightSideName, darkSideName)
 		if err := LogBattleStart(ctx, battle, message); err != nil {
 			log.Printf("Failed to log battle start: %v", err)
 		}
