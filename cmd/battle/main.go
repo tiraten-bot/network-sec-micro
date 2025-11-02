@@ -48,6 +48,16 @@ func main() {
 		log.Fatalf("Failed to connect to Warrior gRPC: %v", err)
 	}
 
+	// Initialize Coin gRPC client
+	coinAddr := os.Getenv("COIN_GRPC_ADDR")
+	if coinAddr == "" {
+		coinAddr = "localhost:50051"
+	}
+
+	if err := battle.InitCoinClient(coinAddr); err != nil {
+		log.Fatalf("Failed to connect to Coin gRPC: %v", err)
+	}
+
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
@@ -62,6 +72,7 @@ func main() {
 		log.Println("Shutting down...")
 		battle.CloseKafkaPublisher()
 		battle.CloseWarriorClient()
+		battle.CloseCoinClient()
 	}()
 
 	// Create Gin router
