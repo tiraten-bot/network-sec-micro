@@ -391,11 +391,14 @@ func (s *Service) GetBattle(query dto.GetBattleQuery) (*Battle, error) {
 	return &battle, nil
 }
 
-// GetBattlesByWarrior gets battles for a warrior
+// GetBattlesByWarrior gets battles for a warrior (or all if warriorID is 0)
 func (s *Service) GetBattlesByWarrior(query dto.GetBattlesByWarriorQuery) ([]Battle, int64, error) {
 	ctx := context.Background()
 
-	filter := bson.M{"warrior_id": query.WarriorID}
+	filter := bson.M{}
+	if query.WarriorID > 0 {
+		filter["warrior_id"] = query.WarriorID
+	}
 	if query.Status != "all" && query.Status != "" {
 		filter["status"] = query.Status
 	}
