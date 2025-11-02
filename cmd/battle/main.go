@@ -151,9 +151,17 @@ func main() {
 		port = "8085"
 	}
 
-	log.Printf("Battle service starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	log.Printf("Battle HTTP service starting on port %s", port)
+	
+	// Start HTTP server in a goroutine
+	go func() {
+		if err := r.Run(":" + port); err != nil {
+			log.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-shutdown
+	log.Println("Shutdown signal received, gracefully shutting down...")
 }
 
