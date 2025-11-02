@@ -83,7 +83,20 @@ func (h *Handler) CreateWarrior(c *gin.Context) {
 	})
 }
 
-// UpdateWarrior handles warrior update
+// UpdateWarrior godoc
+// @Summary Update warrior
+// @Description Update warrior information (own profile or King can update any)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Warrior ID"
+// @Param request body dto.UpdateWarriorRequest true "Update data"
+// @Success 200 {object} dto.WarriorResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /warriors/{id} [put]
 func (h *Handler) UpdateWarrior(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
@@ -152,7 +165,19 @@ func (h *Handler) UpdateWarrior(c *gin.Context) {
 	})
 }
 
-// DeleteWarrior handles warrior deletion (Light Emperor/King only)
+// DeleteWarrior godoc
+// @Summary Delete warrior
+// @Description Delete a warrior (Light Emperor/King only, cannot delete self)
+// @Tags warriors
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Warrior ID"
+// @Success 200 {object} map[string]string "message: string"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /warriors/{id} [delete]
 func (h *Handler) DeleteWarrior(c *gin.Context) {
 	warrior, err := GetCurrentWarrior(c)
 	if err != nil {
