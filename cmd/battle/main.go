@@ -63,6 +63,16 @@ func main() {
 		log.Fatalf("Failed to connect to Coin gRPC: %v", err)
 	}
 
+	// Initialize BattleSpell gRPC client
+	battlespellAddr := os.Getenv("BATTLESPELL_GRPC_ADDR")
+	if battlespellAddr == "" {
+		battlespellAddr = "localhost:50054"
+	}
+
+	if err := battle.InitBattlespellClient(battlespellAddr); err != nil {
+		log.Fatalf("Failed to connect to BattleSpell gRPC: %v", err)
+	}
+
 	// Initialize Redis client for battle logs
 	if err := battle.InitRedisClient(); err != nil {
 		log.Printf("Warning: Failed to connect to Redis (battle logs will not be available): %v", err)
@@ -84,11 +94,12 @@ func main() {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	defer func() {
+		defer func() {
 		log.Println("Shutting down...")
 		battle.CloseKafkaPublisher()
 		battle.CloseWarriorClient()
 		battle.CloseCoinClient()
+		battle.CloseBattlespellClient()
 		battle.CloseRedisClient()
 	}()
 
