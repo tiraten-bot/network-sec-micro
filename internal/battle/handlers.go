@@ -601,10 +601,202 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		return
 	}
 
+		c.JSON(http.StatusOK, gin.H{
+			"battle_id": battleID,
+			"logs":      logs,
+			"count":     len(logs),
+		})
+	}
+}
+
+// ReviveDragon godoc
+// @Summary Revive a dragon in battle
+// @Description Revives a defeated dragon participant if it can still revive (max 3 times)
+// @Tags battles
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.ReviveDragonRequest true "Revive dragon data"
+// @Success 200 {object} map[string]interface{} "participant: BattleParticipant"
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /battles/revive-dragon [post]
+func (h *Handler) ReviveDragon(c *gin.Context) {
+	var req dto.ReviveDragonRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	battleID, err := primitive.ObjectIDFromHex(req.BattleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid battle ID format",
+		})
+		return
+	}
+
+	participant, err := h.Service.ReviveDragonInBattle(c.Request.Context(), battleID, req.DragonParticipantID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "revival_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"battle_id": battleID,
-		"logs":      logs,
-		"count":     len(logs),
+		"success":    true,
+		"participant": dto.ToBattleParticipantResponse(participant),
+		"message":    fmt.Sprintf("Dragon %s revived successfully", participant.Name),
 	})
 }
+
+// DarkEmperorJoinBattle godoc
+// @Summary Dark Emperor joins battle during crisis
+// @Description Allows Dark Emperor to join an ongoing battle when dragon needs crisis intervention (before 3rd revival)
+// @Tags battles
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.DarkEmperorJoinBattleRequest true "Join battle data"
+// @Success 200 {object} map[string]interface{} "participant: BattleParticipant"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /battles/dark-emperor-join [post]
+func (h *Handler) DarkEmperorJoinBattle(c *gin.Context) {
+	user, err := GetCurrentUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if user.Role != "dark_emperor" {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "only dark emperor can join battle during crisis",
+		})
+		return
+	}
+
+	var req dto.DarkEmperorJoinBattleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Verify username matches authenticated user
+	if req.DarkEmperorUsername != user.Username {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "username does not match authenticated user",
+		})
+		return
+	}
+
+	battleID, err := primitive.ObjectIDFromHex(req.BattleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid battle ID format",
+		})
+		return
+	}
+
+	participant, err := h.Service.DarkEmperorJoinBattle(c.Request.Context(), battleID, req.DarkEmperorUsername, req.DarkEmperorUserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "join_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":    true,
+		"participant": dto.ToBattleParticipantResponse(participant),
+		"message":    fmt.Sprintf("Dark Emperor %s joined the battle!", user.Username),
+	})
+}
+
+// SacrificeDragon godoc
+// @Summary Sacrifice dragon and revive all dead enemies
+// @Description Dark Emperor can sacrifice a dragon (before 3rd revival) to revive all defeated enemies in battle
+// @Tags battles
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.SacrificeDragonRequest true "Sacrifice dragon data"
+// @Success 200 {object} map[string]interface{} "revived_count: int, message: string"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Router /battles/sacrifice-dragon [post]
+func (h *Handler) SacrificeDragon(c *gin.Context) {
+	user, err := GetCurrentUser(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
+			Error:   "unauthorized",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if user.Role != "dark_emperor" {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "only dark emperor can sacrifice dragon",
+		})
+		return
+	}
+
+	var req dto.SacrificeDragonRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Verify username matches authenticated user
+	if req.DarkEmperorUsername != user.Username {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{
+			Error:   "forbidden",
+			Message: "username does not match authenticated user",
+		})
+		return
+	}
+
+	battleID, err := primitive.ObjectIDFromHex(req.BattleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid battle ID format",
+		})
+		return
+	}
+
+	revivedCount, err := h.Service.SacrificeDragonAndReviveEnemies(c.Request.Context(), battleID, req.DragonParticipantID, req.DarkEmperorUsername)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "sacrifice_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"revived_count": revivedCount,
+		"message":      fmt.Sprintf("Dragon sacrificed! %d enemies revived.", revivedCount),
+	})
 
