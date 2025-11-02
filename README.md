@@ -26,7 +26,7 @@ graph TB
     
     subgraph "Data Layer"
         PG[(PostgreSQL<br/>Warrior Data)]
-        MG[(MongoDB<br/>Weapon/Enemy/Dragon)]
+        MG[(MongoDB<br/>Weapon/Enemy/Dragon/Battle)]
         MY[(MySQL<br/>Coin Transactions)]
     end
     
