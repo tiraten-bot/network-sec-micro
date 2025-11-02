@@ -14,6 +14,7 @@ import (
 var BattleColl *mongo.Collection
 var BattleTurnColl *mongo.Collection
 var BattleParticipantColl *mongo.Collection
+var SpellColl *mongo.Collection
 
 // InitDatabase initializes the MongoDB database connection
 func InitDatabase() error {
@@ -39,6 +40,7 @@ func InitDatabase() error {
 	BattleColl = db.Collection((&Battle{}).CollectionName())
 	BattleTurnColl = db.Collection((&BattleTurn{}).CollectionName())
 	BattleParticipantColl = db.Collection((&BattleParticipant{}).CollectionName())
+	SpellColl = db.Collection((&Spell{}).CollectionName())
 
 	// Create indexes
 	if err := createIndexes(); err != nil {
