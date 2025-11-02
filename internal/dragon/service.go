@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"network-sec-micro/internal/dragon/dto"
+	"network-sec-micro/pkg/kafka"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
