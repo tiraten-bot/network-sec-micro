@@ -657,12 +657,12 @@ func (h *Handler) ReviveDragon(c *gin.Context) {
 
 // DarkEmperorJoinBattle godoc
 // @Summary Dark Emperor joins battle during crisis
-// @Description Allows Dark Emperor to join an ongoing battle when dragon needs crisis intervention (before 3rd revival)
+// @Description Allows Dark Emperor to join an ongoing battle ONLY when dragon has exactly 1 life left (revival_count = 2 and still alive). Requires dragon_participant_id.
 // @Tags battles
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body dto.DarkEmperorJoinBattleRequest true "Join battle data"
+// @Param request body dto.DarkEmperorJoinBattleRequest true "Join battle data (requires dragon_participant_id)"
 // @Success 200 {object} map[string]interface{} "participant: BattleParticipant"
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 403 {object} dto.ErrorResponse
