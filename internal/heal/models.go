@@ -6,8 +6,11 @@ import "time"
 type HealType string
 
 const (
-	HealTypeFull    HealType = "full"    // Heal to max HP
-	HealTypePartial HealType = "partial" // Heal 50% of current HP
+	HealTypeFull           HealType = "full"            // Heal to max HP
+	HealTypePartial        HealType = "partial"         // Heal 50% of current HP
+	HealTypeEmperorFull    HealType = "emperor_full"    // Emperor full heal (fast, cheap)
+	HealTypeEmperorPartial HealType = "emperor_partial" // Emperor partial heal (fast, cheap)
+	HealTypeDragon         HealType = "dragon"          // Dragon heal (slow, expensive)
 )
 
 // HealingRecord represents a healing transaction
