@@ -13,6 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - warrior-network
     healthcheck:
@@ -294,6 +295,8 @@ services:
       PORT: 8087
       GRPC_PORT: 50055
       ARENASPELL_GRPC_ADDR: arenaspell:50056
+      ARENA_USE_POSTGRES: "1"
+      DB_NAME_ARENA: arena_db
     ports:
       - "8087:8087"
       - "50055:50055"
