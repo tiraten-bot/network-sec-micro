@@ -100,3 +100,37 @@ func (s *WarriorServiceServer) UpdateWarriorPower(ctx context.Context, req *pb.U
 	}, nil
 }
 
+// UpdateWarriorHP updates warrior's HP (for healing)
+func (s *WarriorServiceServer) UpdateWarriorHP(ctx context.Context, req *pb.UpdateWarriorHPRequest) (*pb.UpdateWarriorHPResponse, error) {
+	var w Warrior
+	if err := DB.First(&w, req.WarriorId).Error; err != nil {
+		return nil, status.Errorf(codes.NotFound, "warrior not found: %v", err)
+	}
+
+	oldHP := w.CurrentHP
+
+	// Update HP
+	if err := DB.Model(&w).Update("current_hp", req.NewHp).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update HP: %v", err)
+	}
+
+	// Update MaxHP if not set (calculate from total_power)
+	maxHP := w.MaxHP
+	if maxHP == 0 {
+		maxHP = w.TotalPower * 10
+		if maxHP < 100 {
+			maxHP = 100
+		}
+		if err := DB.Model(&w).Update("max_hp", maxHP).Error; err != nil {
+			log.Printf("Warning: failed to update max_hp: %v", err)
+		}
+	}
+
+	return &pb.UpdateWarriorHPResponse{
+		Success: true,
+		Message: "HP updated successfully",
+		OldHp:   int32(oldHP),
+		NewHp:   req.NewHp,
+	}, nil
+}
+
