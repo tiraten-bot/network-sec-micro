@@ -438,27 +438,143 @@ func (x *UpdateWarriorHPResponse) GetNewHp() int32 {
 	return 0
 }
 
-// Warrior model
-type Warrior struct {
+// Request to update healing state
+type UpdateWarriorHealingStateRequest struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	WarriorId           uint32                 `protobuf:"varint,1,opt,name=warrior_id,json=warriorId,proto3" json:"warrior_id,omitempty"`
+	IsHealing           bool                   `protobuf:"varint,2,opt,name=is_healing,json=isHealing,proto3" json:"is_healing,omitempty"`
+	HealingUntilSeconds int64                  `protobuf:"varint,3,opt,name=healing_until_seconds,json=healingUntilSeconds,proto3" json:"healing_until_seconds,omitempty"` // Unix timestamp (0 if not healing)
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *UpdateWarriorHealingStateRequest) Reset() {
+	*x = UpdateWarriorHealingStateRequest{}
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateWarriorHealingStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateWarriorHealingStateRequest) ProtoMessage() {}
+
+func (x *UpdateWarriorHealingStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateWarriorHealingStateRequest.ProtoReflect.Descriptor instead.
+func (*UpdateWarriorHealingStateRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateWarriorHealingStateRequest) GetWarriorId() uint32 {
+	if x != nil {
+		return x.WarriorId
+	}
+	return 0
+}
+
+func (x *UpdateWarriorHealingStateRequest) GetIsHealing() bool {
+	if x != nil {
+		return x.IsHealing
+	}
+	return false
+}
+
+func (x *UpdateWarriorHealingStateRequest) GetHealingUntilSeconds() int64 {
+	if x != nil {
+		return x.HealingUntilSeconds
+	}
+	return 0
+}
+
+// Response after updating healing state
+type UpdateWarriorHealingStateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
-	CoinBalance   int32                  `protobuf:"varint,5,opt,name=coin_balance,json=coinBalance,proto3" json:"coin_balance,omitempty"`
-	TotalPower    int32                  `protobuf:"varint,6,opt,name=total_power,json=totalPower,proto3" json:"total_power,omitempty"`
-	WeaponCount   int32                  `protobuf:"varint,7,opt,name=weapon_count,json=weaponCount,proto3" json:"weapon_count,omitempty"`
-	CurrentHp     int32                  `protobuf:"varint,8,opt,name=current_hp,json=currentHp,proto3" json:"current_hp,omitempty"` // Current HP (for healing)
-	MaxHp         int32                  `protobuf:"varint,9,opt,name=max_hp,json=maxHp,proto3" json:"max_hp,omitempty"`             // Maximum HP (calculated from total_power)
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
+func (x *UpdateWarriorHealingStateResponse) Reset() {
+	*x = UpdateWarriorHealingStateResponse{}
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateWarriorHealingStateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateWarriorHealingStateResponse) ProtoMessage() {}
+
+func (x *UpdateWarriorHealingStateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateWarriorHealingStateResponse.ProtoReflect.Descriptor instead.
+func (*UpdateWarriorHealingStateResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateWarriorHealingStateResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UpdateWarriorHealingStateResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// Warrior model
+type Warrior struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username            string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email               string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Role                string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	CoinBalance         int32                  `protobuf:"varint,5,opt,name=coin_balance,json=coinBalance,proto3" json:"coin_balance,omitempty"`
+	TotalPower          int32                  `protobuf:"varint,6,opt,name=total_power,json=totalPower,proto3" json:"total_power,omitempty"`
+	WeaponCount         int32                  `protobuf:"varint,7,opt,name=weapon_count,json=weaponCount,proto3" json:"weapon_count,omitempty"`
+	CurrentHp           int32                  `protobuf:"varint,8,opt,name=current_hp,json=currentHp,proto3" json:"current_hp,omitempty"`                                  // Current HP (for healing)
+	MaxHp               int32                  `protobuf:"varint,9,opt,name=max_hp,json=maxHp,proto3" json:"max_hp,omitempty"`                                              // Maximum HP (calculated from total_power)
+	IsHealing           bool                   `protobuf:"varint,10,opt,name=is_healing,json=isHealing,proto3" json:"is_healing,omitempty"`                                 // Is currently healing
+	HealingUntilSeconds int64                  `protobuf:"varint,11,opt,name=healing_until_seconds,json=healingUntilSeconds,proto3" json:"healing_until_seconds,omitempty"` // Unix timestamp when healing completes (0 if not healing)
+	CreatedAt           *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
 func (x *Warrior) Reset() {
 	*x = Warrior{}
-	mi := &file_api_proto_warrior_warrior_proto_msgTypes[8]
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -470,7 +586,7 @@ func (x *Warrior) String() string {
 func (*Warrior) ProtoMessage() {}
 
 func (x *Warrior) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_warrior_warrior_proto_msgTypes[8]
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -483,7 +599,7 @@ func (x *Warrior) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Warrior.ProtoReflect.Descriptor instead.
 func (*Warrior) Descriptor() ([]byte, []int) {
-	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{8}
+	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Warrior) GetId() uint32 {
@@ -549,6 +665,20 @@ func (x *Warrior) GetMaxHp() int32 {
 	return 0
 }
 
+func (x *Warrior) GetIsHealing() bool {
+	if x != nil {
+		return x.IsHealing
+	}
+	return false
+}
+
+func (x *Warrior) GetHealingUntilSeconds() int64 {
+	if x != nil {
+		return x.HealingUntilSeconds
+	}
+	return 0
+}
+
 func (x *Warrior) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
@@ -594,7 +724,16 @@ const file_api_proto_warrior_warrior_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x15\n" +
 	"\x06old_hp\x18\x03 \x01(\x05R\x05oldHp\x12\x15\n" +
-	"\x06new_hp\x18\x04 \x01(\x05R\x05newHp\"\xf2\x02\n" +
+	"\x06new_hp\x18\x04 \x01(\x05R\x05newHp\"\x94\x01\n" +
+	" UpdateWarriorHealingStateRequest\x12\x1d\n" +
+	"\n" +
+	"warrior_id\x18\x01 \x01(\rR\twarriorId\x12\x1d\n" +
+	"\n" +
+	"is_healing\x18\x02 \x01(\bR\tisHealing\x122\n" +
+	"\x15healing_until_seconds\x18\x03 \x01(\x03R\x13healingUntilSeconds\"W\n" +
+	"!UpdateWarriorHealingStateResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xc5\x03\n" +
 	"\aWarrior\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
@@ -606,17 +745,21 @@ const file_api_proto_warrior_warrior_proto_rawDesc = "" +
 	"\fweapon_count\x18\a \x01(\x05R\vweaponCount\x12\x1d\n" +
 	"\n" +
 	"current_hp\x18\b \x01(\x05R\tcurrentHp\x12\x15\n" +
-	"\x06max_hp\x18\t \x01(\x05R\x05maxHp\x129\n" +
+	"\x06max_hp\x18\t \x01(\x05R\x05maxHp\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"is_healing\x18\n" +
+	" \x01(\bR\tisHealing\x122\n" +
+	"\x15healing_until_seconds\x18\v \x01(\x03R\x13healingUntilSeconds\x129\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xfd\x02\n" +
+	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xf1\x03\n" +
 	"\x0eWarriorService\x12c\n" +
 	"\x14GetWarriorByUsername\x12$.warrior.GetWarriorByUsernameRequest\x1a%.warrior.GetWarriorByUsernameResponse\x12Q\n" +
 	"\x0eGetWarriorByID\x12\x1e.warrior.GetWarriorByIDRequest\x1a\x1f.warrior.GetWarriorByIDResponse\x12]\n" +
 	"\x12UpdateWarriorPower\x12\".warrior.UpdateWarriorPowerRequest\x1a#.warrior.UpdateWarriorPowerResponse\x12T\n" +
-	"\x0fUpdateWarriorHP\x12\x1f.warrior.UpdateWarriorHPRequest\x1a .warrior.UpdateWarriorHPResponseB%Z#network-sec-micro/api/proto/warriorb\x06proto3"
+	"\x0fUpdateWarriorHP\x12\x1f.warrior.UpdateWarriorHPRequest\x1a .warrior.UpdateWarriorHPResponse\x12r\n" +
+	"\x19UpdateWarriorHealingState\x12).warrior.UpdateWarriorHealingStateRequest\x1a*.warrior.UpdateWarriorHealingStateResponseB%Z#network-sec-micro/api/proto/warriorb\x06proto3"
 
 var (
 	file_api_proto_warrior_warrior_proto_rawDescOnce sync.Once
@@ -630,37 +773,41 @@ func file_api_proto_warrior_warrior_proto_rawDescGZIP() []byte {
 	return file_api_proto_warrior_warrior_proto_rawDescData
 }
 
-var file_api_proto_warrior_warrior_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_api_proto_warrior_warrior_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_api_proto_warrior_warrior_proto_goTypes = []any{
-	(*GetWarriorByUsernameRequest)(nil),  // 0: warrior.GetWarriorByUsernameRequest
-	(*GetWarriorByUsernameResponse)(nil), // 1: warrior.GetWarriorByUsernameResponse
-	(*GetWarriorByIDRequest)(nil),        // 2: warrior.GetWarriorByIDRequest
-	(*GetWarriorByIDResponse)(nil),       // 3: warrior.GetWarriorByIDResponse
-	(*UpdateWarriorPowerRequest)(nil),    // 4: warrior.UpdateWarriorPowerRequest
-	(*UpdateWarriorPowerResponse)(nil),   // 5: warrior.UpdateWarriorPowerResponse
-	(*UpdateWarriorHPRequest)(nil),       // 6: warrior.UpdateWarriorHPRequest
-	(*UpdateWarriorHPResponse)(nil),      // 7: warrior.UpdateWarriorHPResponse
-	(*Warrior)(nil),                      // 8: warrior.Warrior
-	(*timestamppb.Timestamp)(nil),        // 9: google.protobuf.Timestamp
+	(*GetWarriorByUsernameRequest)(nil),       // 0: warrior.GetWarriorByUsernameRequest
+	(*GetWarriorByUsernameResponse)(nil),      // 1: warrior.GetWarriorByUsernameResponse
+	(*GetWarriorByIDRequest)(nil),             // 2: warrior.GetWarriorByIDRequest
+	(*GetWarriorByIDResponse)(nil),            // 3: warrior.GetWarriorByIDResponse
+	(*UpdateWarriorPowerRequest)(nil),         // 4: warrior.UpdateWarriorPowerRequest
+	(*UpdateWarriorPowerResponse)(nil),        // 5: warrior.UpdateWarriorPowerResponse
+	(*UpdateWarriorHPRequest)(nil),            // 6: warrior.UpdateWarriorHPRequest
+	(*UpdateWarriorHPResponse)(nil),           // 7: warrior.UpdateWarriorHPResponse
+	(*UpdateWarriorHealingStateRequest)(nil),  // 8: warrior.UpdateWarriorHealingStateRequest
+	(*UpdateWarriorHealingStateResponse)(nil), // 9: warrior.UpdateWarriorHealingStateResponse
+	(*Warrior)(nil),                           // 10: warrior.Warrior
+	(*timestamppb.Timestamp)(nil),             // 11: google.protobuf.Timestamp
 }
 var file_api_proto_warrior_warrior_proto_depIdxs = []int32{
-	8, // 0: warrior.GetWarriorByUsernameResponse.warrior:type_name -> warrior.Warrior
-	8, // 1: warrior.GetWarriorByIDResponse.warrior:type_name -> warrior.Warrior
-	9, // 2: warrior.Warrior.created_at:type_name -> google.protobuf.Timestamp
-	9, // 3: warrior.Warrior.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 4: warrior.WarriorService.GetWarriorByUsername:input_type -> warrior.GetWarriorByUsernameRequest
-	2, // 5: warrior.WarriorService.GetWarriorByID:input_type -> warrior.GetWarriorByIDRequest
-	4, // 6: warrior.WarriorService.UpdateWarriorPower:input_type -> warrior.UpdateWarriorPowerRequest
-	6, // 7: warrior.WarriorService.UpdateWarriorHP:input_type -> warrior.UpdateWarriorHPRequest
-	1, // 8: warrior.WarriorService.GetWarriorByUsername:output_type -> warrior.GetWarriorByUsernameResponse
-	3, // 9: warrior.WarriorService.GetWarriorByID:output_type -> warrior.GetWarriorByIDResponse
-	5, // 10: warrior.WarriorService.UpdateWarriorPower:output_type -> warrior.UpdateWarriorPowerResponse
-	7, // 11: warrior.WarriorService.UpdateWarriorHP:output_type -> warrior.UpdateWarriorHPResponse
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	10, // 0: warrior.GetWarriorByUsernameResponse.warrior:type_name -> warrior.Warrior
+	10, // 1: warrior.GetWarriorByIDResponse.warrior:type_name -> warrior.Warrior
+	11, // 2: warrior.Warrior.created_at:type_name -> google.protobuf.Timestamp
+	11, // 3: warrior.Warrior.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 4: warrior.WarriorService.GetWarriorByUsername:input_type -> warrior.GetWarriorByUsernameRequest
+	2,  // 5: warrior.WarriorService.GetWarriorByID:input_type -> warrior.GetWarriorByIDRequest
+	4,  // 6: warrior.WarriorService.UpdateWarriorPower:input_type -> warrior.UpdateWarriorPowerRequest
+	6,  // 7: warrior.WarriorService.UpdateWarriorHP:input_type -> warrior.UpdateWarriorHPRequest
+	8,  // 8: warrior.WarriorService.UpdateWarriorHealingState:input_type -> warrior.UpdateWarriorHealingStateRequest
+	1,  // 9: warrior.WarriorService.GetWarriorByUsername:output_type -> warrior.GetWarriorByUsernameResponse
+	3,  // 10: warrior.WarriorService.GetWarriorByID:output_type -> warrior.GetWarriorByIDResponse
+	5,  // 11: warrior.WarriorService.UpdateWarriorPower:output_type -> warrior.UpdateWarriorPowerResponse
+	7,  // 12: warrior.WarriorService.UpdateWarriorHP:output_type -> warrior.UpdateWarriorHPResponse
+	9,  // 13: warrior.WarriorService.UpdateWarriorHealingState:output_type -> warrior.UpdateWarriorHealingStateResponse
+	9,  // [9:14] is the sub-list for method output_type
+	4,  // [4:9] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_warrior_warrior_proto_init() }
@@ -674,7 +821,7 @@ func file_api_proto_warrior_warrior_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_warrior_warrior_proto_rawDesc), len(file_api_proto_warrior_warrior_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
