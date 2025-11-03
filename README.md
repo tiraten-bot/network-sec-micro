@@ -1463,31 +1463,39 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Battle as Battle Service
-    participant Arena as Arena Service
-    participant Kafka as Kafka Events
-    participant Heal as Heal Service
-    participant Warrior as Warrior Service
+    participant Battle as ⚔️ Battle Service
+    participant Arena as 🏟️ Arena Service
+    participant Kafka as 📨 Kafka Events
+    participant Heal as 💚 Heal Service
+    participant Warrior as 🛡️ Warrior Service
+    participant Dragon as 🐉 Dragon Service
+    participant Enemy as 👹 Enemy Service
     
-    Note over Battle,Warrior: Battle Completion Event
+    Note over Battle,Enemy: ⚔️ Battle Completion Event
     Battle->>Battle: Battle completed (winner determined)
-    Battle->>Kafka: battle.completed (winner_id, loser_id, loser_total_power)
-    Kafka->>Heal: Consume battle.completed
-    Heal->>Heal: Log healing available for warriors
+    Battle->>Kafka: 📨 battle.completed (winner_id, loser_id, participants)
+    Kafka->>Heal: 📥 Consume battle.completed
+    Heal->>Heal: 📝 Log healing available for participants<br/>(Warrior, Dragon, Enemy)
     
-    Note over Arena,Warrior: Arena Match Completion Event
+    Note over Arena,Enemy: 🏟️ Arena Match Completion Event
     Arena->>Arena: Match completed (winner determined)
-    Arena->>Kafka: arena.match.completed (player1_id, player2_id, winner_id)
-    Kafka->>Heal: Consume arena.match.completed
-    Heal->>Heal: Log healing available for players
+    Arena->>Kafka: 📨 arena.match.completed (player1_id, player2_id, winner_id)
+    Kafka->>Heal: 📥 Consume arena.match.completed
+    Heal->>Heal: 📝 Log healing available for players
     
-    Note over Heal,Warrior: Healing Purchase Flow
+    Note over Heal,Enemy: 💚 Healing Purchase Flow (All Participants)
     Heal->>Warrior: GetWarriorByID (check healing state)
     Warrior-->>Heal: is_healing, healing_until
-    Heal->>Heal: Validate healing state
-    Heal->>Heal: Purchase healing package
+    Heal->>Dragon: GetDragonByID (check healing state)
+    Dragon-->>Heal: is_healing, healing_until
+    Heal->>Enemy: GetEnemyByID (check healing state)
+    Enemy-->>Heal: is_healing, healing_until
+    Heal->>Heal: ✅ Validate healing state
+    Heal->>Heal: ⚗️ Purchase healing package<br/>(Warrior/Dragon/Enemy)
     Heal->>Warrior: UpdateWarriorHealingState (set is_healing=true)
-    Heal->>Heal: Schedule HP update after duration
+    Heal->>Dragon: UpdateDragonHealingState (set is_healing=true)
+    Heal->>Enemy: UpdateEnemyHealingState (set is_healing=true)
+    Heal->>Heal: ⏱️ Schedule HP update after duration
 ```
 
 ### Arena Service Complete Event Flow
