@@ -63,7 +63,7 @@ func GetBattleLogLastHP(ctx context.Context, battleID string, warriorID uint) (i
 
 	// Try battle:logs:{battleID} stream (latest entry)
 	streamKey := fmt.Sprintf("battle:logs:%s", battleID)
-	entries, err := redisClient.XRevRange(ctx, streamKey, "+", "-", 1).Result()
+	entries, err := redisClient.XRevRangeN(ctx, streamKey, "+", "-", 1).Result()
 	if err != nil && err != redis.Nil {
 		return 0, err
 	}
