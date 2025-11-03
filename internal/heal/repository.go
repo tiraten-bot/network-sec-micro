@@ -2,7 +2,6 @@ package heal
 
 import (
 	"context"
-	"os"
 )
 
 // Repository abstracts persistence for Heal domain
