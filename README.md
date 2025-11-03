@@ -264,38 +264,75 @@ graph LR
         WP[Weapon Service]
         E[Enemy Service]
         D[Dragon Service]
+        B[Battle Service]
+        A[Arena Service]
     end
     
     subgraph "Kafka Topics"
         T1[weapon.purchase]
         T2[enemy.attack]
         T3[dragon.death]
+        T4[dragon.revival]
+        T5[battle.started]
+        T6[battle.completed]
+        T7[arena.invitation.sent]
+        T8[arena.invitation.accepted]
+        T9[arena.invitation.rejected]
+        T10[arena.invitation.expired]
+        T11[arena.match.started]
+        T12[arena.match.completed]
     end
     
     subgraph "Event Consumers"
         C[Coin Service]
         WP2[Weapon Service]
+        W[Warrior Service]
+        A2[Arena Service]
     end
     
     WP -->|WeaponPurchaseEvent| T1
     E -->|EnemyAttackEvent| T2
     D -->|DragonDeathEvent| T3
+    D -->|DragonRevivalEvent| T4
+    B -->|BattleStartedEvent| T5
+    B -->|BattleCompletedEvent| T6
+    A -->|ArenaInvitationSentEvent| T7
+    A -->|ArenaInvitationAcceptedEvent| T8
+    A -->|ArenaInvitationRejectedEvent| T9
+    A -->|ArenaInvitationExpiredEvent| T10
+    A -->|ArenaMatchStartedEvent| T11
+    A -->|ArenaMatchCompletedEvent| T12
     
     T1 --> C
     T2 --> C
     T3 --> WP2
+    T6 --> A2
     
     C -->|Deduct Coins| C
     WP2 -->|Add Loot Weapon| WP2
+    W -->|Update Kill Count| W
     
     style WP fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style D fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style B fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style T1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style T2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style T3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T4 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T5 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T6 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T7 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T8 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T9 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T10 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T11 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T12 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style C fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style WP2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style W fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Gateway Routing and Resilience
