@@ -29,6 +29,10 @@ func (s *Service) CreateEnemy(cmd dto.CreateEnemyCommand) (*Enemy, error) {
 	if cmd.MaxHealth > 0 {
 		maxHealth = cmd.MaxHealth
 	}
+	coinBalance := int64(0)
+	if cmd.CoinBalance > 0 {
+		coinBalance = cmd.CoinBalance
+	}
 	enemy := Enemy{
 		Name:        cmd.Name,
 		Type:        EnemyType(cmd.Type),
@@ -36,6 +40,7 @@ func (s *Service) CreateEnemy(cmd dto.CreateEnemyCommand) (*Enemy, error) {
 		Health:      cmd.Health,
 		MaxHealth:   maxHealth,
 		AttackPower: cmd.AttackPower,
+		CoinBalance: coinBalance,
 		CreatedBy:   cmd.CreatedBy,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
