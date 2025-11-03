@@ -16,10 +16,11 @@ proto:
 	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior api/proto/battle api/proto/battlespell api/proto/arena
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		api/proto/coin/coin.proto
-	@protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		api/proto/weapon/weapon.proto
+		api/proto/coin/coin.proto \
+		api/proto/warrior/warrior.proto \
+		api/proto/battle/battle.proto \
+		api/proto/battlespell/battlespell.proto \
+		api/proto/arena/arena.proto
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/warrior/warrior.proto
