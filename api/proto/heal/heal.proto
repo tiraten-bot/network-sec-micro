@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package heal;
+
+option go_package = "network-sec-micro/api/proto/heal";
+
+import "google/protobuf/timestamp.proto";
+
+// Heal Service
+service HealService {
+  // Purchase healing package
+  rpc PurchaseHeal(PurchaseHealRequest) returns (PurchaseHealResponse);
+  
+  // Get healing history for a warrior
+  rpc GetHealingHistory(GetHealingHistoryRequest) returns (GetHealingHistoryResponse);
+}
+
+// Request to purchase heal
+message PurchaseHealRequest {
+  string warrior_id = 1;
+  string heal_type = 2; // "full" or "partial" (50%)
+}
+
+// Response after purchase
+message PurchaseHealResponse {
+  bool success = 1;
+  string message = 2;
+  int32 healed_amount = 3;
+  int32 new_hp = 4;
+  int32 coins_spent = 5;
+}
+
+// Request to get healing history
+message GetHealingHistoryRequest {
+  string warrior_id = 1;
+}
+
+// Response with healing history
+message GetHealingHistoryResponse {
+  repeated HealingRecord records = 1;
+}
+
+// Healing record
+message HealingRecord {
+  string id = 1;
+  string warrior_id = 2;
+  string heal_type = 3;
+  int32 healed_amount = 4;
+  int32 coins_spent = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
