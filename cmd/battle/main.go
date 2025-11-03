@@ -125,6 +125,7 @@ func main() {
 		battle.CloseBattlespellClient()
 		battle.CloseRedisClient()
 		battle.CloseWeaponClient()
+		battle.CloseHealClient()
 	}()
 
 	// Start gRPC server in a goroutine
