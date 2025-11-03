@@ -1,19 +1,14 @@
 package battle
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"math/rand"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "log"
+    "math/rand"
+    "time"
 
-	"network-sec-micro/internal/battle/dto"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+    "network-sec-micro/internal/battle/dto"
 )
 
 // StartBattle creates and starts a new team-based battle
@@ -63,12 +58,9 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 		UpdatedAt:             now,
 	}
 
-	result, err := BattleColl.InsertOne(ctx, battle)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create battle: %w", err)
-	}
-
-	battle.ID = result.InsertedID.(primitive.ObjectID)
+    battleID, err := GetRepository().CreateBattle(ctx, battle)
+    if err != nil { return nil, nil, fmt.Errorf("failed to create battle: %w", err) }
+    battle.ID = battleID
 
 	// Create participants
 	participants := make([]*BattleParticipant, 0, len(cmd.LightParticipants)+len(cmd.DarkParticipants))
@@ -76,7 +68,7 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 	// Add light participants
 	for _, pInfo := range cmd.LightParticipants {
 		participant := &BattleParticipant{
-			BattleID:      battle.ID,
+            BattleID:      battle.ID,
 			ParticipantID: pInfo.ParticipantID,
 			Name:         pInfo.Name,
 			Type:         ParticipantType(pInfo.Type),
@@ -140,31 +132,22 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 	}
 
 	// Insert all participants
-	if len(participants) > 0 {
-		docs := make([]interface{}, len(participants))
-		for i, p := range participants {
-			docs[i] = p
-		}
-		_, err = BattleParticipantColl.InsertMany(ctx, docs)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create participants: %w", err)
-		}
-	}
+    if len(participants) > 0 {
+        if err := GetRepository().InsertParticipants(ctx, participants); err != nil {
+            return nil, nil, fmt.Errorf("failed to create participants: %w", err)
+        }
+    }
 
 	// Start the battle
 	battle.Status = BattleStatusInProgress
 	battle.StartedAt = &now
 
-	updateData := bson.M{
-		"status":     battle.Status,
-		"started_at": battle.StartedAt,
-		"updated_at": time.Now(),
-	}
-
-	_, err = BattleColl.UpdateOne(ctx, bson.M{"_id": battle.ID}, bson.M{"$set": updateData})
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to start battle: %w", err)
-	}
+    updateData := map[string]interface{}{
+        "status":     battle.Status,
+        "started_at": battle.StartedAt,
+        "updated_at": time.Now(),
+    }
+    if err := GetRepository().UpdateBattleFields(ctx, battle.ID, updateData); err != nil { return nil, nil, fmt.Errorf("failed to start battle: %w", err) }
 
 	// Log battle start to Redis (simplified)
 	go func() {
@@ -175,8 +158,8 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 	}()
 
 	// Publish battle started event
-	go PublishBattleStartedEvent(
-		battle.ID.Hex(),
+    go PublishBattleStartedEvent(
+        battle.ID,
 		string(battle.BattleType),
 		0, // No single warrior ID in team battles
 		"Team Battle",
