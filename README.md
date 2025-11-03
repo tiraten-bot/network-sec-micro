@@ -287,6 +287,7 @@ graph LR
         T10[arena.invitation.expired]
         T11[arena.match.started]
         T12[arena.match.completed]
+        T13[battle.wager.resolved]
     end
     
     subgraph "Event Consumers"
@@ -294,6 +295,7 @@ graph LR
         WP2[Weapon Service]
         W[Warrior Service]
         A2[Arena Service]
+        H[Heal Service]
     end
     
     WP -->|WeaponPurchaseEvent| T1
