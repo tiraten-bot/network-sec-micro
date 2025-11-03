@@ -1717,40 +1717,46 @@ graph TB
     style DCGW fill:#16a085,stroke:#138d75,color:#ffffff
 ```
 
-### Kubernetes Deployment
+### 💚 Kubernetes Deployment 🌿
 
 ```mermaid
 graph TB
-    subgraph "Kubernetes Namespace: network-sec"
-        KSPG[PostgreSQL<br/>StatefulSet]
-        KSR[Redis<br/>StatefulSet]
-        KSK[Kafka<br/>StatefulSet]
-        KSH[Heal Service<br/>Deployment]
-        KSW[Warrior Service<br/>Deployment]
-        KSC[Coin Service<br/>Deployment]
-        KSGW[Gateway<br/>Deployment]
-        KSSH[Heal Service<br/>Service :50058]
-        KSING[Ingress]
+    subgraph "☸️ Kubernetes Namespace: network-sec"
+        KSPG[💾 PostgreSQL<br/>StatefulSet]
+        KSR[📊 Redis<br/>💚 StatefulSet]
+        KSK[📨 Kafka<br/>StatefulSet]
+        KSH[💚 Heal Service<br/>Deployment]
+        KSW[🛡️ Warrior Service<br/>Deployment]
+        KSC[💰 Coin Service<br/>Deployment]
+        KSD[🐉 Dragon Service<br/>Deployment]
+        KSE[👹 Enemy Service<br/>Deployment]
+        KSGW[🌐 Gateway<br/>Deployment]
+        KSSH[💚 Heal Service<br/>Service :50058]
+        KSING[🔀 Ingress]
     end
     
     KSH -->|Read/Write| KSPG
-    KSH -->|Cache| KSR
+    KSH -->|💚 Cache| KSR
     KSH -->|Consume Events| KSK
     KSH -->|gRPC| KSW
     KSH -->|gRPC| KSC
+    KSH -->|gRPC| KSD
+    KSH -->|gRPC| KSE
     KSSH -.->|Exposes| KSH
     KSGW -->|gRPC Proxy| KSSH
     KSING -->|Routes| KSGW
     
-    style KSH fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style KSPG fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style KSR fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style KSK fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style KSW fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style KSC fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style KSGW fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style KSSH fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style KSING fill:#08315c,stroke:#001a4d,color:#ffffff
+    style KSH fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style KSPG fill:#3498db,stroke:#2980b9,color:#ffffff
+    style KSR fill:#e74c3c,stroke:#c0392b,color:#ffffff
+    style KSK fill:#9b59b6,stroke:#8e44ad,color:#ffffff
+    style KSW fill:#3498db,stroke:#2980b9,color:#ffffff
+    style KSC fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style KSD fill:#8b0000,stroke:#5a0000,color:#ffffff
+    style KSE fill:#7f8c8d,stroke:#34495e,color:#ffffff
+    style KSGW fill:#16a085,stroke:#138d75,color:#ffffff
+    style KSSH fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style KSING fill:#16a085,stroke:#138d75,color:#ffffff
 ```
 
 ### 💚 HealService Redis Logging Flow 📊
