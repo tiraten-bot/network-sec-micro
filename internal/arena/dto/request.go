@@ -16,4 +16,6 @@ type RejectInvitationRequest struct {
 }
 
 // CancelInvitationRequest represents a request to cancel an invitation
-type CancelInvitationRequest struct
+type CancelInvitationRequest struct {
+	InvitationID string `json:"invitation_id" binding:"required"`
+}
