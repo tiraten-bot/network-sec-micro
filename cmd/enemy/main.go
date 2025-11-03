@@ -35,22 +35,40 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize service using Wire (or manual)
-	// service, err := InitializeEnemyApp()
-	// if err != nil {
-	// 	log.Fatalf("Failed to initialize app: %v", err)
-	// }
-	_ = enemy.NewService() // Service initialized
-	
+	// Initialize service
+	service := enemy.NewService()
+	grpcServer := enemy.NewEnemyServiceServer(service)
+
 	// Setup graceful shutdown
-	defer func() {
-		log.Println("Shutting down...")
-		enemy.CloseKafkaPublisher()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Start gRPC server
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		grpcPort = "50060"
+	}
+	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatalf("Failed to listen on gRPC port %s: %v", grpcPort, err)
+	}
+	grpcSrv := grpc.NewServer()
+	pb.RegisterEnemyServiceServer(grpcSrv, grpcServer)
+
+	go func() {
+		log.Printf("Enemy gRPC server starting on port %s", grpcPort)
+		if err := grpcSrv.Serve(grpcLis); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
 	}()
 
 	log.Println("Enemy Service starting...")
-	
-	// Keep running (will add routes later)
-	select {}
+
+	// Wait for interrupt signal
+	<-sigChan
+	log.Println("Shutting down Enemy service...")
+	grpcSrv.GracefulStop()
+	enemy.CloseKafkaPublisher()
+	log.Println("Enemy service stopped")
 }
 
