@@ -1,7 +1,6 @@
 package heal
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"os"
