@@ -658,6 +658,18 @@ graph TB
         B6[GET /api/battles/:id/turns]
     end
     
+    subgraph "Arena Service :8087"
+        A1[POST /api/v1/arena/invitations]
+        A2[POST /api/v1/arena/invitations/accept]
+        A3[POST /api/v1/arena/invitations/reject]
+        A4[POST /api/v1/arena/invitations/cancel]
+        A5[GET /api/v1/arena/invitations/:id]
+        A6[GET /api/v1/arena/invitations/my]
+        A7[GET /api/v1/arena/matches/my]
+        A8[GET /api/v1/arena/matches/:id]
+        A9[POST /api/v1/arena/matches/attack]
+    end
+    
     style W1 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style W2 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style W3 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
@@ -685,6 +697,15 @@ graph TB
     style B4 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style B5 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style B6 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A1 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A2 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A3 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A4 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A5 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A6 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A7 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A8 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style A9 fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Game Flow Examples
