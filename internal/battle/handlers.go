@@ -891,46 +891,4 @@ func (h *Handler) CastSpell(c *gin.Context) {
 	})
 }
 
-// StartArenaBattle godoc
-// @Summary Start an arena battle (internal use by arena service)
-// @Description Starts a 1v1 arena battle between two warriors. Called by arena service when invitation is accepted.
-// @Tags battles
-// @Accept json
-// @Produce json
-// @Param request body dto.StartArenaBattleRequest true "Arena battle data"
-// @Success 201 {object} map[string]interface{} "battle_id: string"
-// @Failure 400 {object} dto.ErrorResponse
-// @Router /api/arena/start [post]
-func (h *Handler) StartArenaBattle(c *gin.Context) {
-	var req dto.StartArenaBattleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-			Error:   "validation_error",
-			Message: err.Error(),
-		})
-		return
-	}
-
-	cmd := dto.StartArenaBattleCommand{
-		Player1ID:   req.Player1ID,
-		Player1Name: req.Player1Name,
-		Player2ID:   req.Player2ID,
-		Player2Name: req.Player2Name,
-		MaxTurns:    req.MaxTurns,
-	}
-
-	battle, participants, err := h.Service.StartArenaBattle(c.Request.Context(), cmd)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-			Error:   "arena_battle_start_failed",
-			Message: err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"battle_id": battle.ID.Hex(),
-		"message":   fmt.Sprintf("Arena battle started: %s vs %s", req.Player1Name, req.Player2Name),
-	})
-}
 
