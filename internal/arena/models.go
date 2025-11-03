@@ -94,6 +94,8 @@ type ArenaMatch struct {
 	// Spell windows (threshold announcements)
 	P1Below50Announced bool `bson:"p1_below50_announced" json:"p1_below50_announced"`
 	P2Below50Announced bool `bson:"p2_below50_announced" json:"p2_below50_announced"`
+	P1Below10Announced bool `bson:"p1_below10_announced" json:"p1_below10_announced"`
+	P2Below10Announced bool `bson:"p2_below10_announced" json:"p2_below10_announced"`
 	
 	// Result
 	Status      ArenaMatchStatus `bson:"status" json:"status"`
