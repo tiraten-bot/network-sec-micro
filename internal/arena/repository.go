@@ -29,16 +29,16 @@ func GetRepository() Repository {
             defaultRepo = &redisRepo{}
             return defaultRepo
         }
-        // fallback to mongo if redis not ready
-        defaultRepo = &mongoRepo{}
+        // fallback to sql if redis not ready and sql enabled
+        if SQLDB.Enabled { defaultRepo = &sqlRepo{} } else { defaultRepo = &redisRepo{} }
     case "sql":
         if SQLDB.Enabled {
             defaultRepo = &sqlRepo{}
             return defaultRepo
         }
-        defaultRepo = &mongoRepo{}
+        defaultRepo = &redisRepo{}
     default:
-        defaultRepo = &mongoRepo{}
+        if SQLDB.Enabled { defaultRepo = &sqlRepo{} } else if getRedis() != nil { defaultRepo = &redisRepo{} } else { defaultRepo = &sqlRepo{} }
     }
     return defaultRepo
 }
