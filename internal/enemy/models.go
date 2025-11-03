@@ -25,6 +25,7 @@ type Enemy struct {
 	Health      int                `bson:"health" json:"health"`
 	MaxHealth   int                `bson:"max_health" json:"max_health"` // Maximum HP (for healing)
 	AttackPower int                `bson:"attack_power" json:"attack_power"`
+	CoinBalance int64              `bson:"coin_balance" json:"coin_balance"` // Enemy's coin balance
 	IsHealing   bool               `bson:"is_healing" json:"is_healing"` // Is currently healing
 	HealingUntil *time.Time        `bson:"healing_until,omitempty" json:"healing_until,omitempty"` // When healing completes
 	CreatedBy   string             `bson:"created_by" json:"created_by"` // Dark emperor/king username
