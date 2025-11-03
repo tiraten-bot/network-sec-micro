@@ -17,6 +17,10 @@ const (
 
     // Dark-side inspired debuff (applies to opponent in 1v1)
     SpellDestroyTheLight SpellType = "destroy_the_light" // Reduce opponent attack/defense by 30% (stack up to 2)
+
+    // Crisis spells (both sides) - unlocked at critical HP window (< =10%)
+    SpellLightCrisis SpellType = "light_crisis" // Strong light-side emergency buff
+    SpellDarkCrisis  SpellType = "dark_crisis"  // Strong dark-side emergency debuff
 )
 
 type TeamSide string
@@ -28,9 +32,9 @@ const (
 
 func (st SpellType) Side() TeamSide {
     switch st {
-    case SpellCallOfTheLightKing, SpellResistance, SpellRebirth:
+    case SpellCallOfTheLightKing, SpellResistance, SpellRebirth, SpellLightCrisis:
         return TeamSideLight
-    case SpellDestroyTheLight:
+    case SpellDestroyTheLight, SpellDarkCrisis:
         return TeamSideDark
     default:
         return ""
