@@ -121,8 +121,6 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 
 // GetHealingHistory retrieves healing history for a warrior
 func (s *Service) GetHealingHistory(ctx context.Context, warriorID uint) ([]*HealingRecord, error) {
-	// TODO: Implement database storage for healing records
-	// For now, return empty slice
-	return []*HealingRecord{}, nil
+	return GetRepository().GetHealingHistory(ctx, warriorID)
 }
 
