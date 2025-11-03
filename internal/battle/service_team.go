@@ -52,10 +52,13 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 		CurrentTurn:           0,
 		CurrentParticipantIndex: 0,
 		MaxTurns:              maxTurns,
-		Status:                BattleStatusPending,
+        Status:                BattleStatusPending,
 		CreatedBy:             cmd.CreatedBy,
 		CreatedAt:             now,
 		UpdatedAt:             now,
+        WagerAmount:           cmd.WagerAmount,
+        LightEmperorID:        cmd.LightEmperorID,
+        DarkEmperorID:         cmd.DarkEmperorID,
 	}
 
     battleID, err := GetRepository().CreateBattle(ctx, battle)
@@ -138,16 +141,21 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
         }
     }
 
-	// Start the battle
-	battle.Status = BattleStatusInProgress
-	battle.StartedAt = &now
+    // Start the battle if no emperor approval required or wager is zero
+    if !(cmd.RequireEmperorApproval && battle.WagerAmount > 0) {
+        battle.Status = BattleStatusInProgress
+        battle.StartedAt = &now
+    }
 
     updateData := map[string]interface{}{
         "status":     battle.Status,
         "started_at": battle.StartedAt,
         "updated_at": time.Now(),
+        "wager_amount": battle.WagerAmount,
+        "light_emperor_id": battle.LightEmperorID,
+        "dark_emperor_id": battle.DarkEmperorID,
     }
-    if err := GetRepository().UpdateBattleFields(ctx, battle.ID, updateData); err != nil { return nil, nil, fmt.Errorf("failed to start battle: %w", err) }
+    if err := GetRepository().UpdateBattleFields(ctx, battle.ID, updateData); err != nil { return nil, nil, fmt.Errorf("failed to update battle: %w", err) }
 
 	// Log battle start to Redis (simplified)
 	go func() {
@@ -157,16 +165,18 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 		}
 	}()
 
-	// Publish battle started event
-    go PublishBattleStartedEvent(
-        battle.ID,
-		string(battle.BattleType),
-		0, // No single warrior ID in team battles
-		"Team Battle",
-		"",
-		"",
-		"",
-	)
+    if battle.Status == BattleStatusInProgress {
+        // Publish battle started event
+        go PublishBattleStartedEvent(
+            battle.ID,
+            string(battle.BattleType),
+            0, // No single warrior ID in team battles
+            "Team Battle",
+            "",
+            "",
+            "",
+        )
+    }
 
 	return battle, participants, nil
 }
