@@ -125,5 +125,27 @@ const (
 	TopicEnemyDestroyed = "enemy.destroyed"
 	TopicBattleStarted  = "battle.started"
 	TopicBattleCompleted = "battle.completed"
+    TopicBattleWagerResolved = "battle.wager.resolved"
 )
+
+// BattleWagerResolvedEvent represents wager payout after a team battle
+type BattleWagerResolvedEvent struct {
+    Event
+    BattleID    string `json:"battle_id"`
+    WinnerSide  string `json:"winner_side"`
+    WagerAmount int    `json:"wager_amount"`
+    LightEmperorID string `json:"light_emperor_id"`
+    DarkEmperorID  string `json:"dark_emperor_id"`
+}
+
+func NewBattleWagerResolvedEvent(battleID, winnerSide string, wagerAmount int, lightEmperorID, darkEmperorID string) *BattleWagerResolvedEvent {
+    return &BattleWagerResolvedEvent{
+        Event: Event{ EventType: "battle_wager_resolved", Timestamp: time.Now(), SourceService: "battle" },
+        BattleID: battleID,
+        WinnerSide: winnerSide,
+        WagerAmount: wagerAmount,
+        LightEmperorID: lightEmperorID,
+        DarkEmperorID: darkEmperorID,
+    }
+}
 
