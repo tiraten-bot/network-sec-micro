@@ -14,6 +14,11 @@ import (
 )
 
 func main() {
+	// Initialize PostgreSQL (optional, for healing records storage)
+	if err := heal.InitPostgres(); err != nil {
+		log.Printf("Warning: Heal Postgres init failed: %v", err)
+	}
+
 	// Initialize Redis client
 	if err := heal.InitRedisClient(); err != nil {
 		log.Printf("Warning: Failed to connect to Redis: %v", err)
