@@ -314,14 +314,13 @@ func (s *Service) CancelInvitation(ctx context.Context, cmd dto.CancelInvitation
 
 // PerformAttack performs an attack in an arena match
 func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID, attackerID uint) (*ArenaMatch, error) {
-	var match ArenaMatch
-	err := MatchColl.FindOne(ctx, bson.M{"_id": matchID}).Decode(&match)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("match not found")
-		}
-		return nil, fmt.Errorf("failed to get match: %w", err)
-	}
+    var match ArenaMatch
+    repo := GetRepository()
+    m, err := repo.GetMatchByID(ctx, matchID.Hex())
+    if err != nil {
+        return nil, fmt.Errorf("failed to get match: %v", err)
+    }
+    match = *m
 
 	if match.Status != MatchStatusInProgress {
 		return nil, errors.New("match is not in progress")
@@ -477,24 +476,24 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 
 	match.UpdatedAt = time.Now()
 
-	updateData := bson.M{
-		"player1_hp":      match.Player1HP,
-		"player2_hp":      match.Player2HP,
-		"current_turn":    match.CurrentTurn,
-		"current_attacker": match.CurrentAttacker,
-		"status":          match.Status,
-		"updated_at":      match.UpdatedAt,
-	}
+    updateData := map[string]interface{}{
+        "player1_hp":      match.Player1HP,
+        "player2_hp":      match.Player2HP,
+        "current_turn":    match.CurrentTurn,
+        "current_attacker": match.CurrentAttacker,
+        "status":          string(match.Status),
+        "updated_at":      match.UpdatedAt,
+    }
 
-	if match.CompletedAt != nil {
-		updateData["completed_at"] = match.CompletedAt
-	}
-	if match.WinnerID != nil {
-		updateData["winner_id"] = *match.WinnerID
-		updateData["winner_name"] = match.WinnerName
-	}
+    if match.CompletedAt != nil {
+        updateData["completed_at"] = match.CompletedAt
+    }
+    if match.WinnerID != nil {
+        updateData["winner_id"] = *match.WinnerID
+        updateData["winner_name"] = match.WinnerName
+    }
 
-	_, err = MatchColl.UpdateOne(ctx, bson.M{"_id": matchID}, bson.M{"$set": updateData})
+    err = repo.UpdateMatchFields(ctx, match.ID.Hex(), updateData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update match: %w", err)
 	}
@@ -506,13 +505,12 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 // ApplySpellEffect applies a 1v1 arenaspell's immediate effect to the match
 func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.ObjectID, casterID uint, spellType string) (*ArenaMatch, error) {
     var match ArenaMatch
-    err := MatchColl.FindOne(ctx, bson.M{"_id": matchID}).Decode(&match)
+    repo := GetRepository()
+    m, err := repo.GetMatchByID(ctx, matchID.Hex())
     if err != nil {
-        if err == mongo.ErrNoDocuments {
-            return nil, errors.New("match not found")
-        }
-        return nil, fmt.Errorf("failed to get match: %w", err)
+        return nil, fmt.Errorf("failed to get match: %v", err)
     }
+    match = *m
 
     if match.Status != MatchStatusInProgress {
         return nil, errors.New("match is not in progress")
@@ -606,7 +604,7 @@ func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.Object
     }
 
     match.UpdatedAt = time.Now()
-    update := bson.M{
+    update := map[string]interface{}{
         "player1_hp":      match.Player1HP,
         "player1_attack":  match.Player1Attack,
         "player1_defense": match.Player1Defense,
@@ -616,7 +614,7 @@ func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.Object
         "updated_at":      match.UpdatedAt,
     }
 
-    _, err = MatchColl.UpdateOne(ctx, bson.M{"_id": matchID}, bson.M{"$set": update})
+    err = repo.UpdateMatchFields(ctx, match.ID.Hex(), update)
     if err != nil {
         return nil, fmt.Errorf("failed to update match: %w", err)
     }
