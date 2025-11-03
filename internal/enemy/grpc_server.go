@@ -93,7 +93,6 @@ func (s *EnemyServiceServer) UpdateEnemyHP(ctx context.Context, req *pb.UpdateEn
 		maxHealth = enemy.Health
 	}
 
-	oldHP := enemy.Health
 	newHP := int(req.NewHp)
 	if newHP > maxHealth {
 		newHP = maxHealth
@@ -179,7 +178,7 @@ func (s *EnemyServiceServer) CheckEnemyCanBattle(ctx context.Context, req *pb.Ch
 			}, nil
 		}
 		// Healing expired, clear state
-		_ = s.UpdateEnemyHealingState(ctx, &pb.UpdateEnemyHealingStateRequest{
+		_, _ = s.UpdateEnemyHealingState(ctx, &pb.UpdateEnemyHealingStateRequest{
 			EnemyId:            req.EnemyId,
 			IsHealing:         false,
 			HealingUntilSeconds: 0,
