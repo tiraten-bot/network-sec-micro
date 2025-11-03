@@ -24,12 +24,13 @@ const (
 
 // Request to purchase heal
 type PurchaseHealRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WarriorId     string                 `protobuf:"bytes,1,opt,name=warrior_id,json=warriorId,proto3" json:"warrior_id,omitempty"`
-	HealType      string                 `protobuf:"bytes,2,opt,name=heal_type,json=healType,proto3" json:"heal_type,omitempty"`          // "full", "partial", "emperor_full", "emperor_partial", "dragon"
-	WarriorRole   string                 `protobuf:"bytes,3,opt,name=warrior_role,json=warriorRole,proto3" json:"warrior_role,omitempty"` // Warrior role for RBAC (e.g., "light_emperor", "warrior", "dragon")
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ParticipantId   string                 `protobuf:"bytes,1,opt,name=participant_id,json=participantId,proto3" json:"participant_id,omitempty"`       // Warrior/Dragon/Enemy ID
+	ParticipantType string                 `protobuf:"bytes,2,opt,name=participant_type,json=participantType,proto3" json:"participant_type,omitempty"` // "warrior", "dragon", "enemy"
+	HealType        string                 `protobuf:"bytes,3,opt,name=heal_type,json=healType,proto3" json:"heal_type,omitempty"`                      // "full", "partial", "emperor_full", "emperor_partial", "dragon"
+	ParticipantRole string                 `protobuf:"bytes,4,opt,name=participant_role,json=participantRole,proto3" json:"participant_role,omitempty"` // Role for RBAC (e.g., "light_emperor", "warrior", "dragon")
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PurchaseHealRequest) Reset() {
@@ -62,9 +63,16 @@ func (*PurchaseHealRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_heal_heal_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PurchaseHealRequest) GetWarriorId() string {
+func (x *PurchaseHealRequest) GetParticipantId() string {
 	if x != nil {
-		return x.WarriorId
+		return x.ParticipantId
+	}
+	return ""
+}
+
+func (x *PurchaseHealRequest) GetParticipantType() string {
+	if x != nil {
+		return x.ParticipantType
 	}
 	return ""
 }
@@ -76,9 +84,9 @@ func (x *PurchaseHealRequest) GetHealType() string {
 	return ""
 }
 
-func (x *PurchaseHealRequest) GetWarriorRole() string {
+func (x *PurchaseHealRequest) GetParticipantRole() string {
 	if x != nil {
-		return x.WarriorRole
+		return x.ParticipantRole
 	}
 	return ""
 }
@@ -162,10 +170,11 @@ func (x *PurchaseHealResponse) GetCoinsSpent() int32 {
 
 // Request to get healing history
 type GetHealingHistoryRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WarriorId     string                 `protobuf:"bytes,1,opt,name=warrior_id,json=warriorId,proto3" json:"warrior_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ParticipantId   string                 `protobuf:"bytes,1,opt,name=participant_id,json=participantId,proto3" json:"participant_id,omitempty"`       // Warrior/Dragon/Enemy ID
+	ParticipantType string                 `protobuf:"bytes,2,opt,name=participant_type,json=participantType,proto3" json:"participant_type,omitempty"` // "warrior", "dragon", "enemy"
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetHealingHistoryRequest) Reset() {
@@ -198,9 +207,16 @@ func (*GetHealingHistoryRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_heal_heal_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetHealingHistoryRequest) GetWarriorId() string {
+func (x *GetHealingHistoryRequest) GetParticipantId() string {
 	if x != nil {
-		return x.WarriorId
+		return x.ParticipantId
+	}
+	return ""
+}
+
+func (x *GetHealingHistoryRequest) GetParticipantType() string {
+	if x != nil {
+		return x.ParticipantType
 	}
 	return ""
 }
@@ -339,22 +355,22 @@ var File_api_proto_heal_heal_proto protoreflect.FileDescriptor
 
 const file_api_proto_heal_heal_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/proto/heal/heal.proto\x12\x04heal\x1a\x1fgoogle/protobuf/timestamp.proto\"t\n" +
-	"\x13PurchaseHealRequest\x12\x1d\n" +
-	"\n" +
-	"warrior_id\x18\x01 \x01(\tR\twarriorId\x12\x1b\n" +
-	"\theal_type\x18\x02 \x01(\tR\bhealType\x12!\n" +
-	"\fwarrior_role\x18\x03 \x01(\tR\vwarriorRole\"\xa7\x01\n" +
+	"\x19api/proto/heal/heal.proto\x12\x04heal\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaf\x01\n" +
+	"\x13PurchaseHealRequest\x12%\n" +
+	"\x0eparticipant_id\x18\x01 \x01(\tR\rparticipantId\x12)\n" +
+	"\x10participant_type\x18\x02 \x01(\tR\x0fparticipantType\x12\x1b\n" +
+	"\theal_type\x18\x03 \x01(\tR\bhealType\x12)\n" +
+	"\x10participant_role\x18\x04 \x01(\tR\x0fparticipantRole\"\xa7\x01\n" +
 	"\x14PurchaseHealResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
 	"\rhealed_amount\x18\x03 \x01(\x05R\fhealedAmount\x12\x15\n" +
 	"\x06new_hp\x18\x04 \x01(\x05R\x05newHp\x12\x1f\n" +
 	"\vcoins_spent\x18\x05 \x01(\x05R\n" +
-	"coinsSpent\"9\n" +
-	"\x18GetHealingHistoryRequest\x12\x1d\n" +
-	"\n" +
-	"warrior_id\x18\x01 \x01(\tR\twarriorId\"J\n" +
+	"coinsSpent\"l\n" +
+	"\x18GetHealingHistoryRequest\x12%\n" +
+	"\x0eparticipant_id\x18\x01 \x01(\tR\rparticipantId\x12)\n" +
+	"\x10participant_type\x18\x02 \x01(\tR\x0fparticipantType\"J\n" +
 	"\x19GetHealingHistoryResponse\x12-\n" +
 	"\arecords\x18\x01 \x03(\v2\x13.heal.HealingRecordR\arecords\"\xdc\x01\n" +
 	"\rHealingRecord\x12\x0e\n" +
