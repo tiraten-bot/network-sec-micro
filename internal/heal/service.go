@@ -105,16 +105,17 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 		return nil, err
 	}
 
-	// Calculate healing amount
+	// Calculate healing amount based on type
 	hpBefore := currentHP
 	var healedAmount int
 	var hpAfter int
 
-	if healType == HealTypeFull {
+	switch healType {
+	case HealTypeFull, HealTypeEmperorFull:
 		// Full heal: restore to max HP
 		healedAmount = maxHP - hpBefore
 		hpAfter = maxHP
-	} else {
+	case HealTypePartial, HealTypeEmperorPartial:
 		// Partial heal: 50% of current HP
 		healedAmount = hpBefore / 2
 		hpAfter = hpBefore + healedAmount
@@ -122,10 +123,16 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 			hpAfter = maxHP
 			healedAmount = maxHP - hpBefore
 		}
+	case HealTypeDragon:
+		// Dragon heal: full heal but very slow
+		healedAmount = maxHP - hpBefore
+		hpAfter = maxHP
+	default:
+		return nil, errors.New("invalid heal type for calculation")
 	}
 
 	// Check if healing is needed
-	if hpBefore >= maxHP && healType == HealTypeFull {
+	if hpBefore >= maxHP && (healType == HealTypeFull || healType == HealTypeEmperorFull || healType == HealTypeDragon) {
 		return nil, errors.New("warrior already at full HP")
 	}
 	if healedAmount <= 0 {
@@ -137,15 +144,20 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 		return nil, fmt.Errorf("failed to deduct coins: %w", err)
 	}
 
-	// Update warrior HP via gRPC
-	if err := UpdateWarriorHP(ctx, warriorID, hpAfter); err != nil {
-		log.Printf("Warning: Failed to update warrior HP via gRPC: %v", err)
-		// Continue anyway - healing record will be saved
+	// Calculate healing completion time
+	now := time.Now()
+	completedAt := now.Add(time.Duration(packageInfo.Duration) * time.Second)
+
+	// Set warrior healing state (HP will be updated after duration)
+	// For now, we'll schedule the HP update
+	// In production, you'd use a background job or timer
+	if err := SetWarriorHealingState(ctx, warriorID, true, &completedAt); err != nil {
+		log.Printf("Warning: Failed to set warrior healing state: %v", err)
 	}
 
-	// Create healing record
+	// Create healing record (HP will be applied after duration)
 	record := &HealingRecord{
-		ID:           fmt.Sprintf("%d-%d", warriorID, time.Now().Unix()),
+		ID:           fmt.Sprintf("%d-%d", warriorID, now.Unix()),
 		WarriorID:    warriorID,
 		WarriorName:  warrior.Username,
 		HealType:     healType,
@@ -153,8 +165,27 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 		HPBefore:     hpBefore,
 		HPAfter:      hpAfter,
 		CoinsSpent:   packageInfo.Price,
-		CreatedAt:    time.Now(),
+		Duration:     packageInfo.Duration,
+		CompletedAt:  &completedAt,
+		CreatedAt:    now,
 	}
+
+	// Save to database
+	if err := GetRepository().SaveHealingRecord(ctx, record); err != nil {
+		log.Printf("Warning: Failed to save healing record: %v", err)
+	}
+
+	// Schedule HP update after duration (in production, use background job)
+	go func() {
+		time.Sleep(time.Duration(packageInfo.Duration) * time.Second)
+		if err := UpdateWarriorHP(context.Background(), warriorID, int32(hpAfter)); err != nil {
+			log.Printf("Failed to apply healing HP after duration: %v", err)
+		} else {
+			// Clear healing state
+			_ = SetWarriorHealingState(context.Background(), warriorID, false, nil)
+			log.Printf("Healing completed for warrior %d: HP updated to %d", warriorID, hpAfter)
+		}
+	}()
 
 	// Save to database
 	if err := GetRepository().SaveHealingRecord(ctx, record); err != nil {
