@@ -70,8 +70,14 @@ func canUsePackage(userRole, requiredRole string) bool {
 	return userRole == requiredRole
 }
 
-// PurchaseHeal processes a healing purchase
-func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType HealType, battleID string, warriorRole string) (*HealingRecord, error) {
+// ==================== COMMANDS (WRITE OPERATIONS) ====================
+
+// PurchaseHeal processes a healing purchase (Command)
+func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand) (*HealingRecord, error) {
+	healType := HealType(cmd.HealType)
+	warriorID := cmd.WarriorID
+	battleID := cmd.BattleID
+	warriorRole := cmd.WarriorRole
 	// Get warrior info
 	warrior, err := GetWarriorByID(ctx, warriorID)
 	if err != nil {
@@ -206,8 +212,10 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 	return record, nil
 }
 
-// GetHealingHistory retrieves healing history for a warrior
-func (s *Service) GetHealingHistory(ctx context.Context, warriorID uint) ([]*HealingRecord, error) {
-	return GetRepository().GetHealingHistory(ctx, warriorID)
+// ==================== QUERIES (READ OPERATIONS) ====================
+
+// GetHealingHistory retrieves healing history for a warrior (Query)
+func (s *Service) GetHealingHistory(ctx context.Context, query dto.GetHealingHistoryQuery) ([]*HealingRecord, error) {
+	return s.repo.GetHealingHistory(ctx, query.WarriorID)
 }
 
