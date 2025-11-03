@@ -76,9 +76,6 @@ func (s *Service) CastSpell(ctx context.Context, cmd dto.CastArenaSpellCommand) 
         _, _ = SpellColl.InsertOne(ctx, rec)
     }
 
-    // Apply effect in Arena immediately (HTTP call for now)
-    _ = ApplySpellEffectViaArena(cmd.MatchID, cmd.CasterUserID, cmd.SpellType)
-
     switch st {
     case SpellCallOfTheLightKing:
         return 1, nil // caster buff
