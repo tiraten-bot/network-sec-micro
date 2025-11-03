@@ -21,15 +21,6 @@ proto:
 		api/proto/battle/battle.proto \
 		api/proto/battlespell/battlespell.proto \
 		api/proto/arena/arena.proto
-	@protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		api/proto/warrior/warrior.proto
-	@protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		api/proto/battle/battle.proto
-	@protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		api/proto/battlespell/battlespell.proto
 	@echo "✅ Protobuf code generated!"
 
 build:
