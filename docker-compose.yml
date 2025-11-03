@@ -335,6 +335,42 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # Heal Service (gRPC)
+  heal:
+    build:
+      context: .
+      dockerfile: dockerfiles/heal.dockerfile
+    container_name: heal-service
+    environment:
+      HEAL_USE_POSTGRES: "1"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME_HEAL: heal_db
+      DB_SSLMODE: disable
+      WARRIOR_GRPC_ADDR: warrior:50052
+      COIN_GRPC_ADDR: coin:50051
+      KAFKA_BROKERS: kafka:9092
+      REDIS_ADDR: redis:6379
+      GRPC_PORT: 50058
+    ports:
+      - "50058:50058"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      warrior:
+        condition: service_healthy
+      coin:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
   # Fiber API Gateway
   fiber-gateway:
     build:
