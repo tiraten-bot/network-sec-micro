@@ -1332,28 +1332,28 @@ sequenceDiagram
     Heal->>Heal: 📊 Log healing completion
 ```
 
-### Heal Service Role-Based Packages
+### 💚 Heal Service Role-Based Packages ⚗️
 
 ```mermaid
 graph TB
-    subgraph "Warrior Packages"
-        WF[Full Heal<br/>100 coins<br/>5 minutes]
-        WP[50% Heal<br/>50 coins<br/>3 minutes]
+    subgraph "🛡️ Warrior Packages"
+        WF[💚 Full Heal<br/>💰 100 coins<br/>⏱️ 5 minutes]
+        WP[💚 50% Heal<br/>💰 50 coins<br/>⏱️ 3 minutes]
     end
     
-    subgraph "Emperor Packages"
-        EF[Emperor Full Heal<br/>20 coins<br/>30 seconds]
-        EP[Emperor Quick Heal<br/>10 coins<br/>15 seconds]
+    subgraph "👑 Emperor Packages"
+        EF[✨ Emperor Full Heal<br/>💰 20 coins<br/>⚡ 30 seconds]
+        EP[✨ Emperor Quick Heal<br/>💰 10 coins<br/>⚡ 15 seconds]
     end
     
-    subgraph "Dragon Package"
-        DH[Dragon Heal<br/>1000 coins<br/>1 hour]
+    subgraph "🐉 Dragon Package"
+        DH[🔥 Dragon Heal<br/>💰 1000 coins<br/>⏱️ 1 hour<br/>💳 Paid by Dark Emperor]
     end
     
-    subgraph "Roles"
-        W[Warrior Role]
-        E[Emperor Role<br/>light_emperor<br/>dark_emperor]
-        D[Dragon Role]
+    subgraph "👥 Roles"
+        W[🛡️ Warrior Role]
+        E[👑 Emperor Role<br/>light_emperor<br/>dark_emperor]
+        D[🐉 Dragon Role]
     end
     
     W --> WF
@@ -1370,41 +1370,41 @@ graph TB
     D --> WF
     D --> WP
     
-    style WF fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style WP fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style EF fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style EP fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style DH fill:#8b0000,stroke:#001a4d,color:#ffffff
-    style W fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style E fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style D fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style WF fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style WP fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style EF fill:#1abc9c,stroke:#16a085,color:#ffffff
+    style EP fill:#1abc9c,stroke:#16a085,color:#ffffff
+    style DH fill:#8b0000,stroke:#5a0000,color:#ffffff
+    style W fill:#3498db,stroke:#2980b9,color:#ffffff
+    style E fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style D fill:#e74c3c,stroke:#c0392b,color:#ffffff
 ```
 
-### Heal Service State Management
+### 💚 Heal Service State Management 🌿
 
 ```mermaid
 stateDiagram-v2
-    [*] --> WarriorHealthy: Warrior at full HP
+    [*] --> WarriorHealthy: ✅ Warrior at full HP
     
-    WarriorHealthy --> PurchaseHealing: Battle/Arena completed<br/>HP reduced
-    PurchaseHealing --> HealingInProgress: Payment successful<br/>Coins deducted
+    WarriorHealthy --> PurchaseHealing: ⚔️ Battle/Arena completed<br/>💔 HP reduced
+    PurchaseHealing --> HealingInProgress: 💰 Payment successful<br/>💳 Coins deducted
     
-    HealingInProgress --> HealingCompleted: Duration elapsed<br/>HP restored
-    HealingInProgress --> BattleBlocked: Attempt to start battle<br/>Check healing state
+    HealingInProgress --> HealingCompleted: ⏱️ Duration elapsed<br/>💚 HP restored
+    HealingInProgress --> BattleBlocked: ⛔ Attempt to start battle<br/>🔍 Check healing state
     
-    HealingCompleted --> WarriorHealthy: HP updated
-    BattleBlocked --> HealingInProgress: Wait for completion
+    HealingCompleted --> WarriorHealthy: ✅ HP updated
+    BattleBlocked --> HealingInProgress: ⏳ Wait for completion
     
     note right of HealingInProgress
-        is_healing = true
-        healing_until = timestamp
-        Cannot start battles/arena
+        💚 is_healing = true
+        ⏱️ healing_until = timestamp
+        ⛔ Cannot start battles/arena
     end note
     
     note right of HealingCompleted
-        is_healing = false
-        healing_until = null
-        HP updated to target value
+        ✅ is_healing = false
+        🧹 healing_until = null
+        💚 HP updated to target value
     end note
 ```
 
