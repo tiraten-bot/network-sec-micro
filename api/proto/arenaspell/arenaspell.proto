@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package arenaspell;
+
+option go_package = "network-sec-micro/api/proto/arenaspell";
+
+// ArenaSpell Service (called by Arena or API layer to cast a 1v1 spell)
+service ArenaSpellService {
+  rpc CastSpell(CastArenaSpellRequest) returns (CastArenaSpellResponse);
+}
+
+message CastArenaSpellRequest {
+  string match_id = 1;
+  string spell_type = 2; // call_of_the_light_king | resistance | rebirth | destroy_the_light
+  uint32 caster_user_id = 3;
+  string caster_username = 4;
+  string caster_role = 5; // light_king | dark_king
+}
+
+message CastArenaSpellResponse {
+  bool success = 1;
+  string message = 2;
+  int32 affected_count = 3;
+}
+
+
