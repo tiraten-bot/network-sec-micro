@@ -23,7 +23,10 @@ type Enemy struct {
 	Type        EnemyType          `bson:"type" json:"type"`
 	Level       int                `bson:"level" json:"level"`
 	Health      int                `bson:"health" json:"health"`
+	MaxHealth   int                `bson:"max_health" json:"max_health"` // Maximum HP (for healing)
 	AttackPower int                `bson:"attack_power" json:"attack_power"`
+	IsHealing   bool               `bson:"is_healing" json:"is_healing"` // Is currently healing
+	HealingUntil *time.Time        `bson:"healing_until,omitempty" json:"healing_until,omitempty"` // When healing completes
 	CreatedBy   string             `bson:"created_by" json:"created_by"` // Dark emperor/king username
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
