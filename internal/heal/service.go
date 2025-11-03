@@ -8,9 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	pbDragon "network-sec-micro/api/proto/dragon"
-	pbEnemy "network-sec-micro/api/proto/enemy"
-	pbWarrior "network-sec-micro/api/proto/warrior"
 	"network-sec-micro/internal/heal/dto"
 )
 
