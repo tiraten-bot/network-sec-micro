@@ -6,7 +6,8 @@ import (
 
 // SetupRoutes configures HTTP routes for arena service
 func SetupRoutes(r *gin.Engine, handler *Handler) {
-	api := r.Group("/api/v1/arena")
+    api := r.Group("/api/v1/arena")
+    api.Use(AuthMiddleware())
 	{
 		// Invitation operations
 		api.POST("/invitations", handler.SendInvitation)
