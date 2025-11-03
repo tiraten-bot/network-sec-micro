@@ -10,6 +10,7 @@ images:
   battlespell: { repository: battlespell, tag: latest, pullPolicy: IfNotPresent }
   arenaspell: { repository: arenaspell, tag: latest, pullPolicy: IfNotPresent }
   arena: { repository: arena, tag: latest, pullPolicy: IfNotPresent }
+  heal: { repository: heal, tag: latest, pullPolicy: IfNotPresent }
   gateway: { repository: fiber-gateway, tag: latest, pullPolicy: IfNotPresent }
 
 replicas:
@@ -22,6 +23,7 @@ replicas:
   battlespell: 1
   arenaspell: 1
   arena: 1
+  heal: 1
   gateway: 1
 
 env:
