@@ -316,6 +316,128 @@ func (x *UpdateWarriorPowerResponse) GetMessage() string {
 	return ""
 }
 
+// Request to update HP
+type UpdateWarriorHPRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WarriorId     uint32                 `protobuf:"varint,1,opt,name=warrior_id,json=warriorId,proto3" json:"warrior_id,omitempty"`
+	NewHp         int32                  `protobuf:"varint,2,opt,name=new_hp,json=newHp,proto3" json:"new_hp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateWarriorHPRequest) Reset() {
+	*x = UpdateWarriorHPRequest{}
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateWarriorHPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateWarriorHPRequest) ProtoMessage() {}
+
+func (x *UpdateWarriorHPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateWarriorHPRequest.ProtoReflect.Descriptor instead.
+func (*UpdateWarriorHPRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UpdateWarriorHPRequest) GetWarriorId() uint32 {
+	if x != nil {
+		return x.WarriorId
+	}
+	return 0
+}
+
+func (x *UpdateWarriorHPRequest) GetNewHp() int32 {
+	if x != nil {
+		return x.NewHp
+	}
+	return 0
+}
+
+// Response after updating HP
+type UpdateWarriorHPResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	OldHp         int32                  `protobuf:"varint,3,opt,name=old_hp,json=oldHp,proto3" json:"old_hp,omitempty"`
+	NewHp         int32                  `protobuf:"varint,4,opt,name=new_hp,json=newHp,proto3" json:"new_hp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateWarriorHPResponse) Reset() {
+	*x = UpdateWarriorHPResponse{}
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateWarriorHPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateWarriorHPResponse) ProtoMessage() {}
+
+func (x *UpdateWarriorHPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateWarriorHPResponse.ProtoReflect.Descriptor instead.
+func (*UpdateWarriorHPResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpdateWarriorHPResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UpdateWarriorHPResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *UpdateWarriorHPResponse) GetOldHp() int32 {
+	if x != nil {
+		return x.OldHp
+	}
+	return 0
+}
+
+func (x *UpdateWarriorHPResponse) GetNewHp() int32 {
+	if x != nil {
+		return x.NewHp
+	}
+	return 0
+}
+
 // Warrior model
 type Warrior struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -326,15 +448,17 @@ type Warrior struct {
 	CoinBalance   int32                  `protobuf:"varint,5,opt,name=coin_balance,json=coinBalance,proto3" json:"coin_balance,omitempty"`
 	TotalPower    int32                  `protobuf:"varint,6,opt,name=total_power,json=totalPower,proto3" json:"total_power,omitempty"`
 	WeaponCount   int32                  `protobuf:"varint,7,opt,name=weapon_count,json=weaponCount,proto3" json:"weapon_count,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CurrentHp     int32                  `protobuf:"varint,8,opt,name=current_hp,json=currentHp,proto3" json:"current_hp,omitempty"` // Current HP (for healing)
+	MaxHp         int32                  `protobuf:"varint,9,opt,name=max_hp,json=maxHp,proto3" json:"max_hp,omitempty"`             // Maximum HP (calculated from total_power)
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Warrior) Reset() {
 	*x = Warrior{}
-	mi := &file_api_proto_warrior_warrior_proto_msgTypes[6]
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +470,7 @@ func (x *Warrior) String() string {
 func (*Warrior) ProtoMessage() {}
 
 func (x *Warrior) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_warrior_warrior_proto_msgTypes[6]
+	mi := &file_api_proto_warrior_warrior_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +483,7 @@ func (x *Warrior) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Warrior.ProtoReflect.Descriptor instead.
 func (*Warrior) Descriptor() ([]byte, []int) {
-	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_warrior_warrior_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Warrior) GetId() uint32 {
@@ -411,6 +535,20 @@ func (x *Warrior) GetWeaponCount() int32 {
 	return 0
 }
 
+func (x *Warrior) GetCurrentHp() int32 {
+	if x != nil {
+		return x.CurrentHp
+	}
+	return 0
+}
+
+func (x *Warrior) GetMaxHp() int32 {
+	if x != nil {
+		return x.MaxHp
+	}
+	return 0
+}
+
 func (x *Warrior) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
@@ -447,7 +585,16 @@ const file_api_proto_warrior_warrior_proto_rawDesc = "" +
 	"\fweapon_count\x18\x03 \x01(\x05R\vweaponCount\"P\n" +
 	"\x1aUpdateWarriorPowerResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xbc\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"N\n" +
+	"\x16UpdateWarriorHPRequest\x12\x1d\n" +
+	"\n" +
+	"warrior_id\x18\x01 \x01(\rR\twarriorId\x12\x15\n" +
+	"\x06new_hp\x18\x02 \x01(\x05R\x05newHp\"{\n" +
+	"\x17UpdateWarriorHPResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x15\n" +
+	"\x06old_hp\x18\x03 \x01(\x05R\x05oldHp\x12\x15\n" +
+	"\x06new_hp\x18\x04 \x01(\x05R\x05newHp\"\xf2\x02\n" +
 	"\aWarrior\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
@@ -456,15 +603,20 @@ const file_api_proto_warrior_warrior_proto_rawDesc = "" +
 	"\fcoin_balance\x18\x05 \x01(\x05R\vcoinBalance\x12\x1f\n" +
 	"\vtotal_power\x18\x06 \x01(\x05R\n" +
 	"totalPower\x12!\n" +
-	"\fweapon_count\x18\a \x01(\x05R\vweaponCount\x129\n" +
+	"\fweapon_count\x18\a \x01(\x05R\vweaponCount\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"current_hp\x18\b \x01(\x05R\tcurrentHp\x12\x15\n" +
+	"\x06max_hp\x18\t \x01(\x05R\x05maxHp\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xa7\x02\n" +
+	"created_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xfd\x02\n" +
 	"\x0eWarriorService\x12c\n" +
 	"\x14GetWarriorByUsername\x12$.warrior.GetWarriorByUsernameRequest\x1a%.warrior.GetWarriorByUsernameResponse\x12Q\n" +
 	"\x0eGetWarriorByID\x12\x1e.warrior.GetWarriorByIDRequest\x1a\x1f.warrior.GetWarriorByIDResponse\x12]\n" +
-	"\x12UpdateWarriorPower\x12\".warrior.UpdateWarriorPowerRequest\x1a#.warrior.UpdateWarriorPowerResponseB%Z#network-sec-micro/api/proto/warriorb\x06proto3"
+	"\x12UpdateWarriorPower\x12\".warrior.UpdateWarriorPowerRequest\x1a#.warrior.UpdateWarriorPowerResponse\x12T\n" +
+	"\x0fUpdateWarriorHP\x12\x1f.warrior.UpdateWarriorHPRequest\x1a .warrior.UpdateWarriorHPResponseB%Z#network-sec-micro/api/proto/warriorb\x06proto3"
 
 var (
 	file_api_proto_warrior_warrior_proto_rawDescOnce sync.Once
@@ -478,7 +630,7 @@ func file_api_proto_warrior_warrior_proto_rawDescGZIP() []byte {
 	return file_api_proto_warrior_warrior_proto_rawDescData
 }
 
-var file_api_proto_warrior_warrior_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_proto_warrior_warrior_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_api_proto_warrior_warrior_proto_goTypes = []any{
 	(*GetWarriorByUsernameRequest)(nil),  // 0: warrior.GetWarriorByUsernameRequest
 	(*GetWarriorByUsernameResponse)(nil), // 1: warrior.GetWarriorByUsernameResponse
@@ -486,22 +638,26 @@ var file_api_proto_warrior_warrior_proto_goTypes = []any{
 	(*GetWarriorByIDResponse)(nil),       // 3: warrior.GetWarriorByIDResponse
 	(*UpdateWarriorPowerRequest)(nil),    // 4: warrior.UpdateWarriorPowerRequest
 	(*UpdateWarriorPowerResponse)(nil),   // 5: warrior.UpdateWarriorPowerResponse
-	(*Warrior)(nil),                      // 6: warrior.Warrior
-	(*timestamppb.Timestamp)(nil),        // 7: google.protobuf.Timestamp
+	(*UpdateWarriorHPRequest)(nil),       // 6: warrior.UpdateWarriorHPRequest
+	(*UpdateWarriorHPResponse)(nil),      // 7: warrior.UpdateWarriorHPResponse
+	(*Warrior)(nil),                      // 8: warrior.Warrior
+	(*timestamppb.Timestamp)(nil),        // 9: google.protobuf.Timestamp
 }
 var file_api_proto_warrior_warrior_proto_depIdxs = []int32{
-	6, // 0: warrior.GetWarriorByUsernameResponse.warrior:type_name -> warrior.Warrior
-	6, // 1: warrior.GetWarriorByIDResponse.warrior:type_name -> warrior.Warrior
-	7, // 2: warrior.Warrior.created_at:type_name -> google.protobuf.Timestamp
-	7, // 3: warrior.Warrior.updated_at:type_name -> google.protobuf.Timestamp
+	8, // 0: warrior.GetWarriorByUsernameResponse.warrior:type_name -> warrior.Warrior
+	8, // 1: warrior.GetWarriorByIDResponse.warrior:type_name -> warrior.Warrior
+	9, // 2: warrior.Warrior.created_at:type_name -> google.protobuf.Timestamp
+	9, // 3: warrior.Warrior.updated_at:type_name -> google.protobuf.Timestamp
 	0, // 4: warrior.WarriorService.GetWarriorByUsername:input_type -> warrior.GetWarriorByUsernameRequest
 	2, // 5: warrior.WarriorService.GetWarriorByID:input_type -> warrior.GetWarriorByIDRequest
 	4, // 6: warrior.WarriorService.UpdateWarriorPower:input_type -> warrior.UpdateWarriorPowerRequest
-	1, // 7: warrior.WarriorService.GetWarriorByUsername:output_type -> warrior.GetWarriorByUsernameResponse
-	3, // 8: warrior.WarriorService.GetWarriorByID:output_type -> warrior.GetWarriorByIDResponse
-	5, // 9: warrior.WarriorService.UpdateWarriorPower:output_type -> warrior.UpdateWarriorPowerResponse
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
+	6, // 7: warrior.WarriorService.UpdateWarriorHP:input_type -> warrior.UpdateWarriorHPRequest
+	1, // 8: warrior.WarriorService.GetWarriorByUsername:output_type -> warrior.GetWarriorByUsernameResponse
+	3, // 9: warrior.WarriorService.GetWarriorByID:output_type -> warrior.GetWarriorByIDResponse
+	5, // 10: warrior.WarriorService.UpdateWarriorPower:output_type -> warrior.UpdateWarriorPowerResponse
+	7, // 11: warrior.WarriorService.UpdateWarriorHP:output_type -> warrior.UpdateWarriorHPResponse
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
 	4, // [4:4] is the sub-list for extension extendee
 	0, // [0:4] is the sub-list for field type_name
@@ -518,7 +674,7 @@ func file_api_proto_warrior_warrior_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_warrior_warrior_proto_rawDesc), len(file_api_proto_warrior_warrior_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
