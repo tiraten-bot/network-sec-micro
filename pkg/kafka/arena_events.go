@@ -178,5 +178,29 @@ const (
 	TopicArenaInvitationExpired = "arena.invitation.expired"
 	TopicArenaMatchStarted      = "arena.match.started"
 	TopicArenaMatchCompleted    = "arena.match.completed"
+    TopicArenaSpellWindowOpened = "arena.spell.window.opened"
 )
+
+// ArenaSpellWindowOpenedEvent fires when a player's HP drops to <=50% for the first time
+type ArenaSpellWindowOpenedEvent struct {
+    Event
+    MatchID     string  `json:"match_id"`
+    PlayerID    uint    `json:"player_id"`
+    PlayerName  string  `json:"player_name"`
+    HpPercent   float64 `json:"hp_percent"`
+}
+
+func NewArenaSpellWindowOpenedEvent(matchID string, playerID uint, playerName string, hpPercent float64) *ArenaSpellWindowOpenedEvent {
+    return &ArenaSpellWindowOpenedEvent{
+        Event: Event{
+            EventType:     "arena_spell_window_opened",
+            Timestamp:     time.Now(),
+            SourceService: "arena",
+        },
+        MatchID:    matchID,
+        PlayerID:   playerID,
+        PlayerName: playerName,
+        HpPercent:  hpPercent,
+    }
+}
 
