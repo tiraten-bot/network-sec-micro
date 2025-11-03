@@ -1681,34 +1681,40 @@ Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
 
 ## HealService Deployment
 
-### Docker Compose Deployment
+### 💚 Docker Compose Deployment 🌿
 
 ```mermaid
 graph TB
-    subgraph "Docker Compose Services"
-        DCPG[PostgreSQL<br/>heal_db]
-        DCR[Redis<br/>Healing State Cache]
-        DCK[Kafka<br/>Events]
-        DCH[Heal Service<br/>:50058]
-        DCW[Warrior Service<br/>:50052]
-        DCC[Coin Service<br/>:50051]
-        DCGW[Gateway<br/>:8090]
+    subgraph "🐳 Docker Compose Services"
+        DCPG[💾 PostgreSQL<br/>heal_db]
+        DCR[📊 Redis<br/>💚 Healing State Cache]
+        DCK[📨 Kafka<br/>Events]
+        DCH[💚 Heal Service<br/>:50058]
+        DCW[🛡️ Warrior Service<br/>:50052]
+        DCC[💰 Coin Service<br/>:50051]
+        DCD[🐉 Dragon Service<br/>:50059]
+        DCE[👹 Enemy Service<br/>:50060]
+        DCGW[🌐 Gateway<br/>:8090]
     end
     
     DCH -->|Read/Write| DCPG
-    DCH -->|Cache| DCR
+    DCH -->|💚 Cache| DCR
     DCH -->|Consume Events| DCK
     DCH -->|gRPC| DCW
     DCH -->|gRPC| DCC
+    DCH -->|gRPC| DCD
+    DCH -->|gRPC| DCE
     DCGW -->|gRPC Proxy| DCH
     
-    style DCH fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style DCPG fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style DCR fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style DCK fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style DCW fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style DCC fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style DCGW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style DCH fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style DCPG fill:#3498db,stroke:#2980b9,color:#ffffff
+    style DCR fill:#e74c3c,stroke:#c0392b,color:#ffffff
+    style DCK fill:#9b59b6,stroke:#8e44ad,color:#ffffff
+    style DCW fill:#3498db,stroke:#2980b9,color:#ffffff
+    style DCC fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style DCD fill:#8b0000,stroke:#5a0000,color:#ffffff
+    style DCE fill:#7f8c8d,stroke:#34495e,color:#ffffff
+    style DCGW fill:#16a085,stroke:#138d75,color:#ffffff
 ```
 
 ### Kubernetes Deployment
