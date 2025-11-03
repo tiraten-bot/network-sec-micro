@@ -24,9 +24,13 @@ func main() {
 	consumer, err := kafkaLib.NewConsumer(
 		kafkaBrokers,
 		"coin-service-group",
-		[]string{kafkaLib.TopicWeaponPurchase},
+		[]string{kafkaLib.TopicWeaponPurchase, kafkaLib.TopicArenaMatchCompleted},
 		coin.ProcessKafkaMessage,
 	)
+	// Init Warrior gRPC client for event-driven coin awards
+	if err := coin.InitWarriorClient(); err != nil {
+		log.Printf("Warning: coin couldn't init warrior client: %v", err)
+	}
 	if err != nil {
 		log.Fatalf("Failed to create Kafka consumer: %v", err)
 	}
