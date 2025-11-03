@@ -35,6 +35,7 @@ build:
 	go build -o bin/battle cmd/battle/main.go
 	go build -o bin/battlespell cmd/battlespell/main.go
 	go build -o bin/arena cmd/arena/main.go
+	go build -o bin/heal cmd/heal/main.go
 
 run:
 	go run cmd/warrior/main.go
