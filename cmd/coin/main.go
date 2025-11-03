@@ -24,7 +24,7 @@ func main() {
 	consumer, err := kafkaLib.NewConsumer(
 		kafkaBrokers,
 		"coin-service-group",
-		[]string{kafkaLib.TopicWeaponPurchase, kafkaLib.TopicArenaMatchCompleted},
+		[]string{kafkaLib.TopicWeaponPurchase, kafkaLib.TopicArenaMatchCompleted, kafkaLib.TopicBattleWagerResolved},
 		coin.ProcessKafkaMessage,
 	)
 	// Init Warrior gRPC client for event-driven coin awards
