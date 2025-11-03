@@ -15,18 +15,13 @@ func ProcessKafkaMessage(message []byte) error {
 	var arenaCompleted kafka.ArenaMatchCompletedEvent
 	if err := json.Unmarshal(message, &arenaCompleted); err == nil {
 		if arenaCompleted.Event.EventType == "arena_match_completed" {
-			// Both players may need healing after arena match
-			ctx := context.Background()
-			service := NewService()
-
-		// Log that healing is available for both players
-		if arenaCompleted.Player1ID > 0 {
-			log.Printf("Arena match completed: Player1 (%d) can heal. Battle ID: %s", arenaCompleted.Player1ID, arenaCompleted.MatchID)
-		}
-		if arenaCompleted.Player2ID > 0 {
-			log.Printf("Arena match completed: Player2 (%d) can heal. Battle ID: %s", arenaCompleted.Player2ID, arenaCompleted.MatchID)
-		}
-
+			// Log that healing is available for both players
+			if arenaCompleted.Player1ID > 0 {
+				log.Printf("Arena match completed: Player1 (%d) can heal. Battle ID: %s", arenaCompleted.Player1ID, arenaCompleted.MatchID)
+			}
+			if arenaCompleted.Player2ID > 0 {
+				log.Printf("Arena match completed: Player2 (%d) can heal. Battle ID: %s", arenaCompleted.Player2ID, arenaCompleted.MatchID)
+			}
 			return nil
 		}
 	}
@@ -43,12 +38,6 @@ func ProcessKafkaMessage(message []byte) error {
 	}
 	if err := json.Unmarshal(message, &battleCompleted); err == nil {
 		if battleCompleted.EventType == "battle_completed" {
-			// Team battle completed - participants can heal
-			ctx := context.Background()
-			service := NewService()
-			_ = service
-			_ = ctx
-
 			log.Printf("Battle completed: Battle ID %s, result: %s. Participants can heal.", battleCompleted.BattleID, battleCompleted.Result)
 			return nil
 		}
