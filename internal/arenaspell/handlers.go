@@ -28,22 +28,22 @@ func NewHandler(s *Service) *Handler { return &Handler{Service: s} }
 // @Failure 400 {object} dto.ErrorResponse
 // @Router /arenaspells/cast [post]
 func (h *Handler) CastSpell(c *gin.Context) {
-    // TODO: Auth middleware ile user bilgisini al
-    // Geçici değerler
-    casterID := uint(1)
-    casterUsername := "temp_user"
-
     var req dto.CastArenaSpellRequest
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "validation_error", Message: err.Error()})
         return
     }
 
+    // TODO: Auth middleware ile gerçek kullanıcıyı al
+    casterID := uint(1)
+    casterUsername := "temp_user"
+
     cmd := dto.CastArenaSpellCommand{
         MatchID:        req.MatchID,
         SpellType:      req.SpellType,
         CasterUserID:   casterID,
         CasterUsername: casterUsername,
+        CasterRole:     req.CasterRole,
     }
 
     affected, err := h.Service.CastSpell(c.Request.Context(), cmd)
