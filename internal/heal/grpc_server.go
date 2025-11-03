@@ -31,18 +31,24 @@ func (s *HealServiceServer) PurchaseHeal(ctx context.Context, req *pb.PurchaseHe
 	}
 
 	healType := HealType(req.HealType)
-	if healType != HealTypeFull && healType != HealTypePartial {
-		return nil, status.Error(codes.InvalidArgument, "invalid heal type. Use 'full' or 'partial'")
+	warriorRole := req.WarriorRole
+	if warriorRole == "" {
+		// Get role from warrior service if not provided
+		warrior, err := GetWarriorByID(ctx, warriorID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to get warrior role")
+		}
+		warriorRole = warrior.Role
 	}
 
-	record, err := s.service.PurchaseHeal(ctx, warriorID, healType, "")
+	record, err := s.service.PurchaseHeal(ctx, warriorID, healType, "", warriorRole)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.PurchaseHealResponse{
 		Success:      true,
-		Message:      "Healing applied successfully",
+		Message:      fmt.Sprintf("Healing started. Will complete in %d seconds", record.Duration),
 		HealedAmount: int32(record.HealedAmount),
 		NewHp:        int32(record.HPAfter),
 		CoinsSpent:   int32(record.CoinsSpent),
