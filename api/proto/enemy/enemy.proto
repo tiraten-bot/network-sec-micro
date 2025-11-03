@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package enemy;
+
+option go_package = "network-sec-micro/api/proto/enemy";
+
+// EnemyService provides gRPC endpoints for enemy operations
+service EnemyService {
+  // GetEnemyByID retrieves an enemy by its ID
+  rpc GetEnemyByID(GetEnemyByIDRequest) returns (GetEnemyByIDResponse);
+  
+  // UpdateEnemyHP updates an enemy's HP
+  rpc UpdateEnemyHP(UpdateEnemyHPRequest) returns (UpdateEnemyHPResponse);
+  
+  // UpdateEnemyHealingState sets enemy's healing state (for heal service)
+  rpc UpdateEnemyHealingState(UpdateEnemyHealingStateRequest) returns (UpdateEnemyHealingStateResponse);
+  
+  // CheckEnemyCanBattle checks if an enemy can participate in battles (not healing)
+  rpc CheckEnemyCanBattle(CheckEnemyCanBattleRequest) returns (CheckEnemyCanBattleResponse);
+}
+
+// Enemy represents an enemy entity
+message Enemy {
+  string id = 1;              // Enemy ID (ObjectID hex)
+  string name = 2;           // Enemy name
+  string type = 3;           // Enemy type (goblin, pirate, skeleton, dragon)
+  int32 level = 4;           // Enemy level
+  int32 health = 5;          // Current HP
+  int32 max_health = 6;      // Maximum HP
+  int32 attack_power = 7;    // Attack power
+  string created_by = 8;     // Creator username (dark emperor/king)
+  bool is_healing = 9;       // Is currently healing
+  int64 healing_until_seconds = 10; // Unix timestamp when healing completes (0 if not healing)
+}
+
+// GetEnemyByIDRequest requests an enemy by ID
+message GetEnemyByIDRequest {
+  string enemy_id = 1;
+}
+
+// GetEnemyByIDResponse returns enemy information
+message GetEnemyByIDResponse {
+  Enemy enemy = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// UpdateEnemyHPRequest updates enemy HP
+message UpdateEnemyHPRequest {
+  string enemy_id = 1;
+  int32 new_hp = 2;
+}
+
+// UpdateEnemyHPResponse confirms HP update
+message UpdateEnemyHPResponse {
+  bool success = 1;
+  string message = 2;
+  int32 current_hp = 3;
+}
+
+// UpdateEnemyHealingStateRequest sets enemy healing state
+message UpdateEnemyHealingStateRequest {
+  string enemy_id = 1;
+  bool is_healing = 2;
+  int64 healing_until_seconds = 3; // Unix timestamp (0 if not healing)
+}
+
+// UpdateEnemyHealingStateResponse confirms healing state update
+message UpdateEnemyHealingStateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// CheckEnemyCanBattleRequest checks if enemy can battle
+message CheckEnemyCanBattleRequest {
+  string enemy_id = 1;
+}
+
+// CheckEnemyCanBattleResponse returns battle eligibility
+message CheckEnemyCanBattleResponse {
+  bool can_battle = 1;
+  string reason = 2; // Empty if can_battle is true
+  int64 healing_until_seconds = 3; // If healing, when it completes
+}
+
