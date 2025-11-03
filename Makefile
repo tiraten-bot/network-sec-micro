@@ -9,6 +9,7 @@ wire:
 	cd cmd/battle && wire
 	cd cmd/battlespell && wire
 	cd cmd/arena && wire
+	cd cmd/arenaspell && wire
 
 # Generate protobuf code
 proto:
