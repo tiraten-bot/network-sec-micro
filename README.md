@@ -414,6 +414,7 @@ graph TB
         DCE[Enemy:8083]
         DCD[Dragon:8084]
         DCC[Coin:50051]
+        DCH[Heal:50058]
         DCK[Kafka:9092]
         DCR[Redis:6379]
         DCPG[Postgres]
@@ -428,6 +429,7 @@ graph TB
         KSE[Deployment enemy]
         KSD[Deployment dragon]
         KSC[Deployment coin]
+        KSH[Deployment heal]
         KSR[bitnami/redis]
         KSK[bitnami/kafka + zookeeper]
         KSPG[bitnami/postgresql]
@@ -436,18 +438,18 @@ graph TB
         ING[Ingress]
     end
 
-    DCGW --- DCW & DCWP & DCE & DCD
-    DCK --- DCWP & DCE & DCD & DCC
-    DCR --- DCGW
-    DCPG --- DCW
+    DCGW --- DCW & DCWP & DCE & DCD & DCH
+    DCK --- DCWP & DCE & DCD & DCC & DCH
+    DCR --- DCGW & DCH
+    DCPG --- DCW & DCH
     DCMG --- DCWP & DCE & DCD
     DCMY --- DCC
 
     ING --- KSGW
-    KSGW --- KSW & KSWP & KSE & KSD
-    KSK --- KSWP & KSE & KSD & KSC
+    KSGW --- KSW & KSWP & KSE & KSD & KSH
+    KSK --- KSWP & KSE & KSD & KSC & KSH
     KSR --- KSGW
-    KSPG --- KSW
+    KSPG --- KSW & KSH
     KSMG --- KSWP & KSE & KSD
     KSMY --- KSC
 
