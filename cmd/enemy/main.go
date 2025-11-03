@@ -2,11 +2,16 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"network-sec-micro/internal/enemy"
+	pb "network-sec-micro/api/proto/enemy"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
 func main() {
