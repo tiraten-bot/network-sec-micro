@@ -12,6 +12,8 @@ type HealingRecordSQL struct {
 	HPBefore     int       `gorm:"not null"`
 	HPAfter      int       `gorm:"not null"`
 	CoinsSpent   int       `gorm:"not null"`
+	Duration     int       `gorm:"not null"`
+	CompletedAt  *time.Time
 	CreatedAt    time.Time `gorm:"not null"`
 }
 
