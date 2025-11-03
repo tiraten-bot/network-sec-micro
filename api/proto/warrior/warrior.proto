@@ -16,6 +16,9 @@ service WarriorService {
   
   // Update warrior's power/stats
   rpc UpdateWarriorPower(UpdateWarriorPowerRequest) returns (UpdateWarriorPowerResponse);
+  
+  // Update warrior's HP (for healing)
+  rpc UpdateWarriorHP(UpdateWarriorHPRequest) returns (UpdateWarriorHPResponse);
 }
 
 // Request to get warrior by username
@@ -51,6 +54,20 @@ message UpdateWarriorPowerResponse {
   string message = 2;
 }
 
+// Request to update HP
+message UpdateWarriorHPRequest {
+  uint32 warrior_id = 1;
+  int32 new_hp = 2;
+}
+
+// Response after updating HP
+message UpdateWarriorHPResponse {
+  bool success = 1;
+  string message = 2;
+  int32 old_hp = 3;
+  int32 new_hp = 4;
+}
+
 // Warrior model
 message Warrior {
   uint32 id = 1;
@@ -60,7 +77,9 @@ message Warrior {
   int32 coin_balance = 5;
   int32 total_power = 6;
   int32 weapon_count = 7;
-  google.protobuf.Timestamp created_at = 8;
-  google.protobuf.Timestamp updated_at = 9;
+  int32 current_hp = 8; // Current HP (for healing)
+  int32 max_hp = 9;     // Maximum HP (calculated from total_power)
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
 }
 
