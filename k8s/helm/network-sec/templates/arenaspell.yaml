@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arenaspell
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: arenaspell
+    component: arenaspell
+spec:
+  replicas: {{ .Values.arenaspell.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: arenaspell
+  template:
+    metadata:
+      labels:
+        app: arenaspell
+        component: arenaspell
+    spec:
+      containers:
+        - name: arenaspell
+          image: {{ .Values.arenaspell.image.repository }}:{{ .Values.arenaspell.image.tag | default "latest" }}
+          imagePullPolicy: {{ .Values.arenaspell.image.pullPolicy | default "IfNotPresent" }}
+          env:
+            - name: MONGODB_URI
+              value: {{ .Values.env.mongo.uri | quote }}
+            - name: MONGODB_DB
+              value: {{ .Values.arenaspell.mongodb.database | default "arenaspell_db" }}
+            - name: GIN_MODE
+              value: {{ .Values.arenaspell.ginMode | default "release" }}
+            - name: ARENASPELL_HTTP_ADDR
+              value: ":{{ .Values.arenaspell.port | default 8088 }}"
+            - name: ARENASPELL_GRPC_PORT
+              value: "{{ .Values.arenaspell.grpcPort | default 50056 }}"
+          ports:
+            - containerPort: {{ .Values.arenaspell.port | default 8088 }}
+              name: http
+              protocol: TCP
+            - containerPort: {{ .Values.arenaspell.grpcPort | default 50056 }}
+              name: grpc
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.arenaspell.port | default 8088 }}
+            initialDelaySeconds: {{ .Values.arenaspell.readinessProbe.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.arenaspell.readinessProbe.periodSeconds | default 5 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.arenaspell.port | default 8088 }}
+            initialDelaySeconds: {{ .Values.arenaspell.livenessProbe.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.arenaspell.livenessProbe.periodSeconds | default 10 }}
+          resources:
+            {{- toYaml .Values.arenaspell.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arenaspell
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: arenaspell
+    component: arenaspell
+spec:
+  type: {{ .Values.arenaspell.service.type | default "ClusterIP" }}
+  ports:
+    - port: {{ .Values.arenaspell.service.port | default 8088 }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.arenaspell.service.grpcPort | default 50056 }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: arenaspell
+
+
