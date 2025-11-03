@@ -87,3 +87,18 @@ message CheckEnemyCanBattleResponse {
   int64 healing_until_seconds = 3; // If healing, when it completes
 }
 
+// DeductEnemyCoinsRequest deducts coins from enemy
+message DeductEnemyCoinsRequest {
+  string enemy_id = 1;
+  int64 amount = 2;
+  string reason = 3;
+}
+
+// DeductEnemyCoinsResponse confirms coin deduction
+message DeductEnemyCoinsResponse {
+  bool success = 1;
+  string message = 2;
+  int64 balance_before = 3;
+  int64 balance_after = 4;
+}
+
