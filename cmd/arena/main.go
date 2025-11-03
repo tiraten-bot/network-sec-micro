@@ -23,15 +23,24 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	// Initialize Warrior gRPC client
+    // Initialize Warrior gRPC client
 	warriorAddr := os.Getenv("WARRIOR_GRPC_ADDR")
 	if warriorAddr == "" {
 		warriorAddr = "localhost:50052"
 	}
 
-	if err := arena.InitWarriorClient(warriorAddr); err != nil {
+    if err := arena.InitWarriorClient(warriorAddr); err != nil {
 		log.Fatalf("Failed to connect to Warrior gRPC: %v", err)
 	}
+
+    // Initialize ArenaSpell gRPC client
+    arenaspellAddr := os.Getenv("ARENASPELL_GRPC_ADDR")
+    if arenaspellAddr == "" {
+        arenaspellAddr = "localhost:50056"
+    }
+    if err := arena.InitArenaSpellClient(arenaspellAddr); err != nil {
+        log.Fatalf("Failed to connect to ArenaSpell gRPC: %v", err)
+    }
 
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
@@ -67,6 +76,7 @@ func main() {
 		arena.CloseKafkaPublisher()
 		arena.CloseKafkaConsumer()
 		arena.CloseWarriorClient()
+        arena.CloseArenaSpellClient()
 	}()
 
 	// Create Gin router
