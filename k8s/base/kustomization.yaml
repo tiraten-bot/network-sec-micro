@@ -19,6 +19,7 @@ resources:
   - battle.yaml
   - battlespell.yaml
   - arena.yaml
+  - heal.yaml
   - gateway.yaml
 
 
