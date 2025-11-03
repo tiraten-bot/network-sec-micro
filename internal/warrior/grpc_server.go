@@ -135,3 +135,31 @@ func (s *WarriorServiceServer) UpdateWarriorHP(ctx context.Context, req *pb.Upda
 	}, nil
 }
 
+// UpdateWarriorHealingState updates warrior's healing state
+func (s *WarriorServiceServer) UpdateWarriorHealingState(ctx context.Context, req *pb.UpdateWarriorHealingStateRequest) (*pb.UpdateWarriorHealingStateResponse, error) {
+	var w Warrior
+	if err := DB.First(&w, req.WarriorId).Error; err != nil {
+		return nil, status.Errorf(codes.NotFound, "warrior not found: %v", err)
+	}
+
+	updates := map[string]interface{}{
+		"is_healing": req.IsHealing,
+	}
+
+	if req.HealingUntilSeconds > 0 {
+		healingUntil := time.Unix(req.HealingUntilSeconds, 0)
+		updates["healing_until"] = healingUntil
+	} else {
+		updates["healing_until"] = nil
+	}
+
+	if err := DB.Model(&w).Updates(updates).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update healing state: %v", err)
+	}
+
+	return &pb.UpdateWarriorHealingStateResponse{
+		Success: true,
+		Message: "healing state updated successfully",
+	}, nil
+}
+
