@@ -1,9 +1,7 @@
 package battle
 
 import (
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+    "time"
 )
 
 // BattleStatus represents the status of a battle
@@ -53,8 +51,8 @@ const (
 
 // BattleParticipant represents a single participant in a battle
 type BattleParticipant struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	BattleID      primitive.ObjectID `bson:"battle_id" json:"battle_id"`
+    ID            string             `json:"id"`
+    BattleID      string             `json:"battle_id"`
 	ParticipantID string             `bson:"participant_id" json:"participant_id"` // Warrior ID, Enemy ID, or Dragon ID
 	Name          string             `bson:"name" json:"name"`
 	Type          ParticipantType    `bson:"type" json:"type"`
@@ -71,8 +69,8 @@ type BattleParticipant struct {
 	IsDefeated   bool               `bson:"is_defeated" json:"is_defeated"`
 	DefeatedAt   *time.Time         `bson:"defeated_at,omitempty" json:"defeated_at,omitempty"`
 	
-	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt    time.Time          `bson:"updated_at" json:"updated_at"`
+    CreatedAt    time.Time          `json:"created_at"`
+    UpdatedAt    time.Time          `json:"updated_at"`
 }
 
 // CollectionName returns the MongoDB collection name
@@ -82,7 +80,7 @@ func (BattleParticipant) CollectionName() string {
 
 // Battle represents a team-based battle
 type Battle struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+    ID            string             `json:"id"`
 	BattleType    BattleType         `bson:"battle_type" json:"battle_type"`
 	
 	// Team information
@@ -107,10 +105,10 @@ type Battle struct {
 	CreatedBy     string             `bson:"created_by" json:"created_by"` // Creator username
 	
 	// Timestamps
-	StartedAt     *time.Time         `bson:"started_at,omitempty" json:"started_at,omitempty"`
-	CompletedAt   *time.Time         `bson:"completed_at,omitempty" json:"completed_at,omitempty"`
-	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt     time.Time          `bson:"updated_at" json:"updated_at"`
+    StartedAt     *time.Time         `json:"started_at,omitempty"`
+    CompletedAt   *time.Time         `json:"completed_at,omitempty"`
+    CreatedAt     time.Time          `json:"created_at"`
+    UpdatedAt     time.Time          `json:"updated_at"`
 }
 
 // CollectionName returns the MongoDB collection name
@@ -125,8 +123,8 @@ func (b *Battle) IsActive() bool {
 
 // BattleTurn represents a single turn in a battle
 type BattleTurn struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	BattleID      primitive.ObjectID `bson:"battle_id" json:"battle_id"`
+    ID            string             `json:"id"`
+    BattleID      string             `json:"battle_id"`
 	TurnNumber    int                `bson:"turn_number" json:"turn_number"`
 	
 	// Attacker info
@@ -152,7 +150,7 @@ type BattleTurn struct {
 	// Was target defeated in this attack?
 	TargetDefeated bool              `bson:"target_defeated" json:"target_defeated"`
 	
-	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
+    CreatedAt     time.Time          `json:"created_at"`
 }
 
 // CollectionName returns the MongoDB collection name
