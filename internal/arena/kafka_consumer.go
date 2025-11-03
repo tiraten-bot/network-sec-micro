@@ -153,19 +153,10 @@ func (h *arenaEventHandler) handleBattleCompleted(data []byte) error {
 		return fmt.Errorf("failed to unmarshal battle completed event: %w", err)
 	}
 
-	// Check if this is an arena battle (battle type might indicate it, or check if match exists)
-	ctx := context.Background()
-	
-	// Find arena match by battle ID
-	var match ArenaMatch
-	err := MatchColl.FindOne(ctx, map[string]interface{}{
-		"battle_id": event.BattleID,
-	}).Decode(&match)
-
-	if err != nil {
-		// Not an arena match, ignore
-		return nil
-	}
+	// Arena service no longer depends on battle service
+	// This consumer can be removed or used for other events
+	// For now, we'll remove battle completed event handling since arena manages its own battles
+	return nil
 
 	// Update match status
 	now := time.Now()
