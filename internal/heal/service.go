@@ -190,7 +190,7 @@ func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand)
 	}
 
 	// Save to database
-	if err := GetRepository().SaveHealingRecord(ctx, record); err != nil {
+	if err := s.repo.SaveHealingRecord(ctx, record); err != nil {
 		log.Printf("Warning: Failed to save healing record: %v", err)
 	}
 
