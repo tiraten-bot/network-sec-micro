@@ -15,17 +15,20 @@ const (
 
 // HealingRecord represents a healing transaction
 type HealingRecord struct {
-	ID           string    `json:"id"`
-	WarriorID    uint      `json:"warrior_id"`
-	WarriorName  string    `json:"warrior_name"`
-	HealType     HealType  `json:"heal_type"`
-	HealedAmount int       `json:"healed_amount"`
-	HPBefore     int       `json:"hp_before"`
-	HPAfter      int       `json:"hp_after"`
-	CoinsSpent   int       `json:"coins_spent"`
-	Duration     int       `json:"duration"`      // Healing duration in seconds
-	CompletedAt  *time.Time `json:"completed_at"` // When healing completes
-	CreatedAt    time.Time `json:"created_at"`
+	ID             string    `json:"id"`
+	ParticipantID  string    `json:"participant_id"`  // Warrior/Dragon/Enemy ID (string for compatibility)
+	ParticipantType string   `json:"participant_type"` // "warrior", "dragon", "enemy"
+	ParticipantName string   `json:"participant_name"` // Name of the participant
+	WarriorID      uint      `json:"warrior_id"`      // Legacy: kept for backward compatibility (0 for dragon/enemy)
+	WarriorName    string    `json:"warrior_name"`    // Legacy: kept for backward compatibility
+	HealType       HealType  `json:"heal_type"`
+	HealedAmount   int       `json:"healed_amount"`
+	HPBefore       int       `json:"hp_before"`
+	HPAfter        int       `json:"hp_after"`
+	CoinsSpent     int       `json:"coins_spent"`
+	Duration       int       `json:"duration"`      // Healing duration in seconds
+	CompletedAt    *time.Time `json:"completed_at"` // When healing completes
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // HealPackage represents pricing and duration for healing packages
