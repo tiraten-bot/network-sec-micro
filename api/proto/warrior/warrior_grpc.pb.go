@@ -22,6 +22,7 @@ const (
 	WarriorService_GetWarriorByUsername_FullMethodName = "/warrior.WarriorService/GetWarriorByUsername"
 	WarriorService_GetWarriorByID_FullMethodName       = "/warrior.WarriorService/GetWarriorByID"
 	WarriorService_UpdateWarriorPower_FullMethodName   = "/warrior.WarriorService/UpdateWarriorPower"
+	WarriorService_UpdateWarriorHP_FullMethodName      = "/warrior.WarriorService/UpdateWarriorHP"
 )
 
 // WarriorServiceClient is the client API for WarriorService service.
@@ -36,6 +37,8 @@ type WarriorServiceClient interface {
 	GetWarriorByID(ctx context.Context, in *GetWarriorByIDRequest, opts ...grpc.CallOption) (*GetWarriorByIDResponse, error)
 	// Update warrior's power/stats
 	UpdateWarriorPower(ctx context.Context, in *UpdateWarriorPowerRequest, opts ...grpc.CallOption) (*UpdateWarriorPowerResponse, error)
+	// Update warrior's HP (for healing)
+	UpdateWarriorHP(ctx context.Context, in *UpdateWarriorHPRequest, opts ...grpc.CallOption) (*UpdateWarriorHPResponse, error)
 }
 
 type warriorServiceClient struct {
@@ -76,6 +79,16 @@ func (c *warriorServiceClient) UpdateWarriorPower(ctx context.Context, in *Updat
 	return out, nil
 }
 
+func (c *warriorServiceClient) UpdateWarriorHP(ctx context.Context, in *UpdateWarriorHPRequest, opts ...grpc.CallOption) (*UpdateWarriorHPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateWarriorHPResponse)
+	err := c.cc.Invoke(ctx, WarriorService_UpdateWarriorHP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WarriorServiceServer is the server API for WarriorService service.
 // All implementations must embed UnimplementedWarriorServiceServer
 // for forward compatibility.
@@ -88,6 +101,8 @@ type WarriorServiceServer interface {
 	GetWarriorByID(context.Context, *GetWarriorByIDRequest) (*GetWarriorByIDResponse, error)
 	// Update warrior's power/stats
 	UpdateWarriorPower(context.Context, *UpdateWarriorPowerRequest) (*UpdateWarriorPowerResponse, error)
+	// Update warrior's HP (for healing)
+	UpdateWarriorHP(context.Context, *UpdateWarriorHPRequest) (*UpdateWarriorHPResponse, error)
 	mustEmbedUnimplementedWarriorServiceServer()
 }
 
@@ -106,6 +121,9 @@ func (UnimplementedWarriorServiceServer) GetWarriorByID(context.Context, *GetWar
 }
 func (UnimplementedWarriorServiceServer) UpdateWarriorPower(context.Context, *UpdateWarriorPowerRequest) (*UpdateWarriorPowerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateWarriorPower not implemented")
+}
+func (UnimplementedWarriorServiceServer) UpdateWarriorHP(context.Context, *UpdateWarriorHPRequest) (*UpdateWarriorHPResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWarriorHP not implemented")
 }
 func (UnimplementedWarriorServiceServer) mustEmbedUnimplementedWarriorServiceServer() {}
 func (UnimplementedWarriorServiceServer) testEmbeddedByValue()                        {}
@@ -182,6 +200,24 @@ func _WarriorService_UpdateWarriorPower_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WarriorService_UpdateWarriorHP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWarriorHPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WarriorServiceServer).UpdateWarriorHP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WarriorService_UpdateWarriorHP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WarriorServiceServer).UpdateWarriorHP(ctx, req.(*UpdateWarriorHPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WarriorService_ServiceDesc is the grpc.ServiceDesc for WarriorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,6 +236,10 @@ var WarriorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateWarriorPower",
 			Handler:    _WarriorService_UpdateWarriorPower_Handler,
+		},
+		{
+			MethodName: "UpdateWarriorHP",
+			Handler:    _WarriorService_UpdateWarriorHP_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
