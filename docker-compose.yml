@@ -293,6 +293,7 @@ services:
       GIN_MODE: release
       PORT: 8087
       GRPC_PORT: 50055
+      ARENASPELL_GRPC_ADDR: arenaspell:50056
     ports:
       - "8087:8087"
       - "50055:50055"
@@ -302,6 +303,28 @@ services:
       warrior:
         condition: service_started
       kafka:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
+  # ArenaSpell Service (HTTP API + gRPC)
+  arenaspell:
+    build:
+      context: .
+      dockerfile: dockerfiles/arenaspell.dockerfile
+    container_name: arenaspell-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: arenaspell_db
+      GIN_MODE: release
+      ARENASPELL_HTTP_ADDR: :8088
+      ARENASPELL_GRPC_PORT: 50056
+    ports:
+      - "8088:8088"
+      - "50056:50056"
+    depends_on:
+      mongodb:
         condition: service_healthy
     networks:
       - warrior-network
@@ -323,6 +346,7 @@ services:
       UPSTREAM_BATTLE: http://battle:8085
       UPSTREAM_BATTLESPELL: http://battlespell:8086
       UPSTREAM_ARENA: http://arena:8087
+      UPSTREAM_ARENASPELL: http://arenaspell:8088
       # Kafka/Redis optional if used by config rules
       REDIS_ADDR: redis:6379
     ports:
@@ -339,6 +363,8 @@ services:
       battlespell:
         condition: service_started
       arena:
+        condition: service_started
+      arenaspell:
         condition: service_started
     networks:
       - warrior-network
