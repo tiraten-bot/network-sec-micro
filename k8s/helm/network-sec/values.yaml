@@ -8,6 +8,7 @@ images:
   coin:    { repository: coin,    tag: latest, pullPolicy: IfNotPresent }
   battle:  { repository: battle,  tag: latest, pullPolicy: IfNotPresent }
   battlespell: { repository: battlespell, tag: latest, pullPolicy: IfNotPresent }
+  arenaspell: { repository: arenaspell, tag: latest, pullPolicy: IfNotPresent }
   arena: { repository: arena, tag: latest, pullPolicy: IfNotPresent }
   gateway: { repository: fiber-gateway, tag: latest, pullPolicy: IfNotPresent }
 
@@ -19,6 +20,7 @@ replicas:
   coin: 1
   battle: 1
   battlespell: 1
+  arenaspell: 1
   arena: 1
   gateway: 1
 
@@ -45,6 +47,7 @@ env:
     battleDB: battle_db
     battlespellDB: battlespell_db
     arenaDB: arena_db
+    arenaspellDB: arenaspell_db
 
 battlespell:
   replicas: 1
@@ -109,6 +112,35 @@ arena:
     ports:
       http: 8087
       grpc: 50055
+
+arenaspell:
+  replicas: 1
+  image:
+    repository: arenaspell
+    tag: latest
+    pullPolicy: IfNotPresent
+  mongodb:
+    database: arenaspell_db
+  ginMode: release
+  port: 8088
+  grpcPort: 50056
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+  service:
+    type: ClusterIP
+    port: 8088
+    grpcPort: 50056
 
 ingress:
   enabled: true
