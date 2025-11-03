@@ -26,27 +26,43 @@ func NewHealServiceServer(service *Service) *HealServiceServer {
 
 // PurchaseHeal handles heal purchase request
 func (s *HealServiceServer) PurchaseHeal(ctx context.Context, req *pb.PurchaseHealRequest) (*pb.PurchaseHealResponse, error) {
-	warriorID, err := parseWarriorID(req.WarriorId)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid warrior ID")
+	participantID := req.ParticipantId
+	participantType := req.ParticipantType
+	healType := HealType(req.HealType)
+	participantRole := req.ParticipantRole
+
+	// Default participant type to warrior for backward compatibility
+	if participantType == "" {
+		participantType = "warrior"
 	}
 
-	healType := HealType(req.HealType)
-	warriorRole := req.WarriorRole
-	if warriorRole == "" {
-		// Get role from warrior service if not provided
-		warrior, err := GetWarriorByID(ctx, warriorID)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "failed to get warrior role")
+	// If role not provided, get it from the participant's service
+	if participantRole == "" {
+		if participantType == "warrior" {
+			warriorID, err := parseWarriorID(participantID)
+			if err != nil {
+				return nil, status.Error(codes.InvalidArgument, "invalid warrior ID")
+			}
+			warrior, err := GetWarriorByID(ctx, warriorID)
+			if err != nil {
+				return nil, status.Error(codes.Internal, "failed to get warrior role")
+			}
+			participantRole = warrior.Role
+		} else if participantType == "dragon" {
+			// Dragons have role "dragon"
+			participantRole = "dragon"
+		} else if participantType == "enemy" {
+			// Enemies don't have roles, default to warrior package
+			participantRole = "warrior"
 		}
-		warriorRole = warrior.Role
 	}
 
 	cmd := dto.PurchaseHealCommand{
-		WarriorID:   warriorID,
-		HealType:    string(healType),
-		BattleID:    "",
-		WarriorRole: warriorRole,
+		ParticipantID:   participantID,
+		ParticipantType: participantType,
+		HealType:        string(healType),
+		BattleID:        "",
+		ParticipantRole: participantRole,
 	}
 	record, err := s.service.PurchaseHeal(ctx, cmd)
 	if err != nil {
