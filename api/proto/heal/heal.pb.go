@@ -26,7 +26,8 @@ const (
 type PurchaseHealRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	WarriorId     string                 `protobuf:"bytes,1,opt,name=warrior_id,json=warriorId,proto3" json:"warrior_id,omitempty"`
-	HealType      string                 `protobuf:"bytes,2,opt,name=heal_type,json=healType,proto3" json:"heal_type,omitempty"` // "full" or "partial" (50%)
+	HealType      string                 `protobuf:"bytes,2,opt,name=heal_type,json=healType,proto3" json:"heal_type,omitempty"`          // "full", "partial", "emperor_full", "emperor_partial", "dragon"
+	WarriorRole   string                 `protobuf:"bytes,3,opt,name=warrior_role,json=warriorRole,proto3" json:"warrior_role,omitempty"` // Warrior role for RBAC (e.g., "light_emperor", "warrior", "dragon")
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,6 +72,13 @@ func (x *PurchaseHealRequest) GetWarriorId() string {
 func (x *PurchaseHealRequest) GetHealType() string {
 	if x != nil {
 		return x.HealType
+	}
+	return ""
+}
+
+func (x *PurchaseHealRequest) GetWarriorRole() string {
+	if x != nil {
+		return x.WarriorRole
 	}
 	return ""
 }
@@ -331,11 +339,12 @@ var File_api_proto_heal_heal_proto protoreflect.FileDescriptor
 
 const file_api_proto_heal_heal_proto_rawDesc = "" +
 	"\n" +
-	"\x19api/proto/heal/heal.proto\x12\x04heal\x1a\x1fgoogle/protobuf/timestamp.proto\"Q\n" +
+	"\x19api/proto/heal/heal.proto\x12\x04heal\x1a\x1fgoogle/protobuf/timestamp.proto\"t\n" +
 	"\x13PurchaseHealRequest\x12\x1d\n" +
 	"\n" +
 	"warrior_id\x18\x01 \x01(\tR\twarriorId\x12\x1b\n" +
-	"\theal_type\x18\x02 \x01(\tR\bhealType\"\xa7\x01\n" +
+	"\theal_type\x18\x02 \x01(\tR\bhealType\x12!\n" +
+	"\fwarrior_role\x18\x03 \x01(\tR\vwarriorRole\"\xa7\x01\n" +
 	"\x14PurchaseHealResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
