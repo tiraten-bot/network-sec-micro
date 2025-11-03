@@ -179,6 +179,7 @@ const (
 	TopicArenaMatchStarted      = "arena.match.started"
 	TopicArenaMatchCompleted    = "arena.match.completed"
     TopicArenaSpellWindowOpened = "arena.spell.window.opened"
+    TopicArenaCrisisWindowOpened = "arena.crisis.window.opened"
 )
 
 // ArenaSpellWindowOpenedEvent fires when a player's HP drops to <=50% for the first time
@@ -194,6 +195,29 @@ func NewArenaSpellWindowOpenedEvent(matchID string, playerID uint, playerName st
     return &ArenaSpellWindowOpenedEvent{
         Event: Event{
             EventType:     "arena_spell_window_opened",
+            Timestamp:     time.Now(),
+            SourceService: "arena",
+        },
+        MatchID:    matchID,
+        PlayerID:   playerID,
+        PlayerName: playerName,
+        HpPercent:  hpPercent,
+    }
+}
+
+// Crisis window (<=10%) event
+type ArenaCrisisWindowOpenedEvent struct {
+    Event
+    MatchID     string  `json:"match_id"`
+    PlayerID    uint    `json:"player_id"`
+    PlayerName  string  `json:"player_name"`
+    HpPercent   float64 `json:"hp_percent"`
+}
+
+func NewArenaCrisisWindowOpenedEvent(matchID string, playerID uint, playerName string, hpPercent float64) *ArenaCrisisWindowOpenedEvent {
+    return &ArenaCrisisWindowOpenedEvent{
+        Event: Event{
+            EventType:     "arena_crisis_window_opened",
             Timestamp:     time.Now(),
             SourceService: "arena",
         },
