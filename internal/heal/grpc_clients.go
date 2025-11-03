@@ -460,21 +460,77 @@ func CheckEnemyHealingState(ctx context.Context, enemyID string) (bool, *time.Ti
 	return true, &healingUntil, nil
 }
 
-// DeductCoinsForParticipant deducts coins for a participant (warrior only for now)
+// DeductCoinsForParticipant deducts coins for a participant
+// - Warrior: Deducts from warrior's own balance
+// - Enemy: Deducts from enemy's own balance
+// - Dragon: Deducts from Dark Emperor's (creator's) balance
 func DeductCoinsForParticipant(ctx context.Context, participantID string, participantType string, amount int64, reason string) error {
-	if participantType != "warrior" {
-		// Dragons and enemies don't have coin balances (they are NPCs)
-		// For now, we'll allow free healing for dragons/enemies
-		// In the future, we might charge the creator's balance
-		log.Printf("Skipping coin deduction for %s (type: %s) - NPCs don't have coin balances", participantID, participantType)
+	switch participantType {
+	case "warrior":
+		warriorID, err := strconv.ParseUint(participantID, 10, 32)
+		if err != nil {
+			return fmt.Errorf("invalid warrior ID: %w", err)
+		}
+		return DeductCoins(ctx, uint(warriorID), amount, reason)
+
+	case "enemy":
+		// Enemy pays from its own coin balance
+		if enemyGrpcClient == nil {
+			return fmt.Errorf("enemy gRPC client not initialized")
+		}
+
+		req := &pbEnemy.DeductEnemyCoinsRequest{
+			EnemyId: participantID,
+			Amount:  amount,
+			Reason:  reason,
+		}
+
+		resp, err := enemyGrpcClient.DeductEnemyCoins(ctx, req)
+		if err != nil {
+			return fmt.Errorf("failed to deduct enemy coins: %w", err)
+		}
+
+		if !resp.Success {
+			return fmt.Errorf("failed to deduct enemy coins: %s", resp.Message)
+		}
+
+		log.Printf("Deducted %d coins from enemy %s. Balance: %d -> %d", amount, participantID, resp.BalanceBefore, resp.BalanceAfter)
 		return nil
-	}
 
-	warriorID, err := strconv.ParseUint(participantID, 10, 32)
-	if err != nil {
-		return fmt.Errorf("invalid warrior ID: %w", err)
-	}
+	case "dragon":
+		// Dragon healing is paid by Dark Emperor (creator)
+		// Get dragon info to find creator
+		dragon, err := GetDragonByID(ctx, participantID)
+		if err != nil {
+			return fmt.Errorf("failed to get dragon info: %w", err)
+		}
 
-	return DeductCoins(ctx, uint(warriorID), amount, reason)
+		if dragon.CreatedBy == "" {
+			return fmt.Errorf("dragon has no creator (dark emperor)")
+		}
+
+		// Get Dark Emperor warrior by username
+		if warriorGrpcClient == nil {
+			return fmt.Errorf("warrior gRPC client not initialized")
+		}
+
+		warriorReq := &pbWarrior.GetWarriorByUsernameRequest{
+			Username: dragon.CreatedBy,
+		}
+
+		warriorResp, err := warriorGrpcClient.GetWarriorByUsername(ctx, warriorReq)
+		if err != nil {
+			return fmt.Errorf("failed to get dark emperor warrior: %w", err)
+		}
+
+		darkEmperorID := warriorResp.Warrior.Id
+		log.Printf("Dragon healing paid by Dark Emperor %s (warrior ID: %d) for dragon %s", dragon.CreatedBy, darkEmperorID, participantID)
+
+		// Deduct coins from Dark Emperor's balance
+		return DeductCoins(ctx, uint(darkEmperorID), amount, fmt.Sprintf("dragon_healing_%s_%s", reason, participantID))
+
+	default:
+		return fmt.Errorf("unsupported participant type: %s", participantType)
+	}
 }
 
