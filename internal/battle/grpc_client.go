@@ -9,6 +9,7 @@ import (
 	pbWarrior "network-sec-micro/api/proto/warrior"
 	pbCoin "network-sec-micro/api/proto/coin"
 	pbBattleSpell "network-sec-micro/api/proto/battlespell"
+    pbWeapon "network-sec-micro/api/proto/weapon"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,6 +23,9 @@ var coinGrpcConn *grpc.ClientConn
 
 var battlespellGrpcClient pbBattleSpell.BattleSpellServiceClient
 var battlespellGrpcConn *grpc.ClientConn
+
+var weaponGrpcClient pbWeapon.WeaponServiceClient
+var weaponGrpcConn *grpc.ClientConn
 
 // InitWarriorClient initializes the gRPC client connection to warrior service
 func InitWarriorClient(addr string) error {
@@ -86,11 +90,39 @@ func InitBattlespellClient(addr string) error {
 	return nil
 }
 
+// InitWeaponClient initializes the gRPC client connection to weapon service
+func InitWeaponClient(addr string) error {
+    if addr == "" {
+        addr = os.Getenv("WEAPON_GRPC_ADDR")
+        if addr == "" {
+            addr = "localhost:50057"
+        }
+    }
+
+    conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        return fmt.Errorf("failed to connect to weapon gRPC: %w", err)
+    }
+
+    weaponGrpcClient = pbWeapon.NewWeaponServiceClient(conn)
+    weaponGrpcConn = conn
+
+    log.Printf("Connected to Weapon gRPC service at %s", addr)
+    return nil
+}
+
 // CloseBattlespellClient closes the battlespell gRPC connection
 func CloseBattlespellClient() {
 	if battlespellGrpcConn != nil {
 		battlespellGrpcConn.Close()
 	}
+}
+
+// CloseWeaponClient closes the weapon gRPC connection
+func CloseWeaponClient() {
+    if weaponGrpcConn != nil {
+        weaponGrpcConn.Close()
+    }
 }
 
 // GetBattlespellClient returns the battlespell gRPC client
@@ -151,6 +183,17 @@ func GetWarriorByID(ctx context.Context, warriorID uint) (*pbWarrior.Warrior, er
 	}
 
 	return resp.Warrior, nil
+}
+
+// CalculateWarriorPowerViaWeapon queries weapon service to compute power
+func CalculateWarriorPowerViaWeapon(ctx context.Context, username string) (totalPower int32, weaponCount int32, err error) {
+    if weaponGrpcClient == nil {
+        return 0, 0, fmt.Errorf("weapon gRPC client not initialized")
+    }
+    req := &pbWeapon.CalculateWarriorPowerRequest{WarriorUsername: username}
+    resp, err := weaponGrpcClient.CalculateWarriorPower(ctx, req)
+    if err != nil { return 0, 0, err }
+    return resp.TotalPower, resp.WeaponCount, nil
 }
 
 // AddCoins adds coins to warrior's balance via gRPC
