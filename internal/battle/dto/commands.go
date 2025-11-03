@@ -81,3 +81,12 @@ type CastSpellCommand struct {
 	TargetDragonID      string `json:"target_dragon_id,omitempty"`     // Required for Dragon Emperor spell
 	TargetDarkEmperorID string `json:"target_dark_emperor_id,omitempty"` // Required for Dragon Emperor spell
 }
+
+// StartArenaBattleCommand represents a command to start a 1v1 arena battle
+type StartArenaBattleCommand struct {
+	Player1ID   uint   `json:"player1_id"`
+	Player1Name string `json:"player1_name"`
+	Player2ID   uint   `json:"player2_id"`
+	Player2Name string `json:"player2_name"`
+	MaxTurns    int    `json:"max_turns"` // Optional, default 50
+}
