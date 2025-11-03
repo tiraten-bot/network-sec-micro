@@ -18,6 +18,7 @@ resources:
   - coin.yaml
   - battle.yaml
   - battlespell.yaml
+  - arena.yaml
   - gateway.yaml
 
 
