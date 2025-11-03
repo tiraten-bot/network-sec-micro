@@ -527,12 +527,16 @@ graph LR
     P5 --> T11
     P5 --> T12
     P5 --> T13
+    P4 --> T14
 
     T1 --> C1
     T2 --> C1
     T3 --> C2
     T4 --> C3
+    T6 --> C5
     T7 --> C4
+    T13 --> C5
+    T14 --> C1
 
     style T1 fill:#0b3d91,stroke:#001a4d,color:#ffffff
     style T2 fill:#0b3d91,stroke:#001a4d,color:#ffffff
@@ -547,6 +551,7 @@ graph LR
     style T11 fill:#0d56b3,stroke:#001a4d,color:#ffffff
     style T12 fill:#0d56b3,stroke:#001a4d,color:#ffffff
     style T13 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style T14 fill:#0d56b3,stroke:#001a4d,color:#ffffff
     style P1 fill:#133e7c,stroke:#001a4d,color:#ffffff
     style P2 fill:#133e7c,stroke:#001a4d,color:#ffffff
     style P3 fill:#133e7c,stroke:#001a4d,color:#ffffff
@@ -556,6 +561,7 @@ graph LR
     style C2 fill:#08315c,stroke:#001a4d,color:#ffffff
     style C3 fill:#08315c,stroke:#001a4d,color:#ffffff
     style C4 fill:#08315c,stroke:#001a4d,color:#ffffff
+    style C5 fill:#08315c,stroke:#001a4d,color:#ffffff
 ```
 
 ## Deployment Pipeline (Local → Docker → Helm)
