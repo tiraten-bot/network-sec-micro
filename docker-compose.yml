@@ -388,6 +388,7 @@ services:
       UPSTREAM_BATTLESPELL: http://battlespell:8086
       UPSTREAM_ARENA: http://arena:8087
       UPSTREAM_ARENASPELL: http://arenaspell:8088
+      UPSTREAM_HEAL: http://heal:50058
       # Kafka/Redis optional if used by config rules
       REDIS_ADDR: redis:6379
     ports:
