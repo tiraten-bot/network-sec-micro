@@ -164,24 +164,25 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 	// Create arena match directly (no battle service dependency)
 	now := time.Now()
 	match := &ArenaMatch{
-		Player1ID:   invitation.ChallengerID,
-		Player1Name: invitation.ChallengerName,
-		Player1HP:   challengerMaxHP,
-		Player1MaxHP: challengerMaxHP,
-		Player1Attack: int(challenger.AttackPower),
+		Player1ID:      invitation.ChallengerID,
+		Player1Name:    invitation.ChallengerName,
+		Player1HP:      challengerMaxHP,
+		Player1MaxHP:   challengerMaxHP,
+		Player1Attack:  int(challenger.AttackPower),
 		Player1Defense: int(challenger.Defense),
-		Player2ID:   invitation.OpponentID,
-		Player2Name: invitation.OpponentName,
-		Player2HP:   opponentMaxHP,
-		Player2MaxHP: opponentMaxHP,
-		Player2Attack: int(opponent.AttackPower),
+		Player2ID:      invitation.OpponentID,
+		Player2Name:    invitation.OpponentName,
+		Player2HP:      opponentMaxHP,
+		Player2MaxHP:   opponentMaxHP,
+		Player2Attack:  int(opponent.AttackPower),
 		Player2Defense: int(opponent.Defense),
-		CurrentTurn: 0,
-		MaxTurns: 50, // Default for arena battles
-		Status: MatchStatusInProgress,
-		StartedAt: &now,
-		CreatedAt: now,
-		UpdatedAt: now,
+		CurrentTurn:    0,
+		MaxTurns:        50, // Default for arena battles
+		CurrentAttacker: 1,  // Player1 starts first
+		Status:          MatchStatusInProgress,
+		StartedAt:       &now,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
 	result, err := MatchColl.InsertOne(ctx, match)
