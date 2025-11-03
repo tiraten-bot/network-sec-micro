@@ -1,19 +1,15 @@
 package arena
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"os"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "log"
+    "os"
+    "time"
 
-	pbWarrior "network-sec-micro/api/proto/warrior"
-	"network-sec-micro/internal/arena/dto"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+    pbWarrior "network-sec-micro/api/proto/warrior"
+    "network-sec-micro/internal/arena/dto"
 )
 
 // Service handles arena business logic with CQRS pattern
@@ -45,34 +41,17 @@ func (s *Service) SendInvitation(ctx context.Context, cmd dto.SendInvitationComm
 
 	opponentID := uint(opponent.Id)
 
-	// Check if there's already a pending invitation between these two
-	var existingInvitation ArenaInvitation
-	err = InvitationColl.FindOne(ctx, bson.M{
-		"challenger_id": cmd.ChallengerID,
-		"opponent_id":   opponentID,
-		"status":        InvitationStatusPending,
-	}).Decode(&existingInvitation)
-
-	if err == nil {
-		// Check if expired
-		if existingInvitation.IsExpired() {
-			// Mark as expired and continue
-			s.markInvitationAsExpired(ctx, existingInvitation.ID)
-		} else {
-			return nil, fmt.Errorf("invitation already sent to %s", cmd.OpponentName)
-		}
-	}
-
-	// Check if opponent has a pending invitation to challenger
-	err = InvitationColl.FindOne(ctx, bson.M{
-		"challenger_id": opponentID,
-		"opponent_id":   cmd.ChallengerID,
-		"status":        InvitationStatusPending,
-	}).Decode(&existingInvitation)
-
-	if err == nil && !existingInvitation.IsExpired() {
-		return nil, fmt.Errorf("%s has already sent you an invitation. Please accept or reject it first", cmd.OpponentName)
-	}
+    // Check if there's already a pending invitation between these two (both directions)
+    if inv, err := GetRepository().FindPendingInvitationBetween(ctx, cmd.ChallengerID, opponentID); err == nil && inv != nil {
+        if inv.IsExpired() {
+            s.markInvitationAsExpired(ctx, inv.ID)
+        } else {
+            return nil, fmt.Errorf("invitation already sent to %s", cmd.OpponentName)
+        }
+    }
+    if inv, err := GetRepository().FindPendingInvitationBetween(ctx, opponentID, cmd.ChallengerID); err == nil && inv != nil && !inv.IsExpired() {
+        return nil, fmt.Errorf("%s has already sent you an invitation. Please accept or reject it first", cmd.OpponentName)
+    }
 
 	// Create invitation
 	now := time.Now()
@@ -89,17 +68,14 @@ func (s *Service) SendInvitation(ctx context.Context, cmd dto.SendInvitationComm
 		UpdatedAt:       now,
 	}
 
-	result, err := InvitationColl.InsertOne(ctx, invitation)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create invitation: %w", err)
-	}
-
-	invitation.ID = result.InsertedID.(primitive.ObjectID)
+    invID, err := GetRepository().InsertInvitation(ctx, invitation)
+    if err != nil { return nil, fmt.Errorf("failed to create invitation: %w", err) }
+    invitation.ID = invID
 
 	// Publish Kafka event
 	go func() {
 		expiresAtStr := expiresAt.Format(time.RFC3339)
-		if err := PublishInvitationSent(invitation.ID.Hex(), cmd.ChallengerID, cmd.ChallengerName, opponentID, cmd.OpponentName, expiresAtStr); err != nil {
+        if err := PublishInvitationSent(invitation.ID, cmd.ChallengerID, cmd.ChallengerName, opponentID, cmd.OpponentName, expiresAtStr); err != nil {
 			log.Printf("Failed to publish invitation sent event: %v", err)
 		}
 	}()
@@ -110,20 +86,9 @@ func (s *Service) SendInvitation(ctx context.Context, cmd dto.SendInvitationComm
 
 // AcceptInvitation accepts an arena invitation and starts the match
 func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitationCommand) (*ArenaMatch, error) {
-	invitationID, err := primitive.ObjectIDFromHex(cmd.InvitationID)
-	if err != nil {
-		return nil, errors.New("invalid invitation ID")
-	}
-
-	// Get invitation
-	var invitation ArenaInvitation
-	err = InvitationColl.FindOne(ctx, bson.M{"_id": invitationID}).Decode(&invitation)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("invitation not found")
-		}
-		return nil, fmt.Errorf("failed to get invitation: %w", err)
-	}
+    if cmd.InvitationID == "" { return nil, errors.New("invalid invitation ID") }
+    invitation, err := GetRepository().GetInvitationByID(ctx, cmd.InvitationID)
+    if err != nil { return nil, fmt.Errorf("failed to get invitation: %w", err) }
 
 	// Validate: only opponent can accept
 	if invitation.OpponentID != cmd.OpponentID {
@@ -185,30 +150,23 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		UpdatedAt:       now,
 	}
 
-	result, err := MatchColl.InsertOne(ctx, match)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create match: %w", err)
-	}
-
-	match.ID = result.InsertedID.(primitive.ObjectID)
+    matchID, err := GetRepository().CreateMatch(ctx, match)
+    if err != nil { return nil, fmt.Errorf("failed to create match: %w", err) }
+    match.ID = matchID
 
 	// Update invitation
-	updateData := bson.M{
-		"status":       InvitationStatusAccepted,
-		"responded_at": now,
-		"battle_id":    match.ID.Hex(), // Store match ID as battle_id for reference
-		"updated_at":   now,
-	}
-
-	_, err = InvitationColl.UpdateOne(ctx, bson.M{"_id": invitationID}, bson.M{"$set": updateData})
-	if err != nil {
-		return nil, fmt.Errorf("failed to update invitation: %w", err)
-	}
+    updateData := map[string]interface{}{
+        "status":       InvitationStatusAccepted,
+        "responded_at": now,
+        "battle_id":    match.ID,
+        "updated_at":   now,
+    }
+    if err := GetRepository().UpdateInvitationFields(ctx, cmd.InvitationID, updateData); err != nil { return nil, fmt.Errorf("failed to update invitation: %w", err) }
 
 	// Publish Kafka events
 	go func() {
-		matchID := match.ID.Hex()
-		if err := PublishInvitationAccepted(invitation.ID.Hex(), invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName, matchID); err != nil {
+        matchID := match.ID
+        if err := PublishInvitationAccepted(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName, matchID); err != nil {
 			log.Printf("Failed to publish invitation accepted event: %v", err)
 		}
 		if err := PublishMatchStarted(matchID, match.Player1ID, match.Player1Name, match.Player2ID, match.Player2Name, matchID); err != nil {
@@ -216,7 +174,7 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		}
 	}()
 
-	log.Printf("Arena invitation accepted: %s vs %s, match: %s", invitation.ChallengerName, invitation.OpponentName, match.ID.Hex())
+    log.Printf("Arena invitation accepted: %s vs %s, match: %s", invitation.ChallengerName, invitation.OpponentName, match.ID)
 	return match, nil
 }
 
