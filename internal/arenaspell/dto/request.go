@@ -4,6 +4,7 @@ package dto
 type CastArenaSpellRequest struct {
     MatchID       string `json:"match_id" binding:"required"`
     SpellType     string `json:"spell_type" binding:"required"`
+    CasterRole    string `json:"caster_role" binding:"required"`
 }
 
 // CastArenaSpellCommand is the command used by service layer
@@ -12,6 +13,7 @@ type CastArenaSpellCommand struct {
     SpellType       string
     CasterUserID    uint
     CasterUsername  string
+    CasterRole      string
 }
 
 // ErrorResponse is a generic error response
