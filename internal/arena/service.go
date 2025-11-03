@@ -214,15 +214,16 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 
 	// Publish Kafka events
 	go func() {
-		if err := PublishInvitationAccepted(invitation.ID.Hex(), invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName, battleID); err != nil {
+		matchID := match.ID.Hex()
+		if err := PublishInvitationAccepted(invitation.ID.Hex(), invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName, matchID); err != nil {
 			log.Printf("Failed to publish invitation accepted event: %v", err)
 		}
-		if err := PublishMatchStarted(match.ID.Hex(), match.Player1ID, match.Player1Name, match.Player2ID, match.Player2Name, battleID); err != nil {
+		if err := PublishMatchStarted(matchID, match.Player1ID, match.Player1Name, match.Player2ID, match.Player2Name, matchID); err != nil {
 			log.Printf("Failed to publish match started event: %v", err)
 		}
 	}()
 
-	log.Printf("Arena invitation accepted: %s vs %s, battle: %s", invitation.ChallengerName, invitation.OpponentName, battleID)
+	log.Printf("Arena invitation accepted: %s vs %s, match: %s", invitation.ChallengerName, invitation.OpponentName, match.ID.Hex())
 	return match, nil
 }
 
