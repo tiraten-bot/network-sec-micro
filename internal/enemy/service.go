@@ -25,11 +25,16 @@ func NewService() *Service {
 
 // CreateEnemy creates a new enemy
 func (s *Service) CreateEnemy(cmd dto.CreateEnemyCommand) (*Enemy, error) {
+	maxHealth := cmd.Health
+	if cmd.MaxHealth > 0 {
+		maxHealth = cmd.MaxHealth
+	}
 	enemy := Enemy{
 		Name:        cmd.Name,
 		Type:        EnemyType(cmd.Type),
 		Level:       cmd.Level,
 		Health:      cmd.Health,
+		MaxHealth:   maxHealth,
 		AttackPower: cmd.AttackPower,
 		CreatedBy:   cmd.CreatedBy,
 		CreatedAt:   time.Now(),
