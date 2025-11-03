@@ -416,9 +416,17 @@ func (h *Handler) ApplyArenaSpell(c *gin.Context) {
     // Enforce spell window at handler level as well (fast-fail)
     var matchSnapshot ArenaMatch
     if err := MatchColl.FindOne(c.Request.Context(), bson.M{"_id": matchID}).Decode(&matchSnapshot); err == nil {
-        allow := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
-        if !(allow(matchSnapshot.Player1HP, matchSnapshot.Player1MaxHP) || allow(matchSnapshot.Player2HP, matchSnapshot.Player2MaxHP)) {
-            c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "forbidden", Message: "spell window not open"})
+        allow50 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
+        allow10 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*10) }
+        isCrisis := req.SpellType == "light_crisis" || req.SpellType == "dark_crisis"
+        ok := false
+        if isCrisis {
+            ok = allow10(matchSnapshot.Player1HP, matchSnapshot.Player1MaxHP) || allow10(matchSnapshot.Player2HP, matchSnapshot.Player2MaxHP)
+        } else {
+            ok = allow50(matchSnapshot.Player1HP, matchSnapshot.Player1MaxHP) || allow50(matchSnapshot.Player2HP, matchSnapshot.Player2MaxHP)
+        }
+        if !ok {
+            c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "forbidden", Message: "spell window not open for this spell"})
             return
         }
     }
