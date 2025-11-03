@@ -22,6 +22,10 @@ func InitPostgres() error {
     if err != nil {
         return err
     }
+    // AutoMigrate tables for battle service
+    if err := pkgdb.AutoMigrate(db, &BattleSQL{}, &BattleParticipantSQL{}, &BattleTurnSQL{}); err != nil {
+        return err
+    }
     SQLDB.Enabled = true
     SQLDB.DB = db
     log.Println("Battle PostgreSQL initialized (GORM)")
