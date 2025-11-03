@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arena
+  labels:
+    app: arena
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: arena
+  template:
+    metadata:
+      labels:
+        app: arena
+    spec:
+      containers:
+      - name: arena
+        image: arena:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8087
+          name: http
+        - containerPort: 50055
+          name: grpc
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://mongodb:27017"
+        - name: MONGODB_DB
+          value: "arena_db"
+        - name: WARRIOR_GRPC_ADDR
+          value: "warrior:50052"
+        - name: KAFKA_BROKERS
+          value: "kafka:9092"
+        - name: GIN_MODE
+          value: "release"
+        - name: PORT
+          value: "8087"
+        - name: GRPC_PORT
+          value: "50055"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8087
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8087
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arena
+  labels:
+    app: arena
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8087
+    targetPort: 8087
+    protocol: TCP
+    name: http
+  - port: 50055
+    targetPort: 50055
+    protocol: TCP
+    name: grpc
+  selector:
+    app: arena
+
