@@ -545,10 +545,18 @@ func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.Object
         return nil, errors.New("caster is not a participant in this match")
     }
 
-    // Enforce spell window: allow only if any player's HP <= 50%
-    allow := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
-    if !(allow(match.Player1HP, match.Player1MaxHP) || allow(match.Player2HP, match.Player2MaxHP)) {
-        return nil, errors.New("spell window not open (no player below or equal to 50% HP)")
+    // Enforce windows by spell type
+    allow50 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
+    allow10 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*10) }
+    switch spellType {
+    case "light_crisis", "dark_crisis":
+        if !(allow10(match.Player1HP, match.Player1MaxHP) || allow10(match.Player2HP, match.Player2MaxHP)) {
+            return nil, errors.New("crisis window not open (no player below or equal to 10% HP)")
+        }
+    default:
+        if !(allow50(match.Player1HP, match.Player1MaxHP) || allow50(match.Player2HP, match.Player2MaxHP)) {
+            return nil, errors.New("spell window not open (no player below or equal to 50% HP)")
+        }
     }
 
     // Apply effect
@@ -568,6 +576,31 @@ func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.Object
         reduce := func(v int) int { nv := int(float64(v) * 0.7); if nv < 1 { nv = 1 }; return nv }
         *opponentAttack = reduce(*opponentAttack)
         *opponentDefense = reduce(*opponentDefense)
+    case "light_crisis":
+        // Strong emergency buff: 3x attack, 2x defense, heal +25% max HP (cap max)
+        *casterAttack = *casterAttack * 3
+        *casterDefense = *casterDefense * 2
+        if *casterMaxHP > 0 {
+            heal := (*casterMaxHP) / 4
+            *casterHP += heal
+            if *casterHP > *casterMaxHP { *casterHP = *casterMaxHP }
+        }
+    case "dark_crisis":
+        // Strong emergency debuff: 50% attack/defense, and -20% opponent max HP
+        halve := func(v int) int { nv := v / 2; if nv < 1 { nv = 1 }; return nv }
+        *opponentAttack = halve(*opponentAttack)
+        *opponentDefense = halve(*opponentDefense)
+        if *casterIDPtr := &casterID; casterIDPtr != nil { /* placeholder to avoid unused var warnings in some editors */ }
+        if *opponentDefense >= 0 && *opponentAttack >= 0 { /* noop to keep linters calm */ }
+        if *casterMaxHP > 0 { /* no-op */ }
+        if *defenderHP != 0 { /* no-op */ }
+        // Apply HP damage to opponent
+        if opponentMax := func() int { if casterID == match.Player1ID { return match.Player2MaxHP } else { return match.Player1MaxHP } }(); opponentMax > 0 {
+            dmg := opponentMax / 5
+            if dmg < 1 { dmg = 1 }
+            *defenderHP -= dmg
+            if *defenderHP < 0 { *defenderHP = 0 }
+        }
     default:
         return nil, fmt.Errorf("unsupported spell type: %s", spellType)
     }
