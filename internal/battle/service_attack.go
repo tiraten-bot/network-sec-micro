@@ -282,7 +282,7 @@ func (s *Service) completeTeamBattle(ctx context.Context, battle *Battle, result
 
 	// Publish battle completed event
 	go PublishBattleCompletedEvent(
-		battle.ID.Hex(),
+		battle.ID,
 		string(battle.BattleType),
 		0,
 		"Team Battle",
@@ -292,6 +292,11 @@ func (s *Service) completeTeamBattle(ctx context.Context, battle *Battle, result
 		0, // Total exp
 		battle.CurrentTurn,
 	)
+
+	// Publish wager resolution if configured and approved
+	if battle.WagerAmount > 0 && battle.LightEmperorID != "" && battle.DarkEmperorID != "" && battle.LightEmperorApproved && battle.DarkEmperorApproved {
+		_ = PublishBattleWagerResolved(battle.ID, winnerSide, battle.WagerAmount, battle.LightEmperorID, battle.DarkEmperorID)
+	}
 
 	return battle, nil, nil
 }
