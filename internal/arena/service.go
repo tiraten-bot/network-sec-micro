@@ -534,6 +534,12 @@ func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.Object
         return nil, errors.New("caster is not a participant in this match")
     }
 
+    // Enforce spell window: allow only if any player's HP <= 50%
+    allow := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
+    if !(allow(match.Player1HP, match.Player1MaxHP) || allow(match.Player2HP, match.Player2MaxHP)) {
+        return nil, errors.New("spell window not open (no player below or equal to 50% HP)")
+    }
+
     // Apply effect
     switch spellType {
     case "call_of_the_light_king":
