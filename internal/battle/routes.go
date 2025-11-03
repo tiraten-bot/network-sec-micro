@@ -19,6 +19,9 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 			protected.POST("/battles/dark-emperor-join", handler.DarkEmperorJoinBattle)
 			protected.POST("/battles/sacrifice-dragon", handler.SacrificeDragon)
 			// Spell casting moved to battlespell service - endpoint removed
+			
+			// Arena battle endpoint (called by arena service)
+			api.POST("/arena/start", handler.StartArenaBattle)
 
 			// RBAC protected routes
 			rbac := protected.Group("")
