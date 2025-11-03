@@ -20,7 +20,8 @@ proto:
 		api/proto/warrior/warrior.proto \
 		api/proto/battle/battle.proto \
 		api/proto/battlespell/battlespell.proto \
-		api/proto/arena/arena.proto
+		api/proto/arena/arena.proto \
+		api/proto/arenaspell/arenaspell.proto
 	@echo "✅ Protobuf code generated!"
 
 build:
