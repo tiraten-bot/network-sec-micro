@@ -315,10 +315,14 @@ graph LR
     T2 --> C
     T3 --> WP2
     T6 --> A2
+    T6 --> H
+    T12 --> H
+    T13 --> C
     
     C -->|Deduct Coins| C
     WP2 -->|Add Loot Weapon| WP2
     W -->|Update Kill Count| W
+    H -->|Log Healing Available| H
     
     style WP fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
@@ -341,6 +345,8 @@ graph LR
     style WP2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style W fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style A2 fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style H fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style T13 fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
 ```
 
 ## Gateway Routing and Resilience
