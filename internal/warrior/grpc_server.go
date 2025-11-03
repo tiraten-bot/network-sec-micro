@@ -76,19 +76,25 @@ func (s *WarriorServiceServer) GetWarriorByID(ctx context.Context, req *pb.GetWa
 			maxHP = 100
 		}
 	}
+	healingUntilSeconds := int64(0)
+	if w.HealingUntil != nil {
+		healingUntilSeconds = w.HealingUntil.Unix()
+	}
 	return &pb.GetWarriorByIDResponse{
 		Warrior: &pb.Warrior{
-			Id:           uint32(w.ID),
-			Username:     w.Username,
-			Email:        w.Email,
-			Role:         string(w.Role),
-			CoinBalance:  int32(w.CoinBalance),
-			TotalPower:   int32(w.TotalPower),
-			WeaponCount:  int32(w.WeaponCount),
-			CurrentHp:    int32(w.CurrentHP),
-			MaxHp:        int32(maxHP),
-			CreatedAt:    timestamppb.New(w.CreatedAt),
-			UpdatedAt:    timestamppb.New(w.UpdatedAt),
+			Id:                uint32(w.ID),
+			Username:          w.Username,
+			Email:             w.Email,
+			Role:              string(w.Role),
+			CoinBalance:       int32(w.CoinBalance),
+			TotalPower:        int32(w.TotalPower),
+			WeaponCount:       int32(w.WeaponCount),
+			CurrentHp:         int32(w.CurrentHP),
+			MaxHp:             int32(maxHP),
+			IsHealing:         w.IsHealing,
+			HealingUntilSeconds: healingUntilSeconds,
+			CreatedAt:         timestamppb.New(w.CreatedAt),
+			UpdatedAt:         timestamppb.New(w.UpdatedAt),
 		},
 	}, nil
 }
