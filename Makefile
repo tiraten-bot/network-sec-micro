@@ -8,6 +8,7 @@ wire:
 	cd cmd/warrior && wire
 	cd cmd/battle && wire
 	cd cmd/battlespell && wire
+	cd cmd/arena && wire
 
 # Generate protobuf code
 proto:
@@ -38,6 +39,7 @@ build:
 	go build -o bin/dragon cmd/dragon/main.go
 	go build -o bin/battle cmd/battle/main.go
 	go build -o bin/battlespell cmd/battlespell/main.go
+	go build -o bin/arena cmd/arena/main.go
 
 run:
 	go run cmd/warrior/main.go
