@@ -34,7 +34,8 @@ message PurchaseHealResponse {
 
 // Request to get healing history
 message GetHealingHistoryRequest {
-  string warrior_id = 1;
+  string participant_id = 1; // Warrior/Dragon/Enemy ID
+  string participant_type = 2; // "warrior", "dragon", "enemy"
 }
 
 // Response with healing history
