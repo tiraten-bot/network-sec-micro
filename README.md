@@ -1459,7 +1459,7 @@ sequenceDiagram
     Heal->>Heal: 📝 Log healing availability (participants can now heal)
 ```
 
-### Heal Service Event Flow
+### 💚 Heal Service Event Flow 🌿
 
 ```mermaid
 sequenceDiagram
