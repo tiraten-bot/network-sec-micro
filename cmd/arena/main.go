@@ -18,11 +18,6 @@ import (
 )
 
 func main() {
-    // Initialize database (Mongo, existing)
-    if err := arena.InitDatabase(); err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
-
     // Initialize Redis client (for Redis-backed repo)
     if err := arena.InitRedisClient(); err != nil {
         log.Printf("Warning: Arena Redis init failed: %v", err)
