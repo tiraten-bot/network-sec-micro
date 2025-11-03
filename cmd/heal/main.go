@@ -42,6 +42,24 @@ func main() {
 		log.Fatalf("Failed to connect to Coin gRPC: %v", err)
 	}
 
+	// Initialize Dragon gRPC client (optional)
+	dragonAddr := os.Getenv("DRAGON_GRPC_ADDR")
+	if dragonAddr == "" {
+		dragonAddr = "localhost:50059"
+	}
+	if err := heal.InitDragonClient(dragonAddr); err != nil {
+		log.Printf("Warning: Failed to connect to Dragon gRPC (optional): %v", err)
+	}
+
+	// Initialize Enemy gRPC client (optional)
+	enemyAddr := os.Getenv("ENEMY_GRPC_ADDR")
+	if enemyAddr == "" {
+		enemyAddr = "localhost:50060"
+	}
+	if err := heal.InitEnemyClient(enemyAddr); err != nil {
+		log.Printf("Warning: Failed to connect to Enemy gRPC (optional): %v", err)
+	}
+
 	// Initialize service and gRPC server using Wire
 	_, grpcServer, err := InitializeApp()
 	if err != nil {
@@ -56,6 +74,8 @@ func main() {
 		log.Println("Shutting down...")
 		heal.CloseWarriorClient()
 		heal.CloseCoinClient()
+		heal.CloseDragonClient()
+		heal.CloseEnemyClient()
 		heal.CloseRedisClient()
 	}()
 
