@@ -172,3 +172,18 @@ func PublishMatchCompleted(matchID string, player1ID uint, player1Name string, p
 	return nil
 }
 
+// PublishSpellWindowOpened publishes event when a player's HP first falls to <=50%
+func PublishSpellWindowOpened(matchID string, playerID uint, playerName string, hpPercent float64) error {
+    publisher := GetKafkaPublisher()
+    if publisher == nil {
+        return fmt.Errorf("kafka publisher not initialized")
+    }
+    event := kafka.NewArenaSpellWindowOpenedEvent(matchID, playerID, playerName, hpPercent)
+    topic := kafka.TopicArenaSpellWindowOpened
+    if err := publisher.Publish(topic, event); err != nil {
+        return fmt.Errorf("failed to publish spell window event: %w", err)
+    }
+    log.Printf("Published arena spell window: match=%s player=%s hp%%=%.2f", matchID, playerName, hpPercent)
+    return nil
+}
+
