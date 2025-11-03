@@ -43,7 +43,12 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	// Initialize Warrior gRPC client
+    // Optionally initialize PostgreSQL (gradual migration)
+    if err := battle.InitPostgres(); err != nil {
+        log.Printf("Warning: Battle Postgres init failed: %v", err)
+    }
+
+    // Initialize Warrior gRPC client
 	warriorAddr := os.Getenv("WARRIOR_GRPC_ADDR")
 	if warriorAddr == "" {
 		warriorAddr = "localhost:50052"
