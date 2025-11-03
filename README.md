@@ -66,6 +66,7 @@ graph TB
     D --> MG
     B --> MG
     C --> MY
+    H --> PG
     
     WP -->|Events| K
     E -->|Events| K
@@ -75,6 +76,7 @@ graph TB
     C -->|Consume| K
     WP -->|Consume| K
     W -->|Consume| K
+    H -->|Consume| K
     
     K --> Z
     
