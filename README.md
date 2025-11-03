@@ -89,6 +89,7 @@ graph TB
     style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style D fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style B fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
+    style H fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style PG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style MG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
     style MY fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
@@ -494,6 +495,7 @@ graph LR
         T11[arena.invitation.expired]
         T12[arena.match.started]
         T13[arena.match.completed]
+        T14[battle.wager.resolved]
     end
 
     subgraph Producers
@@ -509,6 +511,7 @@ graph LR
         C2[Weapon]
         C3[Warrior]
         C4[Arena]
+        C5[Heal]
     end
 
     P1 --> T1
