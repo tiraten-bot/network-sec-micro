@@ -3,13 +3,18 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
+	pb "network-sec-micro/api/proto/arena"
 	"network-sec-micro/internal/arena"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -33,8 +38,8 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize service and handler using Wire
-	service, handler, err := InitializeApp()
+	// Initialize service, handler, and gRPC server using Wire
+	service, handler, grpcServer, err := InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize app with Wire: %v", err)
 	}
@@ -54,6 +59,9 @@ func main() {
 	}
 
 	// Setup graceful shutdown
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
 	defer func() {
 		log.Println("Shutting down...")
 		arena.CloseKafkaPublisher()
@@ -94,15 +102,47 @@ func main() {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Start HTTP server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8087"
+	httpPort := os.Getenv("PORT")
+	if httpPort == "" {
+		httpPort = "8087"
 	}
 
-	log.Printf("Arena HTTP service starting on port %s", port)
-
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start HTTP server: %v", err)
+	// Start gRPC server
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		grpcPort = "50055"
 	}
+
+	grpcListener, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatalf("Failed to listen on gRPC port %s: %v", grpcPort, err)
+	}
+
+	grpcSrv := grpc.NewServer()
+	pb.RegisterArenaServiceServer(grpcSrv, grpcServer)
+
+	// Start gRPC server in goroutine
+	go func() {
+		log.Printf("Arena gRPC service starting on port %s", grpcPort)
+		if err := grpcSrv.Serve(grpcListener); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
+	}()
+
+	// Start HTTP server in goroutine
+	go func() {
+		log.Printf("Arena HTTP service starting on port %s", httpPort)
+		if err := r.Run(":" + httpPort); err != nil {
+			log.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	<-shutdown
+	log.Println("Shutting down servers...")
+
+	// Graceful shutdown
+	grpcSrv.GracefulStop()
+	log.Println("Arena service stopped")
 }
 
