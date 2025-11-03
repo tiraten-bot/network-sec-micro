@@ -18,10 +18,15 @@ import (
 )
 
 func main() {
-	// Initialize database
-	if err := arena.InitDatabase(); err != nil {
+    // Initialize database (Mongo, existing)
+    if err := arena.InitDatabase(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+
+    // Optionally initialize PostgreSQL (gradual migration)
+    if err := arena.InitPostgres(); err != nil {
+        log.Printf("Warning: Arena Postgres init failed: %v", err)
+    }
 
     // Initialize Warrior gRPC client
 	warriorAddr := os.Getenv("WARRIOR_GRPC_ADDR")
