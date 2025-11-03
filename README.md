@@ -44,12 +44,17 @@ graph TB
     LB --> E
     LB --> D
     LB --> B
+    LB --> BS
+    LB --> A
     
     W -.->|gRPC| C
     E -.->|gRPC| W
     D -.->|gRPC| W
     B -.->|gRPC| W
     B -.->|gRPC| C
+    B -.->|gRPC| BS
+    BS -.->|gRPC| B
+    A -.->|gRPC| W
     
     W --> PG
     WP --> MG
@@ -62,8 +67,10 @@ graph TB
     E -->|Events| K
     D -->|Events| K
     B -->|Events| K
+    A -->|Events| K
     C -->|Consume| K
     WP -->|Consume| K
+    W -->|Consume| K
     
     K --> Z
     
