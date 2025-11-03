@@ -24,6 +24,7 @@ graph TB
         B[Battle Service<br/>HTTP :8085]
         BS[Battlespell Service<br/>HTTP :8086]
         A[Arena Service<br/>HTTP :8087]
+        H[Heal Service<br/>gRPC :50058]
     end
     
     subgraph "Data Layer"
@@ -53,8 +54,11 @@ graph TB
     B -.->|gRPC| W
     B -.->|gRPC| C
     B -.->|gRPC| BS
+    B -.->|gRPC| H
     BS -.->|gRPC| B
     A -.->|gRPC| W
+    H -.->|gRPC| W
+    H -.->|gRPC| C
     
     W --> PG
     WP --> MG
@@ -1235,6 +1239,204 @@ graph TB
     style E5 fill:#8b0000,stroke:#001a4d,color:#ffffff
     style E6 fill:#0b3d91,stroke:#001a4d,color:#ffffff
     style E7 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+```
+
+### Heal Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Heal as Heal Service
+    participant Warrior as Warrior Service (gRPC)
+    participant Coin as Coin Service (gRPC)
+    participant Kafka
+    participant PG as PostgreSQL
+
+    Note over Client,PG: Purchase Healing Package Flow
+    Client->>Heal: PurchaseHeal(warrior_id, heal_type, warrior_role)
+    Heal->>Warrior: GetWarriorByID (gRPC)
+    Warrior-->>Heal: Warrior info (HP, role, is_healing)
+    
+    alt Warrior is currently healing
+        Heal->>Heal: Check healing_until timestamp
+        alt Healing not completed
+            Heal-->>Client: Error: Already healing (remaining time)
+        else Healing completed
+            Heal->>Warrior: UpdateWarriorHealingState (clear state)
+        end
+    end
+    
+    Heal->>Heal: GetHealPackageByType (role-based validation)
+    Heal->>Heal: Validate role can use package (RBAC)
+    
+    Heal->>Coin: DeductCoins (gRPC, package price)
+    Coin-->>Heal: Payment confirmed
+    
+    Heal->>Warrior: UpdateWarriorHealingState (is_healing=true, healing_until)
+    Heal->>PG: Save healing record (duration, completed_at)
+    
+    Note over Heal: Background goroutine scheduled
+    Heal->>Heal: Schedule HP update after duration
+    Heal-->>Client: Healing started (duration, coins_spent)
+    
+    Note over Heal,PG: Healing Completion (Background)
+    Heal->>Heal: Wait for duration (15s - 1h)
+    Heal->>Warrior: UpdateWarriorHP (gRPC, new HP)
+    Warrior-->>Heal: HP updated
+    Heal->>Warrior: UpdateWarriorHealingState (is_healing=false)
+    Heal->>Heal: Log healing completion
+```
+
+### Heal Service Role-Based Packages
+
+```mermaid
+graph TB
+    subgraph "Warrior Packages"
+        WF[Full Heal<br/>100 coins<br/>5 minutes]
+        WP[50% Heal<br/>50 coins<br/>3 minutes]
+    end
+    
+    subgraph "Emperor Packages"
+        EF[Emperor Full Heal<br/>20 coins<br/>30 seconds]
+        EP[Emperor Quick Heal<br/>10 coins<br/>15 seconds]
+    end
+    
+    subgraph "Dragon Package"
+        DH[Dragon Heal<br/>1000 coins<br/>1 hour]
+    end
+    
+    subgraph "Roles"
+        W[Warrior Role]
+        E[Emperor Role<br/>light_emperor<br/>dark_emperor]
+        D[Dragon Role]
+    end
+    
+    W --> WF
+    W --> WP
+    W --> EF
+    W --> EP
+    
+    E --> EF
+    E --> EP
+    E --> WF
+    E --> WP
+    
+    D --> DH
+    D --> WF
+    D --> WP
+    
+    style WF fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style WP fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style EF fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style EP fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style DH fill:#8b0000,stroke:#001a4d,color:#ffffff
+    style W fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style E fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style D fill:#133e7c,stroke:#001a4d,color:#ffffff
+```
+
+### Heal Service State Management
+
+```mermaid
+stateDiagram-v2
+    [*] --> WarriorHealthy: Warrior at full HP
+    
+    WarriorHealthy --> PurchaseHealing: Battle/Arena completed<br/>HP reduced
+    PurchaseHealing --> HealingInProgress: Payment successful<br/>Coins deducted
+    
+    HealingInProgress --> HealingCompleted: Duration elapsed<br/>HP restored
+    HealingInProgress --> BattleBlocked: Attempt to start battle<br/>Check healing state
+    
+    HealingCompleted --> WarriorHealthy: HP updated
+    BattleBlocked --> HealingInProgress: Wait for completion
+    
+    note right of HealingInProgress
+        is_healing = true
+        healing_until = timestamp
+        Cannot start battles/arena
+    end note
+    
+    note right of HealingCompleted
+        is_healing = false
+        healing_until = null
+        HP updated to target value
+    end note
+```
+
+### Heal Service Battle/Arena Integration
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Battle as Battle Service
+    participant Arena as Arena Service
+    participant Heal as Heal Service
+    participant Warrior as Warrior Service (gRPC)
+    participant Kafka
+
+    Note over Client,Kafka: Battle Start with Healing Check
+    Client->>Battle: POST /api/battles (start battle)
+    Battle->>Warrior: GetWarriorByID (gRPC, participant IDs)
+    Warrior-->>Battle: Warrior info (is_healing, healing_until)
+    
+    alt Warrior is healing
+        Battle->>Battle: CheckWarriorCanBattle (validation)
+        Battle-->>Client: Error: Warrior is healing (remaining time)
+    else Warrior not healing
+        Battle->>Battle: Start battle (create participants)
+        Battle-->>Client: Battle started
+    end
+    
+    Note over Client,Kafka: Arena Match Start with Healing Check
+    Client->>Arena: POST /api/v1/arena/invitations/accept
+    Arena->>Warrior: GetWarriorByID (gRPC, challenger_id)
+    Warrior-->>Arena: Challenger info (is_healing)
+    Arena->>Warrior: GetWarriorByID (gRPC, opponent_id)
+    Warrior-->>Arena: Opponent info (is_healing)
+    
+    alt Challenger or Opponent is healing
+        Arena-->>Client: Error: Warrior is healing (cannot start match)
+    else Both warriors ready
+        Arena->>Arena: Create match
+        Arena-->>Client: Match started
+    end
+    
+    Note over Client,Kafka: Battle/Arena Completion Triggers Healing
+    Battle->>Kafka: battle.completed event
+    Arena->>Kafka: arena.match.completed event
+    Heal->>Kafka: Consume battle.completed / arena.match.completed
+    Heal->>Heal: Log healing availability (warriors can now heal)
+```
+
+### Heal Service Event Flow
+
+```mermaid
+sequenceDiagram
+    participant Battle as Battle Service
+    participant Arena as Arena Service
+    participant Kafka as Kafka Events
+    participant Heal as Heal Service
+    participant Warrior as Warrior Service
+    
+    Note over Battle,Warrior: Battle Completion Event
+    Battle->>Battle: Battle completed (winner determined)
+    Battle->>Kafka: battle.completed (winner_id, loser_id, loser_total_power)
+    Kafka->>Heal: Consume battle.completed
+    Heal->>Heal: Log healing available for warriors
+    
+    Note over Arena,Warrior: Arena Match Completion Event
+    Arena->>Arena: Match completed (winner determined)
+    Arena->>Kafka: arena.match.completed (player1_id, player2_id, winner_id)
+    Kafka->>Heal: Consume arena.match.completed
+    Heal->>Heal: Log healing available for players
+    
+    Note over Heal,Warrior: Healing Purchase Flow
+    Heal->>Warrior: GetWarriorByID (check healing state)
+    Warrior-->>Heal: is_healing, healing_until
+    Heal->>Heal: Validate healing state
+    Heal->>Heal: Purchase healing package
+    Heal->>Warrior: UpdateWarriorHealingState (set is_healing=true)
+    Heal->>Heal: Schedule HP update after duration
 ```
 
 ### Arena Service Complete Event Flow
