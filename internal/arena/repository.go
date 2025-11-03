@@ -17,9 +17,21 @@ var defaultRepo Repository
 func GetRepository() Repository {
     if defaultRepo != nil { return defaultRepo }
     store := os.Getenv("ARENA_STORE")
-    if store == "sql" && SQLDB.Enabled {
-        defaultRepo = &sqlRepo{}
-    } else {
+    switch store {
+    case "redis":
+        if getRedis() != nil {
+            defaultRepo = &redisRepo{}
+            return defaultRepo
+        }
+        // fallback to mongo if redis not ready
+        defaultRepo = &mongoRepo{}
+    case "sql":
+        if SQLDB.Enabled {
+            defaultRepo = &sqlRepo{}
+            return defaultRepo
+        }
+        defaultRepo = &mongoRepo{}
+    default:
         defaultRepo = &mongoRepo{}
     }
     return defaultRepo
