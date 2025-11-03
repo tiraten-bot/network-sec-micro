@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package dragon;
+
+option go_package = "network-sec-micro/api/proto/dragon";
+
+// DragonService provides gRPC endpoints for dragon operations
+service DragonService {
+  // GetDragonByID retrieves a dragon by its ID
+  rpc GetDragonByID(GetDragonByIDRequest) returns (GetDragonByIDResponse);
+  
+  // UpdateDragonHP updates a dragon's HP
+  rpc UpdateDragonHP(UpdateDragonHPRequest) returns (UpdateDragonHPResponse);
+  
+  // UpdateDragonHealingState sets dragon's healing state (for heal service)
+  rpc UpdateDragonHealingState(UpdateDragonHealingStateRequest) returns (UpdateDragonHealingStateResponse);
+  
+  // CheckDragonCanBattle checks if a dragon can participate in battles (not healing)
+  rpc CheckDragonCanBattle(CheckDragonCanBattleRequest) returns (CheckDragonCanBattleResponse);
+}
+
+// Dragon represents a dragon entity
+message Dragon {
+  string id = 1;              // Dragon ID (ObjectID hex)
+  string name = 2;            // Dragon name
+  string type = 3;           // Dragon type (fire, ice, lightning, shadow)
+  int32 level = 4;           // Dragon level
+  int32 health = 5;          // Current HP
+  int32 max_health = 6;       // Maximum HP
+  int32 attack_power = 7;     // Attack power
+  int32 defense = 8;          // Defense
+  string created_by = 9;      // Creator username (dark emperor)
+  bool is_alive = 10;         // Is dragon alive
+  bool is_healing = 11;       // Is currently healing
+  int64 healing_until_seconds = 12; // Unix timestamp when healing completes (0 if not healing)
+  int32 revival_count = 13;   // Number of times revived (max 3)
+}
+
+// GetDragonByIDRequest requests a dragon by ID
+message GetDragonByIDRequest {
+  string dragon_id = 1;
+}
+
+// GetDragonByIDResponse returns dragon information
+message GetDragonByIDResponse {
+  Dragon dragon = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// UpdateDragonHPRequest updates dragon HP
+message UpdateDragonHPRequest {
+  string dragon_id = 1;
+  int32 new_hp = 2;
+}
+
+// UpdateDragonHPResponse confirms HP update
+message UpdateDragonHPResponse {
+  bool success = 1;
+  string message = 2;
+  int32 current_hp = 3;
+}
+
+// UpdateDragonHealingStateRequest sets dragon healing state
+message UpdateDragonHealingStateRequest {
+  string dragon_id = 1;
+  bool is_healing = 2;
+  int64 healing_until_seconds = 3; // Unix timestamp (0 if not healing)
+}
+
+// UpdateDragonHealingStateResponse confirms healing state update
+message UpdateDragonHealingStateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// CheckDragonCanBattleRequest checks if dragon can battle
+message CheckDragonCanBattleRequest {
+  string dragon_id = 1;
+}
+
+// CheckDragonCanBattleResponse returns battle eligibility
+message CheckDragonCanBattleResponse {
+  bool can_battle = 1;
+  string reason = 2; // Empty if can_battle is true
+  int64 healing_until_seconds = 3; // If healing, when it completes
+}
+
