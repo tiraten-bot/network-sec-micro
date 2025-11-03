@@ -387,7 +387,18 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 		match.Player1HP = *defenderHP
 	}
 
-	// Check if match is over
+    // Threshold events (first time HP <= 50%)
+    checkAndPublish := func(pHP, pMax int, announced *bool, pid uint, pname string) {
+        if pMax > 0 && !*announced && (pHP*100 <= pMax*50) {
+            percent := float64(pHP) / float64(pMax) * 100.0
+            _ = PublishSpellWindowOpened(match.ID.Hex(), pid, pname, percent)
+            *announced = true
+        }
+    }
+    checkAndPublish(match.Player1HP, match.Player1MaxHP, &match.P1Below50Announced, match.Player1ID, match.Player1Name)
+    checkAndPublish(match.Player2HP, match.Player2MaxHP, &match.P2Below50Announced, match.Player2ID, match.Player2Name)
+
+    // Check if match is over
 	if *defenderHP <= 0 {
 		// Defender is defeated
 		match.Status = MatchStatusCompleted
