@@ -67,18 +67,29 @@ func (a *ArenaInvitation) CanBeAccepted() bool {
 	return a.Status == InvitationStatusPending && !a.IsExpired()
 }
 
-// ArenaMatch represents an active or completed arena match
+// ArenaMatch represents an active or completed arena match (1v1)
 type ArenaMatch struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	
 	// Players
-	Player1ID   uint   `bson:"player1_id" json:"player1_id"`
-	Player1Name string `bson:"player1_name" json:"player1_name"`
-	Player2ID   uint   `bson:"player2_id" json:"player2_id"`
-	Player2Name string `bson:"player2_name" json:"player2_name"`
+	Player1ID     uint   `bson:"player1_id" json:"player1_id"`
+	Player1Name   string `bson:"player1_name" json:"player1_name"`
+	Player1HP     int    `bson:"player1_hp" json:"player1_hp"`
+	Player1MaxHP  int    `bson:"player1_max_hp" json:"player1_max_hp"`
+	Player1Attack int    `bson:"player1_attack" json:"player1_attack"`
+	Player1Defense int   `bson:"player1_defense" json:"player1_defense"`
 	
-	// Battle info
-	BattleID    string `bson:"battle_id" json:"battle_id"` // Battle service'deki battle ID
+	Player2ID     uint   `bson:"player2_id" json:"player2_id"`
+	Player2Name   string `bson:"player2_name" json:"player2_name"`
+	Player2HP     int    `bson:"player2_hp" json:"player2_hp"`
+	Player2MaxHP  int    `bson:"player2_max_hp" json:"player2_max_hp"`
+	Player2Attack int    `bson:"player2_attack" json:"player2_attack"`
+	Player2Defense int   `bson:"player2_defense" json:"player2_defense"`
+	
+	// Battle progress
+	CurrentTurn int    `bson:"current_turn" json:"current_turn"`
+	MaxTurns    int    `bson:"max_turns" json:"max_turns"`
+	CurrentAttacker uint `bson:"current_attacker" json:"current_attacker"` // 1 or 2, indicates whose turn it is
 	
 	// Result
 	Status      ArenaMatchStatus `bson:"status" json:"status"`
