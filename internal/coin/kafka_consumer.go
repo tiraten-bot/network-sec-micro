@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+    "strconv"
 
 	pb "network-sec-micro/api/proto/coin"
     "network-sec-micro/pkg/kafka"
@@ -78,6 +79,25 @@ func ProcessKafkaMessage(message []byte) error {
 	// Try to unmarshal as enemy attack event
 	if err := ProcessEnemyAttackMessage(message); err == nil {
 		return nil // Successfully processed
+	}
+
+	// Try to unmarshal as battle wager resolved
+	var wager kafka.BattleWagerResolvedEvent
+	if err := json.Unmarshal(message, &wager); err == nil {
+		if wager.Event.EventType == "battle_wager_resolved" && wager.WagerAmount > 0 {
+			winnerIDStr := wager.LightEmperorID
+			if wager.WinnerSide == "dark" { winnerIDStr = wager.DarkEmperorID }
+			if winnerIDStr != "" {
+				if id64, err := strconv.ParseUint(winnerIDStr, 10, 32); err == nil {
+					ctx := context.Background()
+					service := NewService()
+					server := NewCoinServiceServer(service)
+					_, err := server.AddCoins(ctx, &pb.AddCoinsRequest{WarriorId: uint32(id64), Amount: int64(wager.WagerAmount), Reason: "battle_wager"})
+					if err != nil { log.Printf("Failed to add wager coins: %v", err) }
+				}
+			}
+			return nil
+		}
 	}
 
 	log.Printf("Unknown event type or failed to process message")
