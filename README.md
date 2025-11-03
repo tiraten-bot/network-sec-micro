@@ -1255,6 +1255,70 @@ stateDiagram-v2
     end note
 ```
 
+### Arena Service Kafka Event Schema
+
+```mermaid
+graph TB
+    subgraph "Arena Invitation Sent Event"
+        ES[arena.invitation.sent]
+        ES1[invitation_id: string]
+        ES2[challenger_id: uint]
+        ES3[challenger_name: string]
+        ES4[opponent_id: uint]
+        ES5[opponent_name: string]
+        ES6[expires_at: RFC3339]
+        ES --> ES1
+        ES --> ES2
+        ES --> ES3
+        ES --> ES4
+        ES --> ES5
+        ES --> ES6
+    end
+    
+    subgraph "Arena Invitation Accepted Event"
+        EA[arena.invitation.accepted]
+        EA1[invitation_id: string]
+        EA2[challenger_id: uint]
+        EA3[opponent_id: uint]
+        EA4[battle_id: string]
+        EA --> EA1
+        EA --> EA2
+        EA --> EA3
+        EA --> EA4
+    end
+    
+    subgraph "Arena Match Started Event"
+        MS[arena.match.started]
+        MS1[match_id: string]
+        MS2[player1_id: uint]
+        MS3[player2_id: uint]
+        MS4[battle_id: string]
+        MS --> MS1
+        MS --> MS2
+        MS --> MS3
+        MS --> MS4
+    end
+    
+    subgraph "Arena Match Completed Event"
+        MC[arena.match.completed]
+        MC1[match_id: string]
+        MC2[player1_id: uint]
+        MC3[player2_id: uint]
+        MC4[winner_id: uint?]
+        MC5[winner_name: string]
+        MC --> MC1
+        MC --> MC2
+        MC --> MC3
+        MC --> MC4
+        MC --> MC5
+    end
+    
+    style ES fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style EA fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style MS fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style MC fill:#0d56b3,stroke:#001a4d,color:#ffffff
+```
+
 ## API Documentation (Swagger/OpenAPI)
 
 Tüm HTTP servisleri için Swagger/OpenAPI dokümantasyonu mevcuttur. Swagger UI ile API endpoint'lerini test edebilir ve detaylı dokümantasyona erişebilirsiniz.
