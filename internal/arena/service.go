@@ -398,6 +398,17 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
     checkAndPublish(match.Player1HP, match.Player1MaxHP, &match.P1Below50Announced, match.Player1ID, match.Player1Name)
     checkAndPublish(match.Player2HP, match.Player2MaxHP, &match.P2Below50Announced, match.Player2ID, match.Player2Name)
 
+    // Crisis threshold (<=10%)
+    checkAndPublishCrisis := func(pHP, pMax int, announced *bool, pid uint, pname string) {
+        if pMax > 0 && !*announced && (pHP*100 <= pMax*10) {
+            percent := float64(pHP) / float64(pMax) * 100.0
+            _ = PublishCrisisWindowOpened(match.ID.Hex(), pid, pname, percent)
+            *announced = true
+        }
+    }
+    checkAndPublishCrisis(match.Player1HP, match.Player1MaxHP, &match.P1Below10Announced, match.Player1ID, match.Player1Name)
+    checkAndPublishCrisis(match.Player2HP, match.Player2MaxHP, &match.P2Below10Announced, match.Player2ID, match.Player2Name)
+
     // Check if match is over
 	if *defenderHP <= 0 {
 		// Defender is defeated
