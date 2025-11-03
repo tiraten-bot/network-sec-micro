@@ -93,6 +93,15 @@ func main() {
 		// Don't fail startup if Redis is not available
 	}
 
+	// Initialize Heal gRPC client (optional, for healing state checks)
+	healAddr := os.Getenv("HEAL_GRPC_ADDR")
+	if healAddr == "" {
+		healAddr = "localhost:50058"
+	}
+	if err := battle.InitHealClient(healAddr); err != nil {
+		log.Printf("Warning: Failed to connect to Heal gRPC: %v", err)
+	}
+
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
