@@ -187,3 +187,18 @@ func PublishSpellWindowOpened(matchID string, playerID uint, playerName string, 
     return nil
 }
 
+// PublishCrisisWindowOpened publishes event when a player's HP first falls to <=10%
+func PublishCrisisWindowOpened(matchID string, playerID uint, playerName string, hpPercent float64) error {
+    publisher := GetKafkaPublisher()
+    if publisher == nil {
+        return fmt.Errorf("kafka publisher not initialized")
+    }
+    event := kafka.NewArenaCrisisWindowOpenedEvent(matchID, playerID, playerName, hpPercent)
+    topic := kafka.TopicArenaCrisisWindowOpened
+    if err := publisher.Publish(topic, event); err != nil {
+        return fmt.Errorf("failed to publish crisis window event: %w", err)
+    }
+    log.Printf("Published arena crisis window: match=%s player=%s hp%%=%.2f", matchID, playerName, hpPercent)
+    return nil
+}
+
