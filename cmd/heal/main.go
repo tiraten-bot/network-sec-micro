@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// Initialize service and gRPC server using Wire
-	service, grpcServer, err := InitializeApp()
+	_, grpcServer, err := InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize app: %v", err)
 	}
