@@ -382,6 +382,42 @@ func (h *Handler) AttackInArena(c *gin.Context) {
 	})
 }
 
+// ApplyArenaSpell godoc
+// @Summary Apply an arenaspell effect to a match
+// @Description Applies 1v1 spell effects (buff/debuff) directly to match stats
+// @Tags arena
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.ApplyArenaSpellRequest true "Spell apply data"
+// @Success 200 {object} map[string]interface{} "match: ArenaMatch"
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /api/v1/arena/spells/apply [post]
+func (h *Handler) ApplyArenaSpell(c *gin.Context) {
+    var req dto.ApplyArenaSpellRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "validation_error", Message: err.Error()})
+        return
+    }
+
+    matchID, err := primitive.ObjectIDFromHex(req.MatchID)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "validation_error", Message: "invalid match ID format"})
+        return
+    }
+
+    match, err := h.Service.ApplySpellEffect(c.Request.Context(), matchID, req.CasterID, req.SpellType)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "apply_failed", Message: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "match":   match,
+        "message": "Spell applied successfully",
+    })
+}
+
 // GetMatch godoc
 // @Summary Get an arena match by ID
 // @Description Gets an arena match by ID.
