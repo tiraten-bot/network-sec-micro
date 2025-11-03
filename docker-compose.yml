@@ -238,6 +238,8 @@ services:
       BATTLESPELL_GRPC_ADDR: battlespell:50054
       KAFKA_BROKERS: kafka:9092
       REDIS_ADDR: redis:6379
+      BATTLE_USE_POSTGRES: "1"
+      DB_NAME_BATTLE: battle_db
       GIN_MODE: release
       PORT: 8085
     ports:
