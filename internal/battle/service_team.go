@@ -28,6 +28,29 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
 		return nil, nil, fmt.Errorf("validation failed: %w", err)
 	}
 
+	// Check if any warrior participants are currently healing
+	for _, p := range cmd.LightParticipants {
+		if p.Type == "warrior" {
+			// Parse warrior ID from participant_id
+			var warriorID uint
+			if _, err := fmt.Sscanf(p.ParticipantID, "%d", &warriorID); err == nil {
+				if err := CheckWarriorCanBattle(ctx, warriorID); err != nil {
+					return nil, nil, fmt.Errorf("participant %s cannot battle: %w", p.Name, err)
+				}
+			}
+		}
+	}
+	for _, p := range cmd.DarkParticipants {
+		if p.Type == "warrior" {
+			var warriorID uint
+			if _, err := fmt.Sscanf(p.ParticipantID, "%d", &warriorID); err == nil {
+				if err := CheckWarriorCanBattle(ctx, warriorID); err != nil {
+					return nil, nil, fmt.Errorf("participant %s cannot battle: %w", p.Name, err)
+				}
+			}
+		}
+	}
+
 	// Set defaults
 	lightSideName := cmd.LightSideName
 	if lightSideName == "" {
