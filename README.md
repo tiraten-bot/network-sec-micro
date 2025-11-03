@@ -1787,18 +1787,20 @@ sequenceDiagram
     Heal-->>Client: 💚 Healing history with progress
 ```
 
-### HealService Container Architecture
+### 💚 HealService Container Architecture 🌿
 
 ```mermaid
 graph TB
-    subgraph "HealService Container"
-        APP[Heal Service<br/>Go Application]
-        GRPC[gRPC Server<br/>:50058]
-        DB[PostgreSQL Client<br/>GORM]
-        REDIS[Redis Client]
-        KAFKA[Kafka Consumer]
-        GRPCW[Warrior gRPC<br/>Client]
-        GRPCC[Coin gRPC<br/>Client]
+    subgraph "💚 HealService Container"
+        APP[💚 Heal Service<br/>Go Application]
+        GRPC[📡 gRPC Server<br/>:50058]
+        DB[💾 PostgreSQL Client<br/>GORM]
+        REDIS[📊 Redis Client]
+        KAFKA[📨 Kafka Consumer]
+        GRPCW[🛡️ Warrior gRPC<br/>Client]
+        GRPCC[💰 Coin gRPC<br/>Client]
+        GRPCD[🐉 Dragon gRPC<br/>Client]
+        GRPCE[👹 Enemy gRPC<br/>Client]
     end
     
     APP --> GRPC
@@ -1807,19 +1809,164 @@ graph TB
     APP --> KAFKA
     APP --> GRPCW
     APP --> GRPCC
+    APP --> GRPCD
+    APP --> GRPCE
     
     GRPC -->|Listen| EXTERNAL[External Clients]
-    DB -->|Connect| PG[(PostgreSQL)]
-    REDIS -->|Connect| RD[(Redis)]
-    KAFKA -->|Consume| KF[(Kafka)]
-    GRPCW -->|Call| W[Warrior Service]
-    GRPCC -->|Call| C[Coin Service]
+    DB -->|Connect| PG[(💾 PostgreSQL)]
+    REDIS -->|Connect| RD[(📊 Redis)]
+    KAFKA -->|Consume| KF[(📨 Kafka)]
+    GRPCW -->|Call| W[🛡️ Warrior Service]
+    GRPCC -->|Call| C[💰 Coin Service]
+    GRPCD -->|Call| D[🐉 Dragon Service]
+    GRPCE -->|Call| E[👹 Enemy Service]
     
-    style APP fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style GRPC fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style DB fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style REDIS fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style KAFKA fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style GRPCW fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style GRPCC fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style APP fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style GRPC fill:#1abc9c,stroke:#16a085,color:#ffffff
+    style DB fill:#3498db,stroke:#2980b9,color:#ffffff
+    style REDIS fill:#e74c3c,stroke:#c0392b,color:#ffffff
+    style KAFKA fill:#9b59b6,stroke:#8e44ad,color:#ffffff
+    style GRPCW fill:#3498db,stroke:#2980b9,color:#ffffff
+    style GRPCC fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style GRPCD fill:#8b0000,stroke:#5a0000,color:#ffffff
+    style GRPCE fill:#7f8c8d,stroke:#34495e,color:#ffffff
+```
+
+### 🐉 Dragon Healing Flow 💚
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Heal as 💚 Heal Service
+    participant Dragon as 🐉 Dragon Service (gRPC)
+    participant Warrior as 🛡️ Warrior Service (gRPC)
+    participant Coin as 💰 Coin Service (gRPC)
+    participant Redis as 📊 Redis Streams
+
+    Note over Client,Redis: 🐉 Dragon Healing Purchase
+    Client->>Heal: PurchaseHeal(dragon_id, "dragon", "dragon")
+    Heal->>Dragon: GetDragonByID (gRPC)
+    Dragon-->>Heal: Dragon info (HP, is_alive, created_by)
+    
+    alt Dragon is not alive
+        Heal-->>Client: ⚠️ Error: Dragon is not alive
+    else Dragon is alive and healing
+        Heal-->>Client: ⚠️ Error: Dragon is already healing
+    end
+    
+    Heal->>Heal: GetHealPackageByType ("dragon", "dragon")
+    Heal->>Heal: Validate role (RBAC: dragon role only)
+    
+    Note over Heal,Coin: 💳 Payment by Dark Emperor
+    Heal->>Dragon: GetDragonByID (get created_by username)
+    Dragon-->>Heal: Dark Emperor username
+    Heal->>Warrior: GetWarriorByUsername (gRPC, dark_emperor)
+    Warrior-->>Heal: Dark Emperor warrior ID
+    Heal->>Coin: 💰 DeductCoins (gRPC, 1000 coins from Dark Emperor)
+    Coin-->>Heal: ✅ Payment confirmed (Dark Emperor paid)
+    
+    Heal->>Dragon: UpdateDragonHealingState (is_healing=true, healing_until)
+    Heal->>Redis: 📝 LogHealingStarted (status: "started")
+    Heal-->>Client: ✅ Healing started (1 hour duration, paid by Dark Emperor)
+    
+    Note over Heal,Redis: ⏱️ Healing Progress (1 hour)
+    loop Every 5 seconds for 1 hour
+        Heal->>Heal: Calculate progress percentage
+        Heal->>Redis: 📈 LogHealingProgress (status: "in_progress")
+    end
+    
+    Note over Heal,Dragon: 💉 Healing Completion
+    Heal->>Heal: ⏱️ 1 hour elapsed
+    Heal->>Dragon: UpdateDragonHP (gRPC, max HP)
+    Heal->>Dragon: UpdateDragonHealingState (is_healing=false)
+    Heal->>Redis: ✅ LogHealingCompleted (status: "completed")
+    Heal-->>Client: ✅ Dragon fully healed!
+```
+
+### 👹 Enemy Healing Flow 💚
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Heal as 💚 Heal Service
+    participant Enemy as 👹 Enemy Service (gRPC)
+    participant Redis as 📊 Redis Streams
+
+    Note over Client,Redis: 👹 Enemy Healing Purchase
+    Client->>Heal: PurchaseHeal(enemy_id, "enemy", "full", "warrior")
+    Heal->>Enemy: GetEnemyByID (gRPC)
+    Enemy-->>Heal: Enemy info (HP, max_health, coin_balance, is_healing)
+    
+    alt Enemy is healing
+        Heal-->>Client: ⚠️ Error: Enemy is already healing
+    end
+    
+    Heal->>Heal: GetHealPackageByType ("full", "warrior")
+    Heal->>Heal: Validate role (RBAC: all roles can use warrior packages)
+    
+    Note over Heal,Enemy: 💰 Payment from Enemy's Balance
+    Heal->>Enemy: DeductEnemyCoins (gRPC, package price from enemy balance)
+    alt Insufficient balance
+        Enemy-->>Heal: ⚠️ Error: Insufficient balance
+        Heal-->>Client: ⚠️ Error: Enemy doesn't have enough coins
+    else Payment successful
+        Enemy-->>Heal: ✅ Payment confirmed (coins deducted from enemy)
+        
+        Heal->>Enemy: UpdateEnemyHealingState (is_healing=true, healing_until)
+        Heal->>Redis: 📝 LogHealingStarted (status: "started")
+        Heal-->>Client: ✅ Healing started (duration, coins_spent)
+        
+        Note over Heal,Redis: ⏱️ Healing Progress
+        loop Every 5 seconds
+            Heal->>Heal: Calculate progress percentage
+            Heal->>Redis: 📈 LogHealingProgress (status: "in_progress")
+        end
+        
+        Note over Heal,Enemy: 💉 Healing Completion
+        Heal->>Heal: ⏱️ Duration elapsed
+        Heal->>Enemy: UpdateEnemyHP (gRPC, new HP)
+        Heal->>Enemy: UpdateEnemyHealingState (is_healing=false)
+        Heal->>Redis: ✅ LogHealingCompleted (status: "completed")
+        Heal-->>Client: ✅ Enemy fully healed!
+    end
+```
+
+### 💰 Healing Payment Flow Comparison 💚
+
+```mermaid
+graph TB
+    subgraph "🛡️ Warrior Healing"
+        W1[Warrior<br/>PurchaseHeal]
+        W2[💰 Coin Service<br/>Deduct from Warrior]
+        W3[✅ Payment Complete]
+        W1 --> W2 --> W3
+    end
+    
+    subgraph "👹 Enemy Healing"
+        E1[Enemy<br/>PurchaseHeal]
+        E2[💰 Enemy Service<br/>Deduct from Enemy Balance]
+        E3[✅ Payment Complete]
+        E1 --> E2 --> E3
+    end
+    
+    subgraph "🐉 Dragon Healing"
+        D1[Dragon<br/>PurchaseHeal]
+        D2[🔍 Get Dragon Info<br/>Find Dark Emperor]
+        D3[🛡️ Warrior Service<br/>Get Dark Emperor ID]
+        D4[💰 Coin Service<br/>Deduct from Dark Emperor]
+        D5[✅ Payment Complete<br/>Dark Emperor Paid]
+        D1 --> D2 --> D3 --> D4 --> D5
+    end
+    
+    style W1 fill:#3498db,stroke:#2980b9,color:#ffffff
+    style W2 fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style W3 fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style E1 fill:#7f8c8d,stroke:#34495e,color:#ffffff
+    style E2 fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style E3 fill:#2ecc71,stroke:#27ae60,color:#ffffff
+    style D1 fill:#8b0000,stroke:#5a0000,color:#ffffff
+    style D2 fill:#3498db,stroke:#2980b9,color:#ffffff
+    style D3 fill:#3498db,stroke:#2980b9,color:#ffffff
+    style D4 fill:#f39c12,stroke:#e67e22,color:#ffffff
+    style D5 fill:#2ecc71,stroke:#27ae60,color:#ffffff
 ```
