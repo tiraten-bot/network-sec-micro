@@ -74,9 +74,17 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 	}
 
 	// Check if warrior is already healing
-	if warrior.CurrentHp > 0 { // If we have HP info, check healing state
-		// TODO: Check IsHealing field from warrior service
-		// For now, we'll check healing records for active healing
+	isHealing, healingUntil, err := CheckWarriorHealingState(ctx, warriorID)
+	if err != nil {
+		log.Printf("Warning: Could not check healing state: %v", err)
+	}
+	if isHealing && healingUntil != nil {
+		if time.Now().Before(*healingUntil) {
+			remaining := time.Until(*healingUntil).Seconds()
+			return nil, fmt.Errorf("warrior is already healing. Remaining time: %.0f seconds", remaining)
+		}
+		// Healing time passed, clear state
+		_ = SetWarriorHealingState(ctx, warriorID, false, nil)
 	}
 
 	// Get current HP from battle logs (if battleID provided) or warrior service
