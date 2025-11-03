@@ -158,37 +158,38 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		return nil, fmt.Errorf("failed to get opponent info: %w", err)
 	}
 
-	// Start arena battle via Battle Service HTTP API
-	battleID, err := s.startArenaBattle(ctx, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start arena battle: %w", err)
+	// Calculate HP based on total power
+	challengerMaxHP := int(challenger.TotalPower) * 10
+	if challengerMaxHP < 100 {
+		challengerMaxHP = 100
 	}
 
-	// Update invitation
+	opponentMaxHP := int(opponent.TotalPower) * 10
+	if opponentMaxHP < 100 {
+		opponentMaxHP = 100
+	}
+
+	// Create arena match directly (no battle service dependency)
 	now := time.Now()
-	updateData := bson.M{
-		"status":       InvitationStatusAccepted,
-		"responded_at": now,
-		"battle_id":    battleID,
-		"updated_at":   now,
-	}
-
-	_, err = InvitationColl.UpdateOne(ctx, bson.M{"_id": invitationID}, bson.M{"$set": updateData})
-	if err != nil {
-		return nil, fmt.Errorf("failed to update invitation: %w", err)
-	}
-
-	// Create arena match
 	match := &ArenaMatch{
 		Player1ID:   invitation.ChallengerID,
 		Player1Name: invitation.ChallengerName,
+		Player1HP:   challengerMaxHP,
+		Player1MaxHP: challengerMaxHP,
+		Player1Attack: int(challenger.AttackPower),
+		Player1Defense: int(challenger.Defense),
 		Player2ID:   invitation.OpponentID,
 		Player2Name: invitation.OpponentName,
-		BattleID:    battleID,
-		Status:      MatchStatusInProgress,
-		StartedAt:   &now,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		Player2HP:   opponentMaxHP,
+		Player2MaxHP: opponentMaxHP,
+		Player2Attack: int(opponent.AttackPower),
+		Player2Defense: int(opponent.Defense),
+		CurrentTurn: 0,
+		MaxTurns: 50, // Default for arena battles
+		Status: MatchStatusInProgress,
+		StartedAt: &now,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	result, err := MatchColl.InsertOne(ctx, match)
@@ -197,6 +198,19 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 	}
 
 	match.ID = result.InsertedID.(primitive.ObjectID)
+
+	// Update invitation
+	updateData := bson.M{
+		"status":       InvitationStatusAccepted,
+		"responded_at": now,
+		"battle_id":    match.ID.Hex(), // Store match ID as battle_id for reference
+		"updated_at":   now,
+	}
+
+	_, err = InvitationColl.UpdateOne(ctx, bson.M{"_id": invitationID}, bson.M{"$set": updateData})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update invitation: %w", err)
+	}
 
 	// Publish Kafka events
 	go func() {
