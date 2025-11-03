@@ -1,6 +1,6 @@
 # Empire
 
-A comprehensive microservices-based game system featuring warriors, weapons, coins, enemies, and dragons with role-based access control, gRPC communication, and event-driven architecture using Kafka.
+A comprehensive microservices-based game system featuring warriors, weapons, coins, enemies, dragons, battles, spells, and arena with role-based access control, gRPC communication, and event-driven architecture using Kafka.
 
 ## Architecture Overview
 
@@ -22,6 +22,8 @@ graph TB
         E[Enemy Service<br/>HTTP :8083]
         D[Dragon Service<br/>HTTP :8084]
         B[Battle Service<br/>HTTP :8085]
+        BS[Battlespell Service<br/>HTTP :8086]
+        A[Arena Service<br/>HTTP :8087]
     end
     
     subgraph "Data Layer"
@@ -639,6 +641,435 @@ sequenceDiagram
     Weapon->>Kafka: Consume Event
     Weapon->>Weapon: Add Loot Weapon
     Dragon-->>Client: Dragon Defeated
+```
+
+## Service Workflows (Detailed Flow Diagrams)
+
+### Warrior Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Warrior as Warrior Service
+    participant PG as PostgreSQL
+    participant Kafka
+
+    Note over Client,Kafka: Registration & Login Flow
+    Client->>Warrior: POST /api/login (username, password)
+    Warrior->>PG: Query warrior by username
+    PG-->>Warrior: Warrior data
+    Warrior->>Warrior: Validate password (bcrypt)
+    Warrior->>Warrior: Generate JWT token
+    Warrior-->>Client: JWT token + warrior info
+
+    Note over Client,Kafka: Warrior Creation (Light Emperor/King only)
+    Client->>Warrior: POST /api/warriors (RBAC: Light Emperor/King)
+    Warrior->>PG: Check username/email uniqueness
+    Warrior->>Warrior: Hash password (bcrypt)
+    Warrior->>PG: Create warrior record
+    Warrior-->>Client: Warrior created
+
+    Note over Client,Kafka: Profile Management
+    Client->>Warrior: GET /api/profile (JWT token)
+    Warrior->>Warrior: Validate JWT token
+    Warrior->>PG: Get warrior by ID
+    PG-->>Warrior: Warrior profile
+    Warrior-->>Client: Profile data
+
+    Note over Client,Kafka: Enemy Kill Tracking (Kafka Consumer)
+    Kafka->>Warrior: enemy.destroyed event
+    Warrior->>PG: Update warrior.enemy_kill_count
+    Warrior->>PG: Insert killed_monster record
+```
+
+### Weapon Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Weapon as Weapon Service
+    participant Warrior as Warrior Service (gRPC)
+    participant Coin as Coin Service (gRPC)
+    participant MongoDB
+    participant Kafka
+
+    Note over Client,Kafka: Weapon Purchase Flow
+    Client->>Weapon: POST /api/v1/weapons/:id/buy (JWT token)
+    Weapon->>Weapon: Validate JWT token
+    Weapon->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Weapon: Warrior info (ID, balance, role)
+    
+    Weapon->>MongoDB: Get weapon by ID
+    MongoDB-->>Weapon: Weapon data (price, type, attack_power)
+    
+    Weapon->>Coin: DeductCoins (gRPC)
+    Coin-->>Weapon: Payment confirmed
+    
+    Weapon->>MongoDB: Add warrior ID to weapon.owned_by array
+    Weapon->>Kafka: Publish weapon.purchase event
+    Weapon-->>Client: Weapon purchased successfully
+
+    Note over Client,Kafka: Weapon Creation (Light Emperor/King only)
+    Client->>Weapon: POST /api/v1/weapons (RBAC check)
+    Weapon->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Weapon: Verify role (light_emperor/light_king)
+    Weapon->>MongoDB: Create weapon document
+    Weapon-->>Client: Weapon created
+
+    Note over Client,Kafka: Loot Weapon from Dragon (Kafka Consumer)
+    Kafka->>Weapon: dragon.death event
+    Weapon->>MongoDB: Create loot weapon based on dragon stats
+    Weapon->>MongoDB: Set owned_by to [] (unowned)
+```
+
+### Coin Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Coin as Coin Service (gRPC)
+    participant Warrior as Warrior Service (gRPC)
+    participant MySQL
+    participant Kafka
+
+    Note over Client,Kafka: Get Balance (gRPC)
+    Client->>Coin: GetBalance(warrior_id)
+    Coin->>Warrior: GetWarriorByID (gRPC)
+    Warrior-->>Coin: Warrior data (current balance)
+    Coin-->>Client: Balance
+
+    Note over Client,Kafka: Deduct Coins (gRPC)
+    Client->>Coin: DeductCoins(warrior_id, amount, reason)
+    Coin->>Warrior: GetWarriorByID (gRPC)
+    Warrior-->>Coin: Current balance
+    Coin->>Coin: Validate sufficient balance
+    Coin->>MySQL: Insert transaction (deduct)
+    Coin->>Warrior: UpdateBalance (gRPC)
+    Coin-->>Client: New balance
+
+    Note over Client,Kafka: Add Coins (gRPC)
+    Client->>Coin: AddCoins(warrior_id, amount, reason)
+    Coin->>MySQL: Insert transaction (add)
+    Coin->>Warrior: UpdateBalance (gRPC)
+    Coin-->>Client: New balance
+
+    Note over Client,Kafka: Kafka Consumer - Weapon Purchase
+    Kafka->>Coin: weapon.purchase event
+    Coin->>Coin: DeductCoins (internal call)
+    Coin->>MySQL: Log transaction
+    Coin->>Warrior: UpdateBalance (gRPC)
+
+    Note over Client,Kafka: Kafka Consumer - Enemy Attack
+    Kafka->>Coin: enemy.attack event
+    Coin->>Coin: DeductCoins (penalty)
+    Coin->>MySQL: Log transaction
+    Coin->>Warrior: UpdateBalance (gRPC)
+```
+
+### Enemy Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Enemy as Enemy Service
+    participant Warrior as Warrior Service (gRPC)
+    participant MongoDB
+    participant Kafka
+
+    Note over Client,Kafka: Create Enemy (Dark Emperor/King only)
+    Client->>Enemy: POST /api/v1/enemies (RBAC: Dark Emperor/King)
+    Enemy->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Enemy: Verify role (dark_emperor/dark_king)
+    Enemy->>MongoDB: Create enemy document
+    Enemy-->>Client: Enemy created
+
+    Note over Client,Kafka: Attack Warrior
+    Client->>Enemy: POST /api/v1/enemies/:id/attack (warrior_name)
+    Enemy->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Enemy: Warrior stats (HP, defense, etc.)
+    Enemy->>Enemy: Calculate damage (enemy.attack - warrior.defense)
+    Enemy->>Kafka: Publish enemy.attack event
+    Coin->>Kafka: Consume enemy.attack event
+    Coin->>Coin: Deduct coins from warrior (penalty)
+    Enemy-->>Client: Attack result
+
+    Note over Client,Kafka: Enemy Destroyed (Kafka Event)
+    Enemy->>Kafka: Publish enemy.destroyed event
+    Warrior->>Kafka: Consume enemy.destroyed event
+    Warrior->>Warrior: Update warrior.enemy_kill_count
+    Warrior->>Warrior: Update warrior.title (if threshold reached)
+```
+
+### Dragon Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Dragon as Dragon Service
+    participant Warrior as Warrior Service (gRPC)
+    participant MongoDB
+    participant Kafka
+
+    Note over Client,Kafka: Create Dragon (Dark Emperor only)
+    Client->>Dragon: POST /api/v1/dragons (RBAC: Dark Emperor)
+    Dragon->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Dragon: Verify role (dark_emperor)
+    Dragon->>MongoDB: Create dragon document (revival_count=0, is_alive=true)
+    Dragon-->>Client: Dragon created
+
+    Note over Client,Kafka: Attack Dragon (Light King/Emperor)
+    Client->>Dragon: POST /api/v1/dragons/:id/attack (warrior_name)
+    Dragon->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Dragon: Warrior stats (attack_power, role)
+    Dragon->>Dragon: Validate role (light_king/light_emperor)
+    Dragon->>Dragon: Calculate damage
+    Dragon->>MongoDB: Update dragon.health
+    
+    alt Dragon dies (HP <= 0)
+        Dragon->>MongoDB: Update dragon (is_alive=false, killed_by, killed_at)
+        Dragon->>Dragon: Check revival_count < 3
+        alt Can revive (revival_count < 3)
+            alt revival_count == 2 (Needs crisis intervention)
+                Dragon->>MongoDB: Set awaiting_crisis_intervention=true
+                Dragon->>Kafka: Publish dragon.death event
+            else revival_count < 2 (Auto-revive possible)
+                Dragon->>Kafka: Publish dragon.death event
+            end
+        else Cannot revive (revival_count >= 3)
+            Dragon->>Kafka: Publish dragon.death event (permanent death)
+        end
+        Weapon->>Kafka: Consume dragon.death event
+        Weapon->>Weapon: Add loot weapon
+    end
+    
+    Dragon-->>Client: Attack result
+
+    Note over Client,Kafka: Dragon Revival Flow
+    Client->>Dragon: POST /api/v1/dragons/:id/revive
+    Dragon->>MongoDB: Get dragon by ID
+    Dragon->>Dragon: Check revival_count < 3
+    Dragon->>Dragon: Check awaiting_crisis_intervention
+    Dragon->>MongoDB: Update dragon (health=max_health, is_alive=true, revival_count++, awaiting_crisis_intervention=false)
+    Dragon->>Kafka: Publish dragon.revival event
+    Dragon-->>Client: Dragon revived
+```
+
+### Battle Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Battle as Battle Service
+    participant Warrior as Warrior Service (gRPC)
+    participant Dragon as Dragon Service (HTTP)
+    participant Coin as Coin Service (gRPC)
+    participant Battlespell as Battlespell Service (gRPC)
+    participant MongoDB
+    participant Kafka
+
+    Note over Client,Kafka: Start Team Battle
+    Client->>Battle: POST /api/battles (light/dark participants)
+    Battle->>Warrior: GetWarriorByID (gRPC) for each participant
+    Warrior-->>Battle: Warrior stats (HP, attack, defense)
+    Battle->>Battle: Validate team composition (hierarchy rules)
+    Battle->>MongoDB: Create battle document
+    Battle->>MongoDB: Create battle_participants documents
+    Battle->>Battle: Start battle (status=in_progress)
+    Battle->>Kafka: Publish battle.started event
+    Battle-->>Client: Battle created
+
+    Note over Client,Kafka: Attack in Battle
+    Client->>Battle: POST /api/battles/attack (attacker_id, target_id)
+    Battle->>MongoDB: Get battle and participants
+    Battle->>Battle: Validate attacker and target on different sides
+    Battle->>Battle: Calculate damage (attacker.attack - target.defense)
+    Battle->>MongoDB: Update target.HP
+    
+    alt Target defeated
+        Battle->>MongoDB: Update target (is_alive=false, is_defeated=true)
+        
+        alt Target is Dragon
+            Battle->>Dragon: Check revival status (HTTP GET)
+            Dragon-->>Battle: revival_count, can_revive, awaiting_crisis_intervention
+            
+            alt Can auto-revive (revival_count < 2)
+                Battle->>Battle: Schedule auto-revive (5 seconds)
+                Battle->>Dragon: POST /revive (HTTP)
+                Dragon->>MongoDB: Update dragon (revival_count++, health=max_health)
+                Dragon->>Kafka: Publish dragon.revival event
+                Battle->>MongoDB: Update participant (HP=max_health, is_alive=true)
+            else Needs crisis intervention (revival_count == 2)
+                Battle->>Battle: Log to Redis (crisis intervention required)
+            end
+        end
+        
+        alt Attacker is Dragon and target is Warrior
+            Battle->>Battlespell: TriggerWraithOfDragon (gRPC)
+            Battlespell->>Battle: UpdateParticipantStats (gRPC) - destroy random warrior
+        end
+        
+        Battle->>Battle: Check if team eliminated
+        alt Team eliminated
+            Battle->>Battle: Complete battle
+            Battle->>Coin: AddCoins (gRPC) for winning team
+            Battle->>Kafka: Publish battle.completed event
+        end
+    end
+    
+    Battle->>MongoDB: Update battle (current_turn++)
+    Battle-->>Client: Attack result
+
+    Note over Client,Kafka: Dark Emperor Crisis Intervention
+    Client->>Battle: POST /api/battles/dark-emperor-join (dragon_participant_id)
+    Battle->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Battle: Verify role (dark_emperor)
+    Battle->>Dragon: Check dragon status (HTTP GET)
+    Dragon-->>Battle: revival_count == 2, is_alive == true (1 life left)
+    Battle->>MongoDB: Create participant (dark_emperor)
+    Battle->>MongoDB: Update battle
+    Battle-->>Client: Dark Emperor joined
+
+    Note over Client,Kafka: Sacrifice Dragon
+    Client->>Battle: POST /api/battles/sacrifice-dragon (dragon_participant_id)
+    Battle->>Dragon: Check dragon revival_count (HTTP GET)
+    Dragon-->>Battle: revival_count value
+    Battle->>Battle: Calculate multiplier (3x if revival_count=0, 2x if revival_count=1, 1x otherwise)
+    Battle->>MongoDB: Get all enemies (alive and dead)
+    Battle->>MongoDB: Duplicate enemies (multiplier - 1 copies)
+    Battle->>MongoDB: Revive all dead enemies (HP=max_health)
+    alt revival_count > 0
+        Battle->>MongoDB: Update dragon participant (is_alive=false, is_defeated=true)
+    end
+    Battle-->>Client: Enemies revived and multiplied
+```
+
+### Battlespell Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant BattleGateway as Battle Service (HTTP)
+    participant Battlespell as Battlespell Service
+    participant Battle as Battle Service (gRPC)
+    participant Warrior as Warrior Service (gRPC)
+    participant MongoDB
+    participant Kafka
+
+    Note over Client,Kafka: Cast Spell (Light King)
+    Client->>BattleGateway: POST /api/battles/cast-spell (spell_type: call_of_the_light_king)
+    BattleGateway->>BattleGateway: RBAC check (light_king/dark_king only)
+    BattleGateway->>Battlespell: CastSpell (gRPC)
+    
+    Battlespell->>Warrior: GetWarriorByUsername (gRPC)
+    Warrior-->>Battlespell: Verify role (light_king)
+    Battlespell->>Battlespell: Validate spell type (CanBeCastBy role)
+    Battlespell->>Battle: GetBattleParticipants (gRPC, side=light)
+    Battle-->>Battlespell: Light side participants
+    Battlespell->>Battle: UpdateParticipantStats (gRPC, attack_power * 2)
+    Battle-->>Battlespell: Stats updated
+    Battlespell->>MongoDB: Create spell document (is_active=true)
+    Battlespell-->>BattleGateway: Spell cast successfully
+    BattleGateway-->>Client: Spell cast (affected_count)
+
+    Note over Client,Kafka: Cast Spell (Dark King)
+    Client->>BattleGateway: POST /api/battles/cast-spell (spell_type: destroy_the_light)
+    BattleGateway->>Battlespell: CastSpell (gRPC)
+    Battlespell->>Battlespell: Validate spell (dark_king only)
+    Battlespell->>Battle: GetBattleParticipants (gRPC, side=light)
+    Battlespell->>MongoDB: Check existing spell (stack_count)
+    
+    alt stack_count == 0 (first cast)
+        Battlespell->>Battle: UpdateParticipantStats (gRPC, attack/defense * 0.7)
+        Battlespell->>MongoDB: Update spell (stack_count=1)
+    else stack_count == 1 (second cast)
+        Battlespell->>Battle: UpdateParticipantStats (gRPC, attack/defense * 0.49)
+        Battlespell->>MongoDB: Update spell (stack_count=2)
+    else stack_count >= 2
+        Battlespell-->>BattleGateway: Error: Maximum stack reached
+    end
+    
+    Battlespell-->>Client: Spell stacked successfully
+
+    Note over Client,Kafka: Wraith of Dragon (Triggered by Battle Service)
+    Battle->>Battlespell: TriggerWraithOfDragon (gRPC, battle_id)
+    Battlespell->>MongoDB: Get spell (spell_type=wraith_of_dragon, is_active=true)
+    MongoDB-->>Battlespell: Spell (wraith_count)
+    
+    alt wraith_count < 25
+        Battlespell->>Battle: GetBattleParticipants (gRPC, side=light, is_alive=true)
+        Battle-->>Battlespell: Alive warriors
+        Battlespell->>Battlespell: Select random warrior
+        Battlespell->>Battle: UpdateParticipantStats (gRPC, HP=0, is_alive=false)
+        Battlespell->>MongoDB: Update spell (wraith_count++)
+        Battlespell-->>Battle: Triggered (destroyed_warrior_id, wraith_count)
+    else wraith_count >= 25
+        Battlespell-->>Battle: Error: Maximum wraith count reached
+    end
+```
+
+### Arena Service Workflow
+
+```mermaid
+sequenceDiagram
+    participant Client1 as Challenger Client
+    participant Client2 as Opponent Client
+    participant Arena as Arena Service
+    participant Warrior as Warrior Service (gRPC)
+    participant MongoDB
+    participant Kafka
+
+    Note over Client1,Kafka: Send Invitation
+    Client1->>Arena: POST /api/v1/arena/invitations (opponent_name)
+    Arena->>Arena: Validate (cannot challenge yourself)
+    Arena->>Warrior: GetWarriorByUsername (gRPC, opponent_name)
+    Warrior-->>Arena: Opponent info (ID, username)
+    Arena->>MongoDB: Check for existing pending invitation
+    Arena->>MongoDB: Create invitation (status=pending, expires_at=+10min)
+    Arena->>Kafka: Publish arena.invitation.sent event
+    Arena-->>Client1: Invitation sent
+
+    Note over Client1,Kafka: Accept Invitation
+    Client2->>Arena: POST /api/v1/arena/invitations/accept (invitation_id)
+    Arena->>MongoDB: Get invitation by ID
+    Arena->>Arena: Validate (opponent can accept, not expired)
+    Arena->>Warrior: GetWarriorByID (gRPC, challenger_id)
+    Warrior-->>Arena: Challenger stats (HP, attack, defense)
+    Arena->>Warrior: GetWarriorByID (gRPC, opponent_id)
+    Warrior-->>Arena: Opponent stats (HP, attack, defense)
+    
+    Arena->>Arena: Calculate HP (total_power * 10, min 100)
+    Arena->>MongoDB: Create arena_match (status=in_progress, current_attacker=1)
+    Arena->>MongoDB: Update invitation (status=accepted, battle_id=match_id)
+    Arena->>Kafka: Publish arena.invitation.accepted event
+    Arena->>Kafka: Publish arena.match.started event
+    Arena-->>Client2: Match started
+
+    Note over Client1,Kafka: Attack in Arena Match
+    Client1->>Arena: POST /api/v1/arena/matches/attack (match_id)
+    Arena->>MongoDB: Get match by ID
+    Arena->>Arena: Validate (match in progress, correct turn)
+    Arena->>Arena: Calculate damage (attacker.attack - defender.defense, min 10)
+    Arena->>Arena: Apply damage to defender.HP
+    
+    alt Defender HP <= 0 (Defeated)
+        Arena->>MongoDB: Update match (status=completed, winner_id=attacker_id)
+        Arena->>Kafka: Publish arena.match.completed event
+        Arena-->>Client1: Match completed (winner)
+    else CurrentTurn >= MaxTurns (Timeout)
+        Arena->>Arena: Determine winner by HP (or draw)
+        Arena->>MongoDB: Update match (status=completed, winner_id or null)
+        Arena->>Kafka: Publish arena.match.completed event
+        Arena-->>Client1: Match completed (winner/draw)
+    else Continue
+        Arena->>MongoDB: Update match (current_turn++, current_attacker=switch)
+        Arena-->>Client1: Attack successful (updated HP)
+    end
+
+    Note over Client1,Kafka: Reject Invitation
+    Client2->>Arena: POST /api/v1/arena/invitations/reject (invitation_id)
+    Arena->>MongoDB: Update invitation (status=rejected)
+    Arena->>Kafka: Publish arena.invitation.rejected event
+    Arena-->>Client2: Invitation rejected
 ```
 
 ## API Documentation (Swagger/OpenAPI)
