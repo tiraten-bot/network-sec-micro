@@ -23,6 +23,7 @@ const (
 	EnemyService_UpdateEnemyHP_FullMethodName           = "/enemy.EnemyService/UpdateEnemyHP"
 	EnemyService_UpdateEnemyHealingState_FullMethodName = "/enemy.EnemyService/UpdateEnemyHealingState"
 	EnemyService_CheckEnemyCanBattle_FullMethodName     = "/enemy.EnemyService/CheckEnemyCanBattle"
+	EnemyService_DeductEnemyCoins_FullMethodName        = "/enemy.EnemyService/DeductEnemyCoins"
 )
 
 // EnemyServiceClient is the client API for EnemyService service.
@@ -39,6 +40,8 @@ type EnemyServiceClient interface {
 	UpdateEnemyHealingState(ctx context.Context, in *UpdateEnemyHealingStateRequest, opts ...grpc.CallOption) (*UpdateEnemyHealingStateResponse, error)
 	// CheckEnemyCanBattle checks if an enemy can participate in battles (not healing)
 	CheckEnemyCanBattle(ctx context.Context, in *CheckEnemyCanBattleRequest, opts ...grpc.CallOption) (*CheckEnemyCanBattleResponse, error)
+	// DeductEnemyCoins deducts coins from enemy's balance
+	DeductEnemyCoins(ctx context.Context, in *DeductEnemyCoinsRequest, opts ...grpc.CallOption) (*DeductEnemyCoinsResponse, error)
 }
 
 type enemyServiceClient struct {
@@ -89,6 +92,16 @@ func (c *enemyServiceClient) CheckEnemyCanBattle(ctx context.Context, in *CheckE
 	return out, nil
 }
 
+func (c *enemyServiceClient) DeductEnemyCoins(ctx context.Context, in *DeductEnemyCoinsRequest, opts ...grpc.CallOption) (*DeductEnemyCoinsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeductEnemyCoinsResponse)
+	err := c.cc.Invoke(ctx, EnemyService_DeductEnemyCoins_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EnemyServiceServer is the server API for EnemyService service.
 // All implementations must embed UnimplementedEnemyServiceServer
 // for forward compatibility.
@@ -103,6 +116,8 @@ type EnemyServiceServer interface {
 	UpdateEnemyHealingState(context.Context, *UpdateEnemyHealingStateRequest) (*UpdateEnemyHealingStateResponse, error)
 	// CheckEnemyCanBattle checks if an enemy can participate in battles (not healing)
 	CheckEnemyCanBattle(context.Context, *CheckEnemyCanBattleRequest) (*CheckEnemyCanBattleResponse, error)
+	// DeductEnemyCoins deducts coins from enemy's balance
+	DeductEnemyCoins(context.Context, *DeductEnemyCoinsRequest) (*DeductEnemyCoinsResponse, error)
 	mustEmbedUnimplementedEnemyServiceServer()
 }
 
@@ -124,6 +139,9 @@ func (UnimplementedEnemyServiceServer) UpdateEnemyHealingState(context.Context, 
 }
 func (UnimplementedEnemyServiceServer) CheckEnemyCanBattle(context.Context, *CheckEnemyCanBattleRequest) (*CheckEnemyCanBattleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckEnemyCanBattle not implemented")
+}
+func (UnimplementedEnemyServiceServer) DeductEnemyCoins(context.Context, *DeductEnemyCoinsRequest) (*DeductEnemyCoinsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeductEnemyCoins not implemented")
 }
 func (UnimplementedEnemyServiceServer) mustEmbedUnimplementedEnemyServiceServer() {}
 func (UnimplementedEnemyServiceServer) testEmbeddedByValue()                      {}
@@ -218,6 +236,24 @@ func _EnemyService_CheckEnemyCanBattle_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EnemyService_DeductEnemyCoins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeductEnemyCoinsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnemyServiceServer).DeductEnemyCoins(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EnemyService_DeductEnemyCoins_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnemyServiceServer).DeductEnemyCoins(ctx, req.(*DeductEnemyCoinsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EnemyService_ServiceDesc is the grpc.ServiceDesc for EnemyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -240,6 +276,10 @@ var EnemyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckEnemyCanBattle",
 			Handler:    _EnemyService_CheckEnemyCanBattle_Handler,
+		},
+		{
+			MethodName: "DeductEnemyCoins",
+			Handler:    _EnemyService_DeductEnemyCoins_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
