@@ -5,7 +5,9 @@ type CreateEnemyCommand struct {
 	Type        string
 	Level       int
 	Health      int
+	MaxHealth   int
 	AttackPower int
+	CoinBalance int64
 	CreatedBy   string
 }
 
