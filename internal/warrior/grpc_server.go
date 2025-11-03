@@ -2,6 +2,7 @@ package warrior
 
 import (
 	"context"
+	"log"
 
 	pb "network-sec-micro/api/proto/warrior"
 
