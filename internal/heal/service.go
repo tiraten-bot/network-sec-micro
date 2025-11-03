@@ -315,7 +315,12 @@ func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand)
 
 				if updateErr != nil {
 					log.Printf("Failed to apply healing HP after duration: %v", updateErr)
-					_ = LogHealingFailed(context.Background(), warriorID, participantName, healType, fmt.Sprintf("Failed to update HP: %v", updateErr))
+					var warriorIDForLog uint
+					if participantType == "warrior" {
+						warriorIDUint, _ := strconv.ParseUint(participantID, 10, 32)
+						warriorIDForLog = uint(warriorIDUint)
+					}
+					_ = LogHealingFailed(context.Background(), warriorIDForLog, participantName, healType, fmt.Sprintf("Failed to update HP: %v", updateErr))
 				} else {
 				// Clear healing state
 				switch participantType {
