@@ -9,6 +9,12 @@ import (
 type Repository interface {
     GetMatchByID(ctx context.Context, id string) (*ArenaMatch, error)
     UpdateMatchFields(ctx context.Context, id string, fields map[string]interface{}) error
+    CreateMatch(ctx context.Context, m *ArenaMatch) (string, error)
+
+    InsertInvitation(ctx context.Context, inv *ArenaInvitation) (string, error)
+    GetInvitationByID(ctx context.Context, id string) (*ArenaInvitation, error)
+    UpdateInvitationFields(ctx context.Context, id string, fields map[string]interface{}) error
+    FindPendingInvitationBetween(ctx context.Context, challengerID, opponentID uint) (*ArenaInvitation, error)
 }
 
 var defaultRepo Repository
