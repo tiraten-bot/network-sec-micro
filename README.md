@@ -578,12 +578,34 @@ sequenceDiagram
     participant Helm as Helmfile (Infra)
     participant Chart as Helm (App)
 
-    Dev->>Local: ./scripts/*.sh
-    Note right of Local: build/run/test
-    Local-->>DC: docker-build.sh / docker-run.sh
+    Dev->>Local: ./scripts/heal-build.sh
+    Note right of Local: Build heal service
+    Local->>Local: make proto
+    Local->>Local: go build cmd/heal/main.go
+    
+    Dev->>Local: ./scripts/heal-run.sh
+    Note right of Local: Run heal service locally
+    Local->>Local: Set env vars (Postgres, gRPC, Kafka, Redis)
+    
+    Dev->>DC: ./scripts/docker-build.sh
+    Note right of DC: Build all Docker images
+    DC->>DC: docker build -f dockerfiles/heal.dockerfile
+    DC-->>Dev: heal:latest image
+    
+    Dev->>DC: docker-compose up -d
+    Note right of DC: Start all services
+    DC->>DC: Start heal service (port 50058)
+    DC->>DC: Connect to Postgres, Warrior, Coin, Kafka, Redis
+    
     Dev->>Helm: helm-apply.sh (infra deps)
+    Note right of Helm: Deploy infrastructure
+    Helm->>Helm: Deploy Postgres, MongoDB, MySQL, Kafka, Redis
+    
     Dev->>Chart: helm-app-apply.sh (app chart)
-    Chart-->>Dev: Ingress URL
+    Note right of Chart: Deploy all services
+    Chart->>Chart: Deploy heal service (k8s/base/heal.yaml)
+    Chart->>Chart: Configure gateway with UPSTREAM_HEAL
+    Chart-->>Dev: Ingress URL (heal service accessible via gateway)
 ```
 
 ## Service Dependencies
