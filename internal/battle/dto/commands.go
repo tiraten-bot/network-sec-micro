@@ -21,6 +21,11 @@ type StartBattleCommand struct {
 	DarkParticipants  []ParticipantInfo `json:"dark_participants" binding:"required,min=1"`  // At least 1 participant
 	MaxTurns      int              `json:"max_turns"` // Maximum turns before draw (default 100)
 	CreatedBy     string           `json:"created_by"` // Creator username
+    // Optional wager between emperors
+    WagerAmount   int              `json:"wager_amount"`
+    LightEmperorID string          `json:"light_emperor_id"`
+    DarkEmperorID  string          `json:"dark_emperor_id"`
+    RequireEmperorApproval bool    `json:"require_emperor_approval"`
 }
 
 // AttackCommand represents a command to perform an attack in battle
