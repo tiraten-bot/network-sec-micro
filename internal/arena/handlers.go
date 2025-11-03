@@ -6,7 +6,9 @@ import (
 	"network-sec-micro/internal/arena/dto"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Handler handles HTTP requests for arena service
@@ -324,6 +326,112 @@ func (h *Handler) GetMyMatches(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"matches": matches,
 		"count":   len(matches),
+	})
+}
+
+// AttackInArena godoc
+// @Summary Perform an attack in arena match
+// @Description Performs an attack in an active arena match. Players take turns attacking.
+// @Tags arena
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.AttackInArenaRequest true "Attack data"
+// @Success 200 {object} map[string]interface{} "match: ArenaMatch"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /api/v1/arena/attack [post]
+func (h *Handler) AttackInArena(c *gin.Context) {
+	// TODO: Add auth middleware
+	var req dto.AttackInArenaRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	matchID, err := primitive.ObjectIDFromHex(req.MatchID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid match ID format",
+		})
+		return
+	}
+
+	// TODO: Get user from context
+	cmd := dto.AttackInArenaCommand{
+		MatchID:    req.MatchID,
+		AttackerID: 1, // TODO: Get from auth
+	}
+
+	match, err := h.Service.PerformAttack(c.Request.Context(), matchID, cmd.AttackerID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "attack_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"match":   match,
+		"message": "Attack performed successfully",
+	})
+}
+
+// GetMatch godoc
+// @Summary Get an arena match by ID
+// @Description Gets an arena match by ID.
+// @Tags arena
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Match ID"
+// @Success 200 {object} map[string]interface{} "match: ArenaMatch"
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Router /api/v1/arena/matches/{id} [get]
+func (h *Handler) GetMatch(c *gin.Context) {
+	matchID := c.Param("id")
+	if matchID == "" {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "match ID is required",
+		})
+		return
+	}
+
+	if _, err := primitive.ObjectIDFromHex(matchID); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: "invalid match ID format",
+		})
+		return
+	}
+
+	// Get match from database
+	var match ArenaMatch
+	err := MatchColl.FindOne(c.Request.Context(), bson.M{"_id": matchID}).Decode(&match)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{
+				Error:   "not_found",
+				Message: "Match not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "internal_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"match": match,
 	})
 }
 
