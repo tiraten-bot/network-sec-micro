@@ -481,26 +481,18 @@ func (h *Handler) GetMatch(c *gin.Context) {
 		return
 	}
 
-	// Get match from database
-	var match ArenaMatch
-	err := MatchColl.FindOne(c.Request.Context(), bson.M{"_id": matchID}).Decode(&match)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, dto.ErrorResponse{
-				Error:   "not_found",
-				Message: "Match not found",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
-			Error:   "internal_error",
-			Message: err.Error(),
-		})
-		return
-	}
+    // Get match via repository (supports redis/sql/mongo)
+    m, err := GetRepository().GetMatchByID(c.Request.Context(), matchID)
+    if err != nil {
+        c.JSON(http.StatusNotFound, dto.ErrorResponse{
+            Error:   "not_found",
+            Message: "Match not found",
+        })
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{
-		"match": match,
-	})
+    c.JSON(http.StatusOK, gin.H{
+        "match": m,
+    })
 }
 
