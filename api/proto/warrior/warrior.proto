@@ -19,6 +19,9 @@ service WarriorService {
   
   // Update warrior's HP (for healing)
   rpc UpdateWarriorHP(UpdateWarriorHPRequest) returns (UpdateWarriorHPResponse);
+  
+  // Update warrior's healing state (is_healing, healing_until)
+  rpc UpdateWarriorHealingState(UpdateWarriorHealingStateRequest) returns (UpdateWarriorHealingStateResponse);
 }
 
 // Request to get warrior by username
