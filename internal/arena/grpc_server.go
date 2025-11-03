@@ -10,11 +10,14 @@ import (
 // ArenaServiceServer implements the ArenaService gRPC interface
 type ArenaServiceServer struct {
 	pb.UnimplementedArenaServiceServer
+	service *Service
 }
 
 // NewArenaServiceServer creates a new arena gRPC server
-func NewArenaServiceServer() *ArenaServiceServer {
-	return &ArenaServiceServer{}
+func NewArenaServiceServer(service *Service) *ArenaServiceServer {
+	return &ArenaServiceServer{
+		service: service,
+	}
 }
 
 // GetWarriorByUsername gets warrior info by username via Warrior service gRPC
