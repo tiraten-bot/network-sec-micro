@@ -47,6 +47,15 @@ func main() {
         log.Fatalf("Failed to connect to ArenaSpell gRPC: %v", err)
     }
 
+    // Initialize Weapon gRPC client (optional)
+    weaponAddr := os.Getenv("WEAPON_GRPC_ADDR")
+    if weaponAddr == "" {
+        weaponAddr = "localhost:50057"
+    }
+    if err := arena.InitWeaponClient(weaponAddr); err != nil {
+        log.Printf("Warning: Failed to connect to Weapon gRPC: %v", err)
+    }
+
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
@@ -82,6 +91,7 @@ func main() {
 		arena.CloseKafkaConsumer()
 		arena.CloseWarriorClient()
         arena.CloseArenaSpellClient()
+        arena.CloseWeaponClient()
 	}()
 
 	// Create Gin router
