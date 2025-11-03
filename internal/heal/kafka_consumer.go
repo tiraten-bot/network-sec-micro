@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"strconv"
 
 	"network-sec-micro/pkg/kafka"
 )
