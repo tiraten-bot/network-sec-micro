@@ -23,6 +23,11 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
+    // Initialize Redis client (for Redis-backed repo)
+    if err := arena.InitRedisClient(); err != nil {
+        log.Printf("Warning: Arena Redis init failed: %v", err)
+    }
+
     // Optionally initialize PostgreSQL (gradual migration)
     if err := arena.InitPostgres(); err != nil {
         log.Printf("Warning: Arena Postgres init failed: %v", err)
