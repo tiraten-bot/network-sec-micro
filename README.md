@@ -1649,21 +1649,28 @@ Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
 - Turn-based Combat: Turn history, damage tracking
 - Rewards: Automatic coin rewards/penalties via gRPC
 
-#### Heal Service (gRPC)
-- Healing Packages: Role-based healing packages (Warrior, Emperor, Dragon)
-- Healing Duration: Time-based healing with blocking during healing period
-- RBAC: Role-based access control for healing packages
-- HP Management: Updates warrior HP via gRPC after healing duration
-- Event-Driven: Listens to `battle.completed` and `arena.match.completed` events
-- Database: PostgreSQL (GORM) for healing records storage
-- Redis Logging: Real-time healing progress logging to Redis Streams
-  - `healing:logs:{warrior_id}`: Redis Stream for healing events
+#### 💚 Heal Service (gRPC) 🌿
+- ⚗️ Healing Packages: Role-based healing packages (Warrior, Emperor, Dragon)
+  - 💚 Warrior: Full Heal (100 coins, 5 min) | 50% Heal (50 coins, 3 min)
+  - 👑 Emperor: Fast Full Heal (20 coins, 30 sec) | Quick Heal (10 coins, 15 sec)
+  - 🐉 Dragon: Powerful Heal (1000 coins, 1 hour) - Paid by Dark Emperor
+- ⏱️ Healing Duration: Time-based healing with blocking during healing period
+- 🔐 RBAC: Role-based access control for healing packages
+- 💉 HP Management: Updates HP via gRPC after healing duration (Warrior, Dragon, Enemy)
+- 📡 Event-Driven: Listens to `battle.completed` and `arena.match.completed` events
+- 💾 Database: PostgreSQL (GORM) for healing records storage
+- 📊 Redis Logging: Real-time healing progress logging to Redis Streams
+  - `healing:logs:{participant_id}`: Redis Stream for healing events
   - Status tracking: `started`, `in_progress`, `completed`, `failed`
   - Progress updates: Every 5 seconds during healing
   - Timeline: Sorted set for chronological access
+- 💰 Coin Payment Logic:
+  - 🛡️ Warrior: Pays from own balance
+  - 👹 Enemy: Pays from own balance
+  - 🐉 Dragon: Paid by Dark Emperor (creator)
 - gRPC Endpoints:
-  - `PurchaseHeal`: Purchase healing package
-  - `GetHealingHistory`: Retrieve healing history for a warrior
+  - `PurchaseHeal`: Purchase healing package (supports Warrior, Dragon, Enemy)
+  - `GetHealingHistory`: Retrieve healing history for a participant
 
 ### Notlar
 
