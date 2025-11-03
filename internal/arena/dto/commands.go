@@ -26,3 +26,9 @@ type CancelInvitationCommand struct {
 	ChallengerID uint   `json:"challenger_id"`
 }
 
+// AttackInArenaCommand represents a command to perform an attack in an arena match
+type AttackInArenaCommand struct {
+	MatchID     string `json:"match_id"`
+	AttackerID  uint   `json:"attacker_id"`
+}
+
