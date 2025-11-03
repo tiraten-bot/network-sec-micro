@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heal
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicas.heal | default 1 }}
+  selector:
+    matchLabels:
+      app: heal
+  template:
+    metadata:
+      labels:
+        app: heal
+    spec:
+      containers:
+        - name: heal
+          image: {{ .Values.images.heal.repository }}:{{ .Values.images.heal.tag }}
+          imagePullPolicy: {{ .Values.images.heal.pullPolicy }}
+          env:
+            - { name: HEAL_USE_POSTGRES, value: "1" }
+            - { name: DB_HOST, value: {{ .Values.env.postgres.host | quote }} }
+            - { name: DB_PORT, value: {{ .Values.env.postgres.port | quote }} }
+            - { name: DB_USER, value: {{ .Values.env.postgres.user | quote }} }
+            - { name: DB_PASSWORD, value: {{ .Values.env.postgres.password | quote }} }
+            - { name: DB_NAME_HEAL, value: {{ .Values.env.postgres.db | default "heal_db" | quote }} }
+            - { name: DB_SSLMODE, value: "disable" }
+            - { name: WARRIOR_GRPC_ADDR, value: {{ .Values.env.warriorGrpcAddr | quote }} }
+            - { name: COIN_GRPC_ADDR, value: {{ .Values.env.coinGrpcAddr | quote }} }
+            - { name: KAFKA_BROKERS, value: {{ .Values.env.kafkaBrokers | quote }} }
+            - { name: REDIS_ADDR, value: {{ .Values.env.redisAddr | quote }} }
+            - { name: GRPC_PORT, value: "50058" }
+          ports:
+            - containerPort: 50058
+          readinessProbe:
+            tcpSocket:
+              port: 50058
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 50058
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: heal
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: heal
+  ports:
+    - port: 50058
+      targetPort: 50058
+
