@@ -19,3 +19,8 @@ type RejectInvitationRequest struct {
 type CancelInvitationRequest struct {
 	InvitationID string `json:"invitation_id" binding:"required"`
 }
+
+// AttackInArenaRequest represents a request to perform an attack in an arena match
+type AttackInArenaRequest struct {
+	MatchID string `json:"match_id" binding:"required"`
+}
