@@ -406,7 +406,22 @@ func (h *Handler) ApplyArenaSpell(c *gin.Context) {
         return
     }
 
-    match, err := h.Service.ApplySpellEffect(c.Request.Context(), matchID, req.CasterID, req.SpellType)
+    // Get caster from JWT
+    user, err := GetCurrentUser(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized", Message: err.Error()})
+        return
+    }
+
+    // 1) Call arenaspell gRPC for RBAC ve state
+    _, err = CastArenaSpellViaGRPC(c.Request.Context(), req.MatchID, req.SpellType, user.UserID, user.Username, user.Role)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "arenaspell_failed", Message: err.Error()})
+        return
+    }
+
+    // 2) Apply actual effect to match (stats)
+    match, err := h.Service.ApplySpellEffect(c.Request.Context(), matchID, user.UserID, req.SpellType)
     if err != nil {
         c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "apply_failed", Message: err.Error()})
         return
