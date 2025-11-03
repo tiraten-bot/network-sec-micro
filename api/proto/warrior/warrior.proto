@@ -95,7 +95,9 @@ message Warrior {
   int32 weapon_count = 7;
   int32 current_hp = 8; // Current HP (for healing)
   int32 max_hp = 9;     // Maximum HP (calculated from total_power)
-  google.protobuf.Timestamp created_at = 10;
-  google.protobuf.Timestamp updated_at = 11;
+  bool is_healing = 10; // Is currently healing
+  int64 healing_until_seconds = 11; // Unix timestamp when healing completes (0 if not healing)
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
 }
 
