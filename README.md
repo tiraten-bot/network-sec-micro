@@ -1649,6 +1649,17 @@ Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
 - Turn-based Combat: Turn history, damage tracking
 - Rewards: Automatic coin rewards/penalties via gRPC
 
+#### Heal Service (gRPC)
+- Healing Packages: Role-based healing packages (Warrior, Emperor, Dragon)
+- Healing Duration: Time-based healing with blocking during healing period
+- RBAC: Role-based access control for healing packages
+- HP Management: Updates warrior HP via gRPC after healing duration
+- Event-Driven: Listens to `battle.completed` and `arena.match.completed` events
+- Database: PostgreSQL (GORM) for healing records storage
+- gRPC Endpoints:
+  - `PurchaseHeal`: Purchase healing package
+  - `GetHealingHistory`: Retrieve healing history for a warrior
+
 ### Notlar
 
 - **Coin Service**: gRPC servis olduğu için protobuf dosyalarından dokümantasyon oluşturulabilir (`api/proto/coin/coin.proto`)
