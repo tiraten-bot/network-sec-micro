@@ -38,11 +38,15 @@ docker build -f dockerfiles/battlespell.dockerfile -t battlespell:latest .
 echo "🐳 Building arena service..."
 docker build -f dockerfiles/arena.dockerfile -t arena:latest .
 
+# Build heal service
+echo "🐳 Building heal service..."
+docker build -f dockerfiles/heal.dockerfile -t heal:latest .
+
 # Build fiber-gateway
 echo "🐳 Building fiber-gateway..."
 docker build -f dockerfiles/fibergateway.dockerfile -t fiber-gateway:latest .
 
 echo "✅ All Docker images built successfully!"
-echo "📦 Images: warrior:latest, weapon:latest, coin:latest, enemy:latest, dragon:latest, battle:latest, battlespell:latest, arena:latest, fiber-gateway:latest"
+echo "📦 Images: warrior:latest, weapon:latest, coin:latest, enemy:latest, dragon:latest, battle:latest, battlespell:latest, arena:latest, heal:latest, fiber-gateway:latest"
 echo ""
 echo "🚀 To run with Docker Compose: docker-compose up -d"
