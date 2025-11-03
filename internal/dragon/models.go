@@ -28,6 +28,8 @@ type Dragon struct {
 	Defense     int                `bson:"defense" json:"defense"`
 	CreatedBy   string             `bson:"created_by" json:"created_by"` // Dark emperor username
 	IsAlive     bool               `bson:"is_alive" json:"is_alive"`
+	IsHealing   bool               `bson:"is_healing" json:"is_healing"` // Is currently healing
+	HealingUntil *time.Time        `bson:"healing_until,omitempty" json:"healing_until,omitempty"` // When healing completes
 	KilledBy    string             `bson:"killed_by,omitempty" json:"killed_by,omitempty"` // Light king/emperor username
 	KilledAt    *time.Time         `bson:"killed_at,omitempty" json:"killed_at,omitempty"`
 	RevivalCount int               `bson:"revival_count" json:"revival_count"` // Number of times dragon has been revived (max 3)
