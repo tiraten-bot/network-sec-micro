@@ -8,6 +8,7 @@ import (
 
 	pbWarrior "network-sec-micro/api/proto/warrior"
     pbArenaSpell "network-sec-micro/api/proto/arenaspell"
+    pbWeapon "network-sec-micro/api/proto/weapon"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,6 +18,8 @@ var warriorGrpcClient pbWarrior.WarriorServiceClient
 var warriorGrpcConn *grpc.ClientConn
 var arenaspellGrpcClient pbArenaSpell.ArenaSpellServiceClient
 var arenaspellGrpcConn *grpc.ClientConn
+var weaponGrpcClient pbWeapon.WeaponServiceClient
+var weaponGrpcConn *grpc.ClientConn
 
 // InitWarriorClient initializes the gRPC client connection to warrior service
 func InitWarriorClient(addr string) error {
@@ -72,6 +75,30 @@ func CloseArenaSpellClient() {
     }
 }
 
+// InitWeaponClient initializes the gRPC client connection to weapon service
+func InitWeaponClient(addr string) error {
+    if addr == "" {
+        addr = os.Getenv("WEAPON_GRPC_ADDR")
+        if addr == "" {
+            addr = "localhost:50057"
+        }
+    }
+
+    conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        return fmt.Errorf("failed to connect to weapon gRPC: %w", err)
+    }
+
+    weaponGrpcClient = pbWeapon.NewWeaponServiceClient(conn)
+    weaponGrpcConn = conn
+    log.Printf("Connected to Weapon gRPC service at %s", addr)
+    return nil
+}
+
+func CloseWeaponClient() {
+    if weaponGrpcConn != nil { weaponGrpcConn.Close() }
+}
+
 // CastArenaSpellViaGRPC proxies to arenaspell.CastSpell
 func CastArenaSpellViaGRPC(ctx context.Context, matchID string, spellType string, casterID uint, casterUsername, casterRole string) (int32, error) {
     if arenaspellGrpcClient == nil {
@@ -92,6 +119,17 @@ func CastArenaSpellViaGRPC(ctx context.Context, matchID string, spellType string
         return 0, fmt.Errorf(resp.Message)
     }
     return resp.AffectedCount, nil
+}
+
+// CalculateWarriorPowerViaWeapon queries weapon service to compute power
+func CalculateWarriorPowerViaWeapon(ctx context.Context, username string) (totalPower int32, weaponCount int32, err error) {
+    if weaponGrpcClient == nil {
+        return 0, 0, fmt.Errorf("weapon gRPC client not initialized")
+    }
+    req := &pbWeapon.CalculateWarriorPowerRequest{WarriorUsername: username}
+    resp, err := weaponGrpcClient.CalculateWarriorPower(ctx, req)
+    if err != nil { return 0, 0, err }
+    return resp.TotalPower, resp.WeaponCount, nil
 }
 
 // GetWarriorByUsername gets warrior info via gRPC
