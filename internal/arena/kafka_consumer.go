@@ -154,67 +154,8 @@ func (h *arenaEventHandler) handleBattleCompleted(data []byte) error {
 	}
 
 	// Arena service no longer depends on battle service
-	// This consumer can be removed or used for other events
-	// For now, we'll remove battle completed event handling since arena manages its own battles
-	return nil
-
-	// Update match status
-	now := time.Now()
-	updateData := map[string]interface{}{
-		"status":       MatchStatusCompleted,
-		"completed_at": now,
-		"updated_at":   now,
-	}
-
-	// Determine winner based on battle result
-	// In arena battles, player1 is on light side, player2 is on dark side
-	if event.Result == "light_victory" {
-		// Player1 (light side) wins
-		updateData["winner_id"] = match.Player1ID
-		updateData["winner_name"] = match.Player1Name
-	} else if event.Result == "dark_victory" {
-		// Player2 (dark side) wins
-		updateData["winner_id"] = match.Player2ID
-		updateData["winner_name"] = match.Player2Name
-	} else {
-		// Draw - no winner
-		updateData["winner_id"] = nil
-		updateData["winner_name"] = ""
-	}
-
-	_, err = MatchColl.UpdateOne(ctx, map[string]interface{}{
-		"_id": match.ID,
-	}, map[string]interface{}{
-		"$set": updateData,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to update match: %w", err)
-	}
-
-	// Get winner info for event
-	var winnerID *uint
-	var winnerName string
-	if wid, ok := updateData["winner_id"].(uint); ok {
-		winnerID = &wid
-		winnerName = updateData["winner_name"].(string)
-	}
-
-	// Publish arena match completed event
-	if err := PublishMatchCompleted(
-		match.ID.Hex(),
-		match.Player1ID,
-		match.Player1Name,
-		match.Player2ID,
-		match.Player2Name,
-		winnerID,
-		winnerName,
-		event.BattleID,
-	); err != nil {
-		log.Printf("Failed to publish match completed event: %v", err)
-	}
-
-	log.Printf("Arena match completed: %s vs %s, winner: %s", match.Player1Name, match.Player2Name, winnerName)
+	// Arena manages its own 1v1 matches independently
+	// This consumer can be removed or used for other events in the future
 	return nil
 }
 
