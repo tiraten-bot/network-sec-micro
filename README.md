@@ -434,40 +434,74 @@ graph LR
         T2[enemy.attack]
         T3[dragon.death]
         T4[enemy.destroyed]
+        T5[dragon.revival]
+        T6[battle.started]
+        T7[battle.completed]
+        T8[arena.invitation.sent]
+        T9[arena.invitation.accepted]
+        T10[arena.invitation.rejected]
+        T11[arena.invitation.expired]
+        T12[arena.match.started]
+        T13[arena.match.completed]
     end
 
     subgraph Producers
         P1[Weapon]
         P2[Enemy]
         P3[Dragon]
+        P4[Battle]
+        P5[Arena]
     end
 
     subgraph Consumers
         C1[Coin]
         C2[Weapon]
         C3[Warrior]
+        C4[Arena]
     end
 
     P1 --> T1
     P2 --> T2
     P3 --> T3
     P2 --> T4
+    P3 --> T5
+    P4 --> T6
+    P4 --> T7
+    P5 --> T8
+    P5 --> T9
+    P5 --> T10
+    P5 --> T11
+    P5 --> T12
+    P5 --> T13
 
     T1 --> C1
     T2 --> C1
     T3 --> C2
     T4 --> C3
+    T7 --> C4
 
     style T1 fill:#0b3d91,stroke:#001a4d,color:#ffffff
     style T2 fill:#0b3d91,stroke:#001a4d,color:#ffffff
     style T3 fill:#0b3d91,stroke:#001a4d,color:#ffffff
     style T4 fill:#0b3d91,stroke:#001a4d,color:#ffffff
-    style P1 fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style P2 fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style P3 fill:#0d56b3,stroke:#001a4d,color:#ffffff
-    style C1 fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style C2 fill:#133e7c,stroke:#001a4d,color:#ffffff
-    style C3 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style T5 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style T6 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style T7 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style T8 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style T9 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style T10 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style T11 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style T12 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style T13 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style P1 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style P2 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style P3 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style P4 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style P5 fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style C1 fill:#08315c,stroke:#001a4d,color:#ffffff
+    style C2 fill:#08315c,stroke:#001a4d,color:#ffffff
+    style C3 fill:#08315c,stroke:#001a4d,color:#ffffff
+    style C4 fill:#08315c,stroke:#001a4d,color:#ffffff
 ```
 
 ## Deployment Pipeline (Local → Docker → Helm)
