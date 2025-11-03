@@ -187,13 +187,8 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 		}
 	}()
 
-	// Save to database
-	if err := GetRepository().SaveHealingRecord(ctx, record); err != nil {
-		log.Printf("Warning: Failed to save healing record: %v", err)
-	}
-
-	log.Printf("Healing applied: warrior=%d, type=%s, healed=%d, hp: %d->%d, coins=%d",
-		warriorID, healType, healedAmount, hpBefore, hpAfter, packageInfo.Price)
+	log.Printf("Healing started: warrior=%d, type=%s, will heal=%d, hp: %d->%d, coins=%d, duration=%ds",
+		warriorID, healType, healedAmount, hpBefore, hpAfter, packageInfo.Price, packageInfo.Duration)
 
 	return record, nil
 }
