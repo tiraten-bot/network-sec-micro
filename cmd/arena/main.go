@@ -38,10 +38,25 @@ func main() {
 		log.Fatalf("Failed to initialize app with Wire: %v", err)
 	}
 
+	// Initialize Kafka consumer
+	if err := arena.InitKafkaConsumer(); err != nil {
+		log.Printf("Warning: Failed to initialize Kafka consumer: %v", err)
+	} else {
+		// Start consuming battle completed events
+		consumer := arena.NewArenaConsumer(service)
+		ctx := context.Background()
+		go func() {
+			if err := consumer.StartConsuming(ctx); err != nil {
+				log.Printf("Failed to start Kafka consumer: %v", err)
+			}
+		}()
+	}
+
 	// Setup graceful shutdown
 	defer func() {
 		log.Println("Shutting down...")
 		arena.CloseKafkaPublisher()
+		arena.CloseKafkaConsumer()
 		arena.CloseWarriorClient()
 	}()
 
