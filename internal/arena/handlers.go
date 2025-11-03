@@ -413,6 +413,16 @@ func (h *Handler) ApplyArenaSpell(c *gin.Context) {
         return
     }
 
+    // Enforce spell window at handler level as well (fast-fail)
+    var matchSnapshot ArenaMatch
+    if err := MatchColl.FindOne(c.Request.Context(), bson.M{"_id": matchID}).Decode(&matchSnapshot); err == nil {
+        allow := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
+        if !(allow(matchSnapshot.Player1HP, matchSnapshot.Player1MaxHP) || allow(matchSnapshot.Player2HP, matchSnapshot.Player2MaxHP)) {
+            c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "forbidden", Message: "spell window not open"})
+            return
+        }
+    }
+
     // 1) Call arenaspell gRPC for RBAC ve state
     _, err = CastArenaSpellViaGRPC(c.Request.Context(), req.MatchID, req.SpellType, user.UserID, user.Username, user.Role)
     if err != nil {
