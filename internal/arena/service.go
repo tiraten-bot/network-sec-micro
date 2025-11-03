@@ -481,6 +481,89 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 	return &match, nil
 }
 
+// ApplySpellEffect applies a 1v1 arenaspell's immediate effect to the match
+func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.ObjectID, casterID uint, spellType string) (*ArenaMatch, error) {
+    var match ArenaMatch
+    err := MatchColl.FindOne(ctx, bson.M{"_id": matchID}).Decode(&match)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            return nil, errors.New("match not found")
+        }
+        return nil, fmt.Errorf("failed to get match: %w", err)
+    }
+
+    if match.Status != MatchStatusInProgress {
+        return nil, errors.New("match is not in progress")
+    }
+
+    // Resolve caster/opponent pointers
+    var casterAttack, casterDefense, casterHP, casterMaxHP *int
+    var opponentAttack, opponentDefense *int
+    var casterName, opponentName string
+
+    if casterID == match.Player1ID {
+        casterAttack = &match.Player1Attack
+        casterDefense = &match.Player1Defense
+        casterHP = &match.Player1HP
+        casterMaxHP = &match.Player1MaxHP
+        opponentAttack = &match.Player2Attack
+        opponentDefense = &match.Player2Defense
+        casterName = match.Player1Name
+        opponentName = match.Player2Name
+    } else if casterID == match.Player2ID {
+        casterAttack = &match.Player2Attack
+        casterDefense = &match.Player2Defense
+        casterHP = &match.Player2HP
+        casterMaxHP = &match.Player2MaxHP
+        opponentAttack = &match.Player1Attack
+        opponentDefense = &match.Player1Defense
+        casterName = match.Player2Name
+        opponentName = match.Player1Name
+    } else {
+        return nil, errors.New("caster is not a participant in this match")
+    }
+
+    // Apply effect
+    switch spellType {
+    case "call_of_the_light_king":
+        *casterAttack = *casterAttack * 2
+    case "resistance":
+        *casterDefense = *casterDefense * 2
+    case "rebirth":
+        if *casterHP == 0 {
+            half := (*casterMaxHP) / 2
+            if half < 1 { half = 1 }
+            *casterHP = half
+        }
+    case "destroy_the_light":
+        // reduce opponent stats by 30% (stack enforcement handled by arenaspell)
+        reduce := func(v int) int { nv := int(float64(v) * 0.7); if nv < 1 { nv = 1 }; return nv }
+        *opponentAttack = reduce(*opponentAttack)
+        *opponentDefense = reduce(*opponentDefense)
+    default:
+        return nil, fmt.Errorf("unsupported spell type: %s", spellType)
+    }
+
+    match.UpdatedAt = time.Now()
+    update := bson.M{
+        "player1_hp":      match.Player1HP,
+        "player1_attack":  match.Player1Attack,
+        "player1_defense": match.Player1Defense,
+        "player2_hp":      match.Player2HP,
+        "player2_attack":  match.Player2Attack,
+        "player2_defense": match.Player2Defense,
+        "updated_at":      match.UpdatedAt,
+    }
+
+    _, err = MatchColl.UpdateOne(ctx, bson.M{"_id": matchID}, bson.M{"$set": update})
+    if err != nil {
+        return nil, fmt.Errorf("failed to update match: %w", err)
+    }
+
+    log.Printf("Arena spell applied: %s by %s on %s", spellType, casterName, opponentName)
+    return &match, nil
+}
+
 // markInvitationAsExpired marks an invitation as expired
 func (s *Service) markInvitationAsExpired(ctx context.Context, invitationID primitive.ObjectID) {
 	var invitation ArenaInvitation
