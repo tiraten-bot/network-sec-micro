@@ -18,6 +18,8 @@ func SetupRoutes(r *gin.Engine, handler *Handler) {
 
 		// Match operations
 		api.GET("/matches/my", handler.GetMyMatches)
+		api.GET("/matches/:id", handler.GetMatch)
+		api.POST("/matches/attack", handler.AttackInArena)
 	}
 }
 
