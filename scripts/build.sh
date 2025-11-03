@@ -38,6 +38,10 @@ go build -o bin/battle cmd/battle/main.go
 echo "✨ Building battlespell service..."
 go build -o bin/battlespell cmd/battlespell/main.go
 
+# Build arenaspell service
+echo "✨ Building arenaspell service..."
+go build -o bin/arenaspell cmd/arenaspell/main.go
+
 # Build arena service
 echo "🏟️ Building arena service..."
 go build -o bin/arena cmd/arena/main.go
