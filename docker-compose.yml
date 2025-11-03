@@ -408,6 +408,8 @@ services:
         condition: service_started
       arenaspell:
         condition: service_started
+      heal:
+        condition: service_started
     networks:
       - warrior-network
     restart: unless-stopped
