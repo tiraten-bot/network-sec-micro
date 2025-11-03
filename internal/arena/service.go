@@ -115,6 +115,22 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		return nil, fmt.Errorf("failed to get opponent info: %w", err)
 	}
 
+	// Check if either warrior is currently healing
+	if challenger.IsHealing && challenger.HealingUntilSeconds > 0 {
+		healingUntil := time.Unix(challenger.HealingUntilSeconds, 0)
+		if time.Now().Before(healingUntil) {
+			remaining := time.Until(healingUntil).Seconds()
+			return nil, fmt.Errorf("challenger is currently healing. Cannot start match. Remaining time: %.0f seconds", remaining)
+		}
+	}
+	if opponent.IsHealing && opponent.HealingUntilSeconds > 0 {
+		healingUntil := time.Unix(opponent.HealingUntilSeconds, 0)
+		if time.Now().Before(healingUntil) {
+			remaining := time.Until(healingUntil).Seconds()
+			return nil, fmt.Errorf("opponent is currently healing. Cannot start match. Remaining time: %.0f seconds", remaining)
+		}
+	}
+
     // Optionally recalc power via weapon service
     if os.Getenv("ARENA_USE_WEAPON_POWER") != "" {
         if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, challenger.Username); err == nil {
