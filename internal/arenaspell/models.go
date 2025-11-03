@@ -19,6 +19,35 @@ const (
     SpellDestroyTheLight SpellType = "destroy_the_light" // Reduce opponent attack/defense by 30% (stack up to 2)
 )
 
+type TeamSide string
+
+const (
+    TeamSideLight TeamSide = "light"
+    TeamSideDark  TeamSide = "dark"
+)
+
+func (st SpellType) Side() TeamSide {
+    switch st {
+    case SpellCallOfTheLightKing, SpellResistance, SpellRebirth:
+        return TeamSideLight
+    case SpellDestroyTheLight:
+        return TeamSideDark
+    default:
+        return ""
+    }
+}
+
+// CanBeCastBy validates role-based casting (kings only by side)
+func (st SpellType) CanBeCastBy(role string) bool {
+    side := st.Side()
+    if side == TeamSideLight {
+        return role == "light_king"
+    } else if side == TeamSideDark {
+        return role == "dark_king"
+    }
+    return false
+}
+
 // Spell represents a spell cast in an arena match
 type Spell struct {
     ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
