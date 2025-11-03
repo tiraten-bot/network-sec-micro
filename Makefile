@@ -13,7 +13,7 @@ wire:
 # Generate protobuf code
 proto:
 	@echo "🔨 Generating protobuf code..."
-	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior api/proto/battle api/proto/battlespell
+	@mkdir -p api/proto/coin api/proto/weapon api/proto/warrior api/proto/battle api/proto/battlespell api/proto/arena
 	@protoc --go_out=. --go_opt=paths=source_relative \
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/coin/coin.proto
