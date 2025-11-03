@@ -19,19 +19,13 @@ func ProcessKafkaMessage(message []byte) error {
 			ctx := context.Background()
 			service := NewService()
 
-			// Process Player1
-			if arenaCompleted.Player1ID > 0 {
-				battleID := arenaCompleted.MatchID
-				// Try partial heal automatically (optional - can be removed if not desired)
-				// For now, just log that healing is available
-				log.Printf("Arena match completed: Player1 (%d) can heal. Battle ID: %s", arenaCompleted.Player1ID, battleID)
-			}
-
-			// Process Player2
-			if arenaCompleted.Player2ID > 0 {
-				battleID := arenaCompleted.MatchID
-				log.Printf("Arena match completed: Player2 (%d) can heal. Battle ID: %s", arenaCompleted.Player2ID, battleID)
-			}
+		// Log that healing is available for both players
+		if arenaCompleted.Player1ID > 0 {
+			log.Printf("Arena match completed: Player1 (%d) can heal. Battle ID: %s", arenaCompleted.Player1ID, arenaCompleted.MatchID)
+		}
+		if arenaCompleted.Player2ID > 0 {
+			log.Printf("Arena match completed: Player2 (%d) can heal. Battle ID: %s", arenaCompleted.Player2ID, arenaCompleted.MatchID)
+		}
 
 			return nil
 		}
