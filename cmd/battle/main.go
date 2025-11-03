@@ -78,6 +78,15 @@ func main() {
 		log.Fatalf("Failed to connect to BattleSpell gRPC: %v", err)
 	}
 
+	// Initialize Weapon gRPC client (optional)
+	weaponAddr := os.Getenv("WEAPON_GRPC_ADDR")
+	if weaponAddr == "" {
+		weaponAddr = "localhost:50057"
+	}
+	if err := battle.InitWeaponClient(weaponAddr); err != nil {
+		log.Printf("Warning: Failed to connect to Weapon gRPC: %v", err)
+	}
+
 	// Initialize Redis client for battle logs
 	if err := battle.InitRedisClient(); err != nil {
 		log.Printf("Warning: Failed to connect to Redis (battle logs will not be available): %v", err)
@@ -106,6 +115,7 @@ func main() {
 		battle.CloseCoinClient()
 		battle.CloseBattlespellClient()
 		battle.CloseRedisClient()
+		battle.CloseWeaponClient()
 	}()
 
 	// Start gRPC server in a goroutine
