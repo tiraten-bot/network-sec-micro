@@ -23,15 +23,19 @@ type HealingRecord struct {
 	HPBefore     int       `json:"hp_before"`
 	HPAfter      int       `json:"hp_after"`
 	CoinsSpent   int       `json:"coins_spent"`
+	Duration     int       `json:"duration"`      // Healing duration in seconds
+	CompletedAt  *time.Time `json:"completed_at"` // When healing completes
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-// HealPackage represents pricing for healing packages
+// HealPackage represents pricing and duration for healing packages
 type HealPackage struct {
 	Type        HealType `json:"type"`
 	Name        string   `json:"name"`
 	Price       int      `json:"price"`
+	Duration    int      `json:"duration"` // Duration in seconds
 	Description string   `json:"description"`
+	RequiredRole string  `json:"required_role"` // Role required to use this package
 }
 
 var (
@@ -39,13 +43,41 @@ var (
 		Type:        HealTypeFull,
 		Name:        "Full Heal",
 		Price:       100,
+		Duration:    300, // 5 minutes
 		Description: "Restore HP to maximum",
+		RequiredRole: "warrior",
 	}
 	PartialHealPackage = HealPackage{
 		Type:        HealTypePartial,
 		Name:        "50% Heal",
 		Price:       50,
+		Duration:    180, // 3 minutes
 		Description: "Restore 50% of current HP",
+		RequiredRole: "warrior",
+	}
+	EmperorFullHealPackage = HealPackage{
+		Type:        HealTypeEmperorFull,
+		Name:        "Emperor Full Heal",
+		Price:       20,  // Cheap for emperors
+		Duration:    30,  // 30 seconds - very fast
+		Description: "Emperor exclusive: Fast full heal",
+		RequiredRole: "emperor",
+	}
+	EmperorPartialHealPackage = HealPackage{
+		Type:        HealTypeEmperorPartial,
+		Name:        "Emperor Quick Heal",
+		Price:       10,  // Very cheap
+		Duration:    15,  // 15 seconds - very fast
+		Description: "Emperor exclusive: Quick partial heal",
+		RequiredRole: "emperor",
+	}
+	DragonHealPackage = HealPackage{
+		Type:        HealTypeDragon,
+		Name:        "Dragon Heal",
+		Price:       1000, // Very expensive
+		Duration:    3600, // 1 hour - very long
+		Description: "Dragon exclusive: Powerful but slow heal",
+		RequiredRole: "dragon",
 	}
 )
 
