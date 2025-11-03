@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WarriorService_GetWarriorByUsername_FullMethodName = "/warrior.WarriorService/GetWarriorByUsername"
-	WarriorService_GetWarriorByID_FullMethodName       = "/warrior.WarriorService/GetWarriorByID"
-	WarriorService_UpdateWarriorPower_FullMethodName   = "/warrior.WarriorService/UpdateWarriorPower"
-	WarriorService_UpdateWarriorHP_FullMethodName      = "/warrior.WarriorService/UpdateWarriorHP"
+	WarriorService_GetWarriorByUsername_FullMethodName      = "/warrior.WarriorService/GetWarriorByUsername"
+	WarriorService_GetWarriorByID_FullMethodName            = "/warrior.WarriorService/GetWarriorByID"
+	WarriorService_UpdateWarriorPower_FullMethodName        = "/warrior.WarriorService/UpdateWarriorPower"
+	WarriorService_UpdateWarriorHP_FullMethodName           = "/warrior.WarriorService/UpdateWarriorHP"
+	WarriorService_UpdateWarriorHealingState_FullMethodName = "/warrior.WarriorService/UpdateWarriorHealingState"
 )
 
 // WarriorServiceClient is the client API for WarriorService service.
@@ -39,6 +40,8 @@ type WarriorServiceClient interface {
 	UpdateWarriorPower(ctx context.Context, in *UpdateWarriorPowerRequest, opts ...grpc.CallOption) (*UpdateWarriorPowerResponse, error)
 	// Update warrior's HP (for healing)
 	UpdateWarriorHP(ctx context.Context, in *UpdateWarriorHPRequest, opts ...grpc.CallOption) (*UpdateWarriorHPResponse, error)
+	// Update warrior's healing state (is_healing, healing_until)
+	UpdateWarriorHealingState(ctx context.Context, in *UpdateWarriorHealingStateRequest, opts ...grpc.CallOption) (*UpdateWarriorHealingStateResponse, error)
 }
 
 type warriorServiceClient struct {
@@ -89,6 +92,16 @@ func (c *warriorServiceClient) UpdateWarriorHP(ctx context.Context, in *UpdateWa
 	return out, nil
 }
 
+func (c *warriorServiceClient) UpdateWarriorHealingState(ctx context.Context, in *UpdateWarriorHealingStateRequest, opts ...grpc.CallOption) (*UpdateWarriorHealingStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateWarriorHealingStateResponse)
+	err := c.cc.Invoke(ctx, WarriorService_UpdateWarriorHealingState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WarriorServiceServer is the server API for WarriorService service.
 // All implementations must embed UnimplementedWarriorServiceServer
 // for forward compatibility.
@@ -103,6 +116,8 @@ type WarriorServiceServer interface {
 	UpdateWarriorPower(context.Context, *UpdateWarriorPowerRequest) (*UpdateWarriorPowerResponse, error)
 	// Update warrior's HP (for healing)
 	UpdateWarriorHP(context.Context, *UpdateWarriorHPRequest) (*UpdateWarriorHPResponse, error)
+	// Update warrior's healing state (is_healing, healing_until)
+	UpdateWarriorHealingState(context.Context, *UpdateWarriorHealingStateRequest) (*UpdateWarriorHealingStateResponse, error)
 	mustEmbedUnimplementedWarriorServiceServer()
 }
 
@@ -124,6 +139,9 @@ func (UnimplementedWarriorServiceServer) UpdateWarriorPower(context.Context, *Up
 }
 func (UnimplementedWarriorServiceServer) UpdateWarriorHP(context.Context, *UpdateWarriorHPRequest) (*UpdateWarriorHPResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateWarriorHP not implemented")
+}
+func (UnimplementedWarriorServiceServer) UpdateWarriorHealingState(context.Context, *UpdateWarriorHealingStateRequest) (*UpdateWarriorHealingStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWarriorHealingState not implemented")
 }
 func (UnimplementedWarriorServiceServer) mustEmbedUnimplementedWarriorServiceServer() {}
 func (UnimplementedWarriorServiceServer) testEmbeddedByValue()                        {}
@@ -218,6 +236,24 @@ func _WarriorService_UpdateWarriorHP_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WarriorService_UpdateWarriorHealingState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWarriorHealingStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WarriorServiceServer).UpdateWarriorHealingState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WarriorService_UpdateWarriorHealingState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WarriorServiceServer).UpdateWarriorHealingState(ctx, req.(*UpdateWarriorHealingStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WarriorService_ServiceDesc is the grpc.ServiceDesc for WarriorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -240,6 +276,10 @@ var WarriorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateWarriorHP",
 			Handler:    _WarriorService_UpdateWarriorHP_Handler,
+		},
+		{
+			MethodName: "UpdateWarriorHealingState",
+			Handler:    _WarriorService_UpdateWarriorHealingState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
