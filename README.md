@@ -1656,6 +1656,11 @@ Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
 - HP Management: Updates warrior HP via gRPC after healing duration
 - Event-Driven: Listens to `battle.completed` and `arena.match.completed` events
 - Database: PostgreSQL (GORM) for healing records storage
+- Redis Logging: Real-time healing progress logging to Redis Streams
+  - `healing:logs:{warrior_id}`: Redis Stream for healing events
+  - Status tracking: `started`, `in_progress`, `completed`, `failed`
+  - Progress updates: Every 5 seconds during healing
+  - Timeline: Sorted set for chronological access
 - gRPC Endpoints:
   - `PurchaseHeal`: Purchase healing package
   - `GetHealingHistory`: Retrieve healing history for a warrior
