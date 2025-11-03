@@ -184,21 +184,18 @@ func CheckWarriorHealingState(ctx context.Context, warriorID uint) (bool, *time.
 		return false, nil, err
 	}
 
-	// Note: Warrior proto doesn't have IsHealing/HealingUntil fields yet
-	// We'll need to query the database directly or add these fields to proto
-	// For now, we'll check active healing records from repository
-	records, err := GetRepository().GetHealingHistory(ctx, warriorID)
-	if err != nil {
-		return false, nil, err
+	if !warrior.IsHealing || warrior.HealingUntilSeconds == 0 {
+		return false, nil, nil
 	}
 
+	healingUntil := time.Unix(warrior.HealingUntilSeconds, 0)
 	now := time.Now()
-	for _, rec := range records {
-		if rec.CompletedAt != nil && now.Before(*rec.CompletedAt) {
-			return true, rec.CompletedAt, nil
-		}
+	if now.After(healingUntil) {
+		// Healing time passed, clear state
+		_ = SetWarriorHealingState(ctx, warriorID, false, nil)
+		return false, nil, nil
 	}
 
-	return false, nil, nil
+	return true, &healingUntil, nil
 }
 
