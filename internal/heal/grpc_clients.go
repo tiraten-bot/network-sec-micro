@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	pbWarrior "network-sec-micro/api/proto/warrior"
 	pbCoin "network-sec-micro/api/proto/coin"
+	pbDragon "network-sec-micro/api/proto/dragon"
+	pbEnemy "network-sec-micro/api/proto/enemy"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,6 +22,12 @@ var warriorGrpcConn *grpc.ClientConn
 
 var coinGrpcClient pbCoin.CoinServiceClient
 var coinGrpcConn *grpc.ClientConn
+
+var dragonGrpcClient pbDragon.DragonServiceClient
+var dragonGrpcConn *grpc.ClientConn
+
+var enemyGrpcClient pbEnemy.EnemyServiceClient
+var enemyGrpcConn *grpc.ClientConn
 
 // InitWarriorClient initializes the gRPC client connection to warrior service
 func InitWarriorClient(addr string) error {
