@@ -80,9 +80,25 @@ func (s *HealServiceServer) PurchaseHeal(ctx context.Context, req *pb.PurchaseHe
 
 // GetHealingHistory retrieves healing history
 func (s *HealServiceServer) GetHealingHistory(ctx context.Context, req *pb.GetHealingHistoryRequest) (*pb.GetHealingHistoryResponse, error) {
-	warriorID, err := parseWarriorID(req.WarriorId)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid warrior ID")
+	participantID := req.ParticipantId
+	participantType := req.ParticipantType
+
+	// Default to warrior for backward compatibility
+	if participantType == "" {
+		participantType = "warrior"
+	}
+
+	// For now, we only support warrior history (warriorID is uint)
+	// TODO: Add support for dragon/enemy history
+	var warriorID uint
+	if participantType == "warrior" {
+		var err error
+		warriorID, err = parseWarriorID(participantID)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid warrior ID")
+		}
+	} else {
+		return nil, status.Error(codes.Unimplemented, "healing history for dragon/enemy not yet supported")
 	}
 
 	query := dto.GetHealingHistoryQuery{
@@ -97,7 +113,7 @@ func (s *HealServiceServer) GetHealingHistory(ctx context.Context, req *pb.GetHe
 	for _, r := range records {
 		pbRecords = append(pbRecords, &pb.HealingRecord{
 			Id:           r.ID,
-			WarriorId:    req.WarriorId,
+			WarriorId:    participantID, // Use participantID for compatibility
 			HealType:     string(r.HealType),
 			HealedAmount: int32(r.HealedAmount),
 			CoinsSpent:   int32(r.CoinsSpent),
