@@ -14,7 +14,7 @@ type ArenaInvitationSentEvent struct {
 }
 
 // NewArenaInvitationSentEvent creates a new arena invitation sent event
-func NewArenaInvitationSentEvent(invitationID string, challengerID uint, challengerName string, opponentID uint, opponentName string, expiresAt time.Time) *ArenaInvitationSentEvent {
+func NewArenaInvitationSentEvent(invitationID string, challengerID uint, challengerName string, opponentID uint, opponentName string, expiresAtStr string) *ArenaInvitationSentEvent {
 	return &ArenaInvitationSentEvent{
 		Event: Event{
 			EventType:     "arena_invitation_sent",
@@ -26,7 +26,7 @@ func NewArenaInvitationSentEvent(invitationID string, challengerID uint, challen
 		ChallengerName: challengerName,
 		OpponentID:     opponentID,
 		OpponentName:   opponentName,
-		ExpiresAt:      expiresAt.Format(time.RFC3339),
+		ExpiresAt:      expiresAtStr,
 	}
 }
 
