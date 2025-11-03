@@ -18,13 +18,18 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"network-sec-micro/internal/dragon"
+	pb "network-sec-micro/api/proto/dragon"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
 func main() {
