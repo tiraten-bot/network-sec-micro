@@ -1286,18 +1286,18 @@ graph TB
     style E7 fill:#0d56b3,stroke:#001a4d,color:#ffffff
 ```
 
-### Heal Service Workflow
+### 💚 Heal Service Workflow (Warrior Healing) 🌿
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Heal as Heal Service
-    participant Warrior as Warrior Service (gRPC)
-    participant Coin as Coin Service (gRPC)
+    participant Heal as 💚 Heal Service
+    participant Warrior as 🛡️ Warrior Service (gRPC)
+    participant Coin as 💰 Coin Service (gRPC)
     participant Kafka
-    participant PG as PostgreSQL
+    participant PG as 💾 PostgreSQL
 
-    Note over Client,PG: Purchase Healing Package Flow
+    Note over Client,PG: ⚗️ Purchase Healing Package Flow
     Client->>Heal: PurchaseHeal(warrior_id, heal_type, warrior_role)
     Heal->>Warrior: GetWarriorByID (gRPC)
     Warrior-->>Heal: Warrior info (HP, role, is_healing)
@@ -1305,7 +1305,7 @@ sequenceDiagram
     alt Warrior is currently healing
         Heal->>Heal: Check healing_until timestamp
         alt Healing not completed
-            Heal-->>Client: Error: Already healing (remaining time)
+            Heal-->>Client: ⚠️ Error: Already healing (remaining time)
         else Healing completed
             Heal->>Warrior: UpdateWarriorHealingState (clear state)
         end
@@ -1314,22 +1314,22 @@ sequenceDiagram
     Heal->>Heal: GetHealPackageByType (role-based validation)
     Heal->>Heal: Validate role can use package (RBAC)
     
-    Heal->>Coin: DeductCoins (gRPC, package price)
-    Coin-->>Heal: Payment confirmed
+    Heal->>Coin: 💰 DeductCoins (gRPC, package price)
+    Coin-->>Heal: ✅ Payment confirmed
     
     Heal->>Warrior: UpdateWarriorHealingState (is_healing=true, healing_until)
     Heal->>PG: Save healing record (duration, completed_at)
     
-    Note over Heal: Background goroutine scheduled
+    Note over Heal: ⏱️ Background goroutine scheduled
     Heal->>Heal: Schedule HP update after duration
-    Heal-->>Client: Healing started (duration, coins_spent)
+    Heal-->>Client: ✅ Healing started (duration, coins_spent)
     
-    Note over Heal,PG: Healing Completion (Background)
+    Note over Heal,PG: 💉 Healing Completion (Background)
     Heal->>Heal: Wait for duration (15s - 1h)
     Heal->>Warrior: UpdateWarriorHP (gRPC, new HP)
-    Warrior-->>Heal: HP updated
+    Warrior-->>Heal: ✅ HP updated
     Heal->>Warrior: UpdateWarriorHealingState (is_healing=false)
-    Heal->>Heal: Log healing completion
+    Heal->>Heal: 📊 Log healing completion
 ```
 
 ### Heal Service Role-Based Packages
