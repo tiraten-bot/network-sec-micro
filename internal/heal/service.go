@@ -89,6 +89,12 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 		return nil, fmt.Errorf("failed to deduct coins: %w", err)
 	}
 
+	// Update warrior HP via gRPC
+	if err := UpdateWarriorHP(ctx, warriorID, hpAfter); err != nil {
+		log.Printf("Warning: Failed to update warrior HP via gRPC: %v", err)
+		// Continue anyway - healing record will be saved
+	}
+
 	// Create healing record
 	record := &HealingRecord{
 		ID:           fmt.Sprintf("%d-%d", warriorID, time.Now().Unix()),
@@ -102,8 +108,11 @@ func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType Hea
 		CreatedAt:    time.Now(),
 	}
 
-	// TODO: Update warrior HP via gRPC (if warrior service supports HP updates)
-	// For now, we log the healing
+	// Save to database
+	if err := GetRepository().SaveHealingRecord(ctx, record); err != nil {
+		log.Printf("Warning: Failed to save healing record: %v", err)
+	}
+
 	log.Printf("Healing applied: warrior=%d, type=%s, healed=%d, hp: %d->%d, coins=%d",
 		warriorID, healType, healedAmount, hpBefore, hpAfter, packageInfo.Price)
 
