@@ -34,6 +34,8 @@ type Warrior struct {
 	WeaponCount int       `gorm:"default:0" json:"weapon_count"`        // Number of owned weapons
 	CurrentHP   int       `gorm:"default:0" json:"current_hp"`          // Current HP (for healing)
 	MaxHP       int       `gorm:"default:0" json:"max_hp"`              // Maximum HP (calculated from total_power)
+	IsHealing   bool      `gorm:"default:false" json:"is_healing"`      // Is currently healing
+	HealingUntil *time.Time `json:"healing_until,omitempty"`            // When healing completes
     // Title and achievement counters
     Title            string    `gorm:"type:varchar(50);default:''" json:"title"`
     EnemyKillCount   int       `gorm:"default:0" json:"enemy_kill_count"`
