@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pb "network-sec-micro/api/proto/coin"
+    "network-sec-micro/pkg/kafka"
 )
 
 // WeaponPurchaseEvent represents the event structure
@@ -51,6 +52,26 @@ func ProcessKafkaMessage(message []byte) error {
 			service := NewService()
 			server := NewCoinServiceServer(service)
 			return server.HandleWeaponPurchase(weaponEvent)
+		}
+	}
+
+	// Try to unmarshal as arena match completed
+	var arenaCompleted kafka.ArenaMatchCompletedEvent
+	if err := json.Unmarshal(message, &arenaCompleted); err == nil {
+		if arenaCompleted.Event.EventType == "arena_match_completed" && arenaCompleted.WinnerID != nil {
+			winnerID := *arenaCompleted.WinnerID
+			var loserID uint
+			if winnerID == arenaCompleted.Player1ID { loserID = arenaCompleted.Player2ID } else { loserID = arenaCompleted.Player1ID }
+			// Fetch loser warrior to derive coin award amount (use total_power)
+			if w, err := GetWarriorByID(loserID); err == nil {
+				amount := int64(w.TotalPower)
+				ctx := context.Background()
+				service := NewService()
+				server := NewCoinServiceServer(service)
+				_, err := server.AddCoins(ctx, &pb.AddCoinsRequest{WarriorId: uint32(winnerID), Amount: amount, Reason: "arena_victory"})
+				if err != nil { log.Printf("Failed to add coins for arena victory: %v", err) }
+				return nil
+			}
 		}
 	}
 
