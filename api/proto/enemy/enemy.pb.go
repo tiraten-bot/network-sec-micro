@@ -31,9 +31,10 @@ type Enemy struct {
 	Health              int32                  `protobuf:"varint,5,opt,name=health,proto3" json:"health,omitempty"`                                                         // Current HP
 	MaxHealth           int32                  `protobuf:"varint,6,opt,name=max_health,json=maxHealth,proto3" json:"max_health,omitempty"`                                  // Maximum HP
 	AttackPower         int32                  `protobuf:"varint,7,opt,name=attack_power,json=attackPower,proto3" json:"attack_power,omitempty"`                            // Attack power
-	CreatedBy           string                 `protobuf:"bytes,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`                                   // Creator username (dark emperor/king)
-	IsHealing           bool                   `protobuf:"varint,9,opt,name=is_healing,json=isHealing,proto3" json:"is_healing,omitempty"`                                  // Is currently healing
-	HealingUntilSeconds int64                  `protobuf:"varint,10,opt,name=healing_until_seconds,json=healingUntilSeconds,proto3" json:"healing_until_seconds,omitempty"` // Unix timestamp when healing completes (0 if not healing)
+	CoinBalance         int64                  `protobuf:"varint,8,opt,name=coin_balance,json=coinBalance,proto3" json:"coin_balance,omitempty"`                            // Enemy's coin balance
+	CreatedBy           string                 `protobuf:"bytes,9,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`                                   // Creator username (dark emperor/king)
+	IsHealing           bool                   `protobuf:"varint,10,opt,name=is_healing,json=isHealing,proto3" json:"is_healing,omitempty"`                                 // Is currently healing
+	HealingUntilSeconds int64                  `protobuf:"varint,11,opt,name=healing_until_seconds,json=healingUntilSeconds,proto3" json:"healing_until_seconds,omitempty"` // Unix timestamp when healing completes (0 if not healing)
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -113,6 +114,13 @@ func (x *Enemy) GetMaxHealth() int32 {
 func (x *Enemy) GetAttackPower() int32 {
 	if x != nil {
 		return x.AttackPower
+	}
+	return 0
+}
+
+func (x *Enemy) GetCoinBalance() int64 {
+	if x != nil {
+		return x.CoinBalance
 	}
 	return 0
 }
@@ -578,11 +586,141 @@ func (x *CheckEnemyCanBattleResponse) GetHealingUntilSeconds() int64 {
 	return 0
 }
 
+// DeductEnemyCoinsRequest deducts coins from enemy
+type DeductEnemyCoinsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EnemyId       string                 `protobuf:"bytes,1,opt,name=enemy_id,json=enemyId,proto3" json:"enemy_id,omitempty"`
+	Amount        int64                  `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeductEnemyCoinsRequest) Reset() {
+	*x = DeductEnemyCoinsRequest{}
+	mi := &file_api_proto_enemy_enemy_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeductEnemyCoinsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeductEnemyCoinsRequest) ProtoMessage() {}
+
+func (x *DeductEnemyCoinsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_enemy_enemy_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeductEnemyCoinsRequest.ProtoReflect.Descriptor instead.
+func (*DeductEnemyCoinsRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_enemy_enemy_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeductEnemyCoinsRequest) GetEnemyId() string {
+	if x != nil {
+		return x.EnemyId
+	}
+	return ""
+}
+
+func (x *DeductEnemyCoinsRequest) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *DeductEnemyCoinsRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+// DeductEnemyCoinsResponse confirms coin deduction
+type DeductEnemyCoinsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	BalanceBefore int64                  `protobuf:"varint,3,opt,name=balance_before,json=balanceBefore,proto3" json:"balance_before,omitempty"`
+	BalanceAfter  int64                  `protobuf:"varint,4,opt,name=balance_after,json=balanceAfter,proto3" json:"balance_after,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeductEnemyCoinsResponse) Reset() {
+	*x = DeductEnemyCoinsResponse{}
+	mi := &file_api_proto_enemy_enemy_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeductEnemyCoinsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeductEnemyCoinsResponse) ProtoMessage() {}
+
+func (x *DeductEnemyCoinsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_enemy_enemy_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeductEnemyCoinsResponse.ProtoReflect.Descriptor instead.
+func (*DeductEnemyCoinsResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_enemy_enemy_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DeductEnemyCoinsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *DeductEnemyCoinsResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *DeductEnemyCoinsResponse) GetBalanceBefore() int64 {
+	if x != nil {
+		return x.BalanceBefore
+	}
+	return 0
+}
+
+func (x *DeductEnemyCoinsResponse) GetBalanceAfter() int64 {
+	if x != nil {
+		return x.BalanceAfter
+	}
+	return 0
+}
+
 var File_api_proto_enemy_enemy_proto protoreflect.FileDescriptor
 
 const file_api_proto_enemy_enemy_proto_rawDesc = "" +
 	"\n" +
-	"\x1bapi/proto/enemy/enemy.proto\x12\x05enemy\"\xa1\x02\n" +
+	"\x1bapi/proto/enemy/enemy.proto\x12\x05enemy\"\xc4\x02\n" +
 	"\x05Enemy\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -591,13 +729,14 @@ const file_api_proto_enemy_enemy_proto_rawDesc = "" +
 	"\x06health\x18\x05 \x01(\x05R\x06health\x12\x1d\n" +
 	"\n" +
 	"max_health\x18\x06 \x01(\x05R\tmaxHealth\x12!\n" +
-	"\fattack_power\x18\a \x01(\x05R\vattackPower\x12\x1d\n" +
+	"\fattack_power\x18\a \x01(\x05R\vattackPower\x12!\n" +
+	"\fcoin_balance\x18\b \x01(\x03R\vcoinBalance\x12\x1d\n" +
 	"\n" +
-	"created_by\x18\b \x01(\tR\tcreatedBy\x12\x1d\n" +
+	"created_by\x18\t \x01(\tR\tcreatedBy\x12\x1d\n" +
 	"\n" +
-	"is_healing\x18\t \x01(\bR\tisHealing\x122\n" +
-	"\x15healing_until_seconds\x18\n" +
-	" \x01(\x03R\x13healingUntilSeconds\"0\n" +
+	"is_healing\x18\n" +
+	" \x01(\bR\tisHealing\x122\n" +
+	"\x15healing_until_seconds\x18\v \x01(\x03R\x13healingUntilSeconds\"0\n" +
 	"\x13GetEnemyByIDRequest\x12\x19\n" +
 	"\benemy_id\x18\x01 \x01(\tR\aenemyId\"n\n" +
 	"\x14GetEnemyByIDResponse\x12\"\n" +
@@ -626,12 +765,22 @@ const file_api_proto_enemy_enemy_proto_rawDesc = "" +
 	"\n" +
 	"can_battle\x18\x01 \x01(\bR\tcanBattle\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x122\n" +
-	"\x15healing_until_seconds\x18\x03 \x01(\x03R\x13healingUntilSeconds2\xeb\x02\n" +
+	"\x15healing_until_seconds\x18\x03 \x01(\x03R\x13healingUntilSeconds\"d\n" +
+	"\x17DeductEnemyCoinsRequest\x12\x19\n" +
+	"\benemy_id\x18\x01 \x01(\tR\aenemyId\x12\x16\n" +
+	"\x06amount\x18\x02 \x01(\x03R\x06amount\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"\x9a\x01\n" +
+	"\x18DeductEnemyCoinsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12%\n" +
+	"\x0ebalance_before\x18\x03 \x01(\x03R\rbalanceBefore\x12#\n" +
+	"\rbalance_after\x18\x04 \x01(\x03R\fbalanceAfter2\xc0\x03\n" +
 	"\fEnemyService\x12G\n" +
 	"\fGetEnemyByID\x12\x1a.enemy.GetEnemyByIDRequest\x1a\x1b.enemy.GetEnemyByIDResponse\x12J\n" +
 	"\rUpdateEnemyHP\x12\x1b.enemy.UpdateEnemyHPRequest\x1a\x1c.enemy.UpdateEnemyHPResponse\x12h\n" +
 	"\x17UpdateEnemyHealingState\x12%.enemy.UpdateEnemyHealingStateRequest\x1a&.enemy.UpdateEnemyHealingStateResponse\x12\\\n" +
-	"\x13CheckEnemyCanBattle\x12!.enemy.CheckEnemyCanBattleRequest\x1a\".enemy.CheckEnemyCanBattleResponseB#Z!network-sec-micro/api/proto/enemyb\x06proto3"
+	"\x13CheckEnemyCanBattle\x12!.enemy.CheckEnemyCanBattleRequest\x1a\".enemy.CheckEnemyCanBattleResponse\x12S\n" +
+	"\x10DeductEnemyCoins\x12\x1e.enemy.DeductEnemyCoinsRequest\x1a\x1f.enemy.DeductEnemyCoinsResponseB#Z!network-sec-micro/api/proto/enemyb\x06proto3"
 
 var (
 	file_api_proto_enemy_enemy_proto_rawDescOnce sync.Once
@@ -645,7 +794,7 @@ func file_api_proto_enemy_enemy_proto_rawDescGZIP() []byte {
 	return file_api_proto_enemy_enemy_proto_rawDescData
 }
 
-var file_api_proto_enemy_enemy_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_api_proto_enemy_enemy_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_api_proto_enemy_enemy_proto_goTypes = []any{
 	(*Enemy)(nil),                           // 0: enemy.Enemy
 	(*GetEnemyByIDRequest)(nil),             // 1: enemy.GetEnemyByIDRequest
@@ -656,22 +805,26 @@ var file_api_proto_enemy_enemy_proto_goTypes = []any{
 	(*UpdateEnemyHealingStateResponse)(nil), // 6: enemy.UpdateEnemyHealingStateResponse
 	(*CheckEnemyCanBattleRequest)(nil),      // 7: enemy.CheckEnemyCanBattleRequest
 	(*CheckEnemyCanBattleResponse)(nil),     // 8: enemy.CheckEnemyCanBattleResponse
+	(*DeductEnemyCoinsRequest)(nil),         // 9: enemy.DeductEnemyCoinsRequest
+	(*DeductEnemyCoinsResponse)(nil),        // 10: enemy.DeductEnemyCoinsResponse
 }
 var file_api_proto_enemy_enemy_proto_depIdxs = []int32{
-	0, // 0: enemy.GetEnemyByIDResponse.enemy:type_name -> enemy.Enemy
-	1, // 1: enemy.EnemyService.GetEnemyByID:input_type -> enemy.GetEnemyByIDRequest
-	3, // 2: enemy.EnemyService.UpdateEnemyHP:input_type -> enemy.UpdateEnemyHPRequest
-	5, // 3: enemy.EnemyService.UpdateEnemyHealingState:input_type -> enemy.UpdateEnemyHealingStateRequest
-	7, // 4: enemy.EnemyService.CheckEnemyCanBattle:input_type -> enemy.CheckEnemyCanBattleRequest
-	2, // 5: enemy.EnemyService.GetEnemyByID:output_type -> enemy.GetEnemyByIDResponse
-	4, // 6: enemy.EnemyService.UpdateEnemyHP:output_type -> enemy.UpdateEnemyHPResponse
-	6, // 7: enemy.EnemyService.UpdateEnemyHealingState:output_type -> enemy.UpdateEnemyHealingStateResponse
-	8, // 8: enemy.EnemyService.CheckEnemyCanBattle:output_type -> enemy.CheckEnemyCanBattleResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0,  // 0: enemy.GetEnemyByIDResponse.enemy:type_name -> enemy.Enemy
+	1,  // 1: enemy.EnemyService.GetEnemyByID:input_type -> enemy.GetEnemyByIDRequest
+	3,  // 2: enemy.EnemyService.UpdateEnemyHP:input_type -> enemy.UpdateEnemyHPRequest
+	5,  // 3: enemy.EnemyService.UpdateEnemyHealingState:input_type -> enemy.UpdateEnemyHealingStateRequest
+	7,  // 4: enemy.EnemyService.CheckEnemyCanBattle:input_type -> enemy.CheckEnemyCanBattleRequest
+	9,  // 5: enemy.EnemyService.DeductEnemyCoins:input_type -> enemy.DeductEnemyCoinsRequest
+	2,  // 6: enemy.EnemyService.GetEnemyByID:output_type -> enemy.GetEnemyByIDResponse
+	4,  // 7: enemy.EnemyService.UpdateEnemyHP:output_type -> enemy.UpdateEnemyHPResponse
+	6,  // 8: enemy.EnemyService.UpdateEnemyHealingState:output_type -> enemy.UpdateEnemyHealingStateResponse
+	8,  // 9: enemy.EnemyService.CheckEnemyCanBattle:output_type -> enemy.CheckEnemyCanBattleResponse
+	10, // 10: enemy.EnemyService.DeductEnemyCoins:output_type -> enemy.DeductEnemyCoinsResponse
+	6,  // [6:11] is the sub-list for method output_type
+	1,  // [1:6] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_enemy_enemy_proto_init() }
@@ -685,7 +838,7 @@ func file_api_proto_enemy_enemy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_enemy_enemy_proto_rawDesc), len(file_api_proto_enemy_enemy_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
