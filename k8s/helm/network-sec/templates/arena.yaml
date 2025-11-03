@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "network-sec.fullname" . }}-arena
+  labels:
+    {{- include "network-sec.labels" . | nindent 4 }}
+    app.kubernetes.io/component: arena
+spec:
+  replicas: {{ .Values.arena.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "network-sec.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: arena
+  template:
+    metadata:
+      labels:
+        {{- include "network-sec.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: arena
+    spec:
+      containers:
+      - name: arena
+        image: "{{ .Values.images.arena.repository }}:{{ .Values.images.arena.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.images.arena.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: {{ .Values.arena.ports.http }}
+          name: http
+          protocol: TCP
+        - containerPort: {{ .Values.arena.ports.grpc }}
+          name: grpc
+          protocol: TCP
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://{{ include "network-sec.fullname" . }}-mongodb:27017"
+        - name: MONGODB_DB
+          value: {{ .Values.env.mongo.arenaDB | default "arena_db" }}
+        - name: WARRIOR_GRPC_ADDR
+          value: "{{ include "network-sec.fullname" . }}-warrior:50052"
+        - name: KAFKA_BROKERS
+          value: "{{ include "network-sec.fullname" . }}-kafka:9092"
+        - name: GIN_MODE
+          value: {{ .Values.arena.ginMode | default "release" }}
+        - name: PORT
+          value: {{ .Values.arena.ports.http | default 8087 | quote }}
+        - name: GRPC_PORT
+          value: {{ .Values.arena.ports.grpc | default 50055 | quote }}
+        {{- if .Values.arena.probes }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.arena.ports.http }}
+          initialDelaySeconds: {{ .Values.arena.probes.readiness.initialDelaySeconds | default 5 }}
+          periodSeconds: {{ .Values.arena.probes.readiness.periodSeconds | default 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.arena.ports.http }}
+          initialDelaySeconds: {{ .Values.arena.probes.liveness.initialDelaySeconds | default 10 }}
+          periodSeconds: {{ .Values.arena.probes.liveness.periodSeconds | default 30 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.arena.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "network-sec.fullname" . }}-arena
+  labels:
+    {{- include "network-sec.labels" . | nindent 4 }}
+    app.kubernetes.io/component: arena
+spec:
+  type: {{ .Values.arena.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.arena.ports.http }}
+    targetPort: {{ .Values.arena.ports.http }}
+    protocol: TCP
+    name: http
+  - port: {{ .Values.arena.ports.grpc }}
+    targetPort: {{ .Values.arena.ports.grpc }}
+    protocol: TCP
+    name: grpc
+  selector:
+    {{- include "network-sec.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: arena
+
