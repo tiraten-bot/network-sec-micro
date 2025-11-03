@@ -400,9 +400,9 @@ func (h *Handler) ApplyArenaSpell(c *gin.Context) {
         return
     }
 
-    matchID, err := primitive.ObjectIDFromHex(req.MatchID)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "validation_error", Message: "invalid match ID format"})
+    matchID := req.MatchID
+    if matchID == "" {
+        c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "validation_error", Message: "match ID is required"})
         return
     }
 
@@ -414,8 +414,7 @@ func (h *Handler) ApplyArenaSpell(c *gin.Context) {
     }
 
     // Enforce spell window at handler level as well (fast-fail)
-    var matchSnapshot ArenaMatch
-    if err := MatchColl.FindOne(c.Request.Context(), bson.M{"_id": matchID}).Decode(&matchSnapshot); err == nil {
+    if matchSnapshot, err := GetRepository().GetMatchByID(c.Request.Context(), matchID); err == nil {
         allow50 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
         allow10 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*10) }
         isCrisis := req.SpellType == "light_crisis" || req.SpellType == "dark_crisis"
@@ -473,13 +472,7 @@ func (h *Handler) GetMatch(c *gin.Context) {
 		return
 	}
 
-	if _, err := primitive.ObjectIDFromHex(matchID); err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
-			Error:   "validation_error",
-			Message: "invalid match ID format",
-		})
-		return
-	}
+    // accept any non-empty matchID (string ID)
 
     // Get match via repository (supports redis/sql/mongo)
     m, err := GetRepository().GetMatchByID(c.Request.Context(), matchID)
