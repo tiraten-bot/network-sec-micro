@@ -231,7 +231,7 @@ func (s *Service) RejectInvitation(ctx context.Context, cmd dto.RejectInvitation
 
 	// Publish Kafka event
 	go func() {
-		if err := PublishInvitationRejected(invitation.ID.Hex(), invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
+        if err := PublishInvitationRejected(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
 			log.Printf("Failed to publish invitation rejected event: %v", err)
 		}
 	}()
@@ -286,7 +286,7 @@ func (s *Service) CancelInvitation(ctx context.Context, cmd dto.CancelInvitation
 func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID, attackerID uint) (*ArenaMatch, error) {
     var match ArenaMatch
     repo := GetRepository()
-    m, err := repo.GetMatchByID(ctx, matchID.Hex())
+    m, err := repo.GetMatchByID(ctx, matchID)
     if err != nil {
         return nil, fmt.Errorf("failed to get match: %v", err)
     }
@@ -360,7 +360,7 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
     checkAndPublish := func(pHP, pMax int, announced *bool, pid uint, pname string) {
         if pMax > 0 && !*announced && (pHP*100 <= pMax*50) {
             percent := float64(pHP) / float64(pMax) * 100.0
-            _ = PublishSpellWindowOpened(match.ID.Hex(), pid, pname, percent)
+            _ = PublishSpellWindowOpened(match.ID, pid, pname, percent)
             *announced = true
         }
     }
@@ -371,7 +371,7 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
     checkAndPublishCrisis := func(pHP, pMax int, announced *bool, pid uint, pname string) {
         if pMax > 0 && !*announced && (pHP*100 <= pMax*10) {
             percent := float64(pHP) / float64(pMax) * 100.0
-            _ = PublishCrisisWindowOpened(match.ID.Hex(), pid, pname, percent)
+            _ = PublishCrisisWindowOpened(match.ID, pid, pname, percent)
             *announced = true
         }
     }
@@ -399,14 +399,14 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 		// Publish match completed event
 		go func() {
 			if err := PublishMatchCompleted(
-				match.ID.Hex(),
+                match.ID,
 				match.Player1ID,
 				match.Player1Name,
 				match.Player2ID,
 				match.Player2Name,
 				match.WinnerID,
 				match.WinnerName,
-				match.ID.Hex(),
+                match.ID,
 			); err != nil {
 				log.Printf("Failed to publish match completed event: %v", err)
 			}
@@ -430,14 +430,14 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 
 		go func() {
 			if err := PublishMatchCompleted(
-				match.ID.Hex(),
+                match.ID,
 				match.Player1ID,
 				match.Player1Name,
 				match.Player2ID,
 				match.Player2Name,
 				match.WinnerID,
 				match.WinnerName,
-				match.ID.Hex(),
+                match.ID,
 			); err != nil {
 				log.Printf("Failed to publish match completed event: %v", err)
 			}
@@ -463,7 +463,7 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
         updateData["winner_name"] = match.WinnerName
     }
 
-    err = repo.UpdateMatchFields(ctx, match.ID.Hex(), updateData)
+    err = repo.UpdateMatchFields(ctx, match.ID, updateData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update match: %w", err)
 	}
@@ -476,7 +476,7 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.ObjectID, casterID uint, spellType string) (*ArenaMatch, error) {
     var match ArenaMatch
     repo := GetRepository()
-    m, err := repo.GetMatchByID(ctx, matchID.Hex())
+    m, err := repo.GetMatchByID(ctx, matchID)
     if err != nil {
         return nil, fmt.Errorf("failed to get match: %v", err)
     }
@@ -584,7 +584,7 @@ func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.Object
         "updated_at":      match.UpdatedAt,
     }
 
-    err = repo.UpdateMatchFields(ctx, match.ID.Hex(), update)
+    err = repo.UpdateMatchFields(ctx, match.ID, update)
     if err != nil {
         return nil, fmt.Errorf("failed to update match: %w", err)
     }
@@ -610,7 +610,7 @@ func (s *Service) markInvitationAsExpired(ctx context.Context, invitationID prim
 
 		// Publish event
 		go func() {
-			if err := PublishInvitationExpired(invitation.ID.Hex(), invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
+            if err := PublishInvitationExpired(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
 				log.Printf("Failed to publish invitation expired event: %v", err)
 			}
 		}()
