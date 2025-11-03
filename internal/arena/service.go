@@ -115,13 +115,25 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		return nil, fmt.Errorf("failed to get opponent info: %w", err)
 	}
 
-	// Calculate HP based on total power
-	challengerMaxHP := int(challenger.TotalPower) * 10
+    // Optionally recalc power via weapon service
+    if os.Getenv("ARENA_USE_WEAPON_POWER") != "" {
+        if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, challenger.Username); err == nil {
+            challenger.TotalPower = tp
+            challenger.WeaponCount = wc
+        }
+        if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, opponent.Username); err == nil {
+            opponent.TotalPower = tp
+            opponent.WeaponCount = wc
+        }
+    }
+
+    // Calculate HP based on total power
+    challengerMaxHP := int(challenger.TotalPower) * 10
 	if challengerMaxHP < 100 {
 		challengerMaxHP = 100
 	}
 
-	opponentMaxHP := int(opponent.TotalPower) * 10
+    opponentMaxHP := int(opponent.TotalPower) * 10
 	if opponentMaxHP < 100 {
 		opponentMaxHP = 100
 	}
