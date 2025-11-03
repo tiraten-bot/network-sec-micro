@@ -20,6 +20,11 @@ type BattleSQL struct {
     CompletedAt             *time.Time
     CreatedAt               time.Time
     UpdatedAt               time.Time
+    WagerAmount             int
+    LightEmperorID          string `gorm:"size:64"`
+    DarkEmperorID           string `gorm:"size:64"`
+    LightEmperorApproved    bool   `gorm:"not null;default:false"`
+    DarkEmperorApproved     bool   `gorm:"not null;default:false"`
 }
 
 func (BattleSQL) TableName() string { return "battles" }
