@@ -1747,44 +1747,44 @@ graph TB
     style KSING fill:#08315c,stroke:#001a4d,color:#ffffff
 ```
 
-### HealService Redis Logging Flow
+### 💚 HealService Redis Logging Flow 📊
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Heal as Heal Service
-    participant Redis as Redis Streams
-    participant Warrior as Warrior Service
+    participant Heal as 💚 Heal Service
+    participant Redis as 📊 Redis Streams
+    participant Warrior as 🛡️ Warrior Service
     
-    Note over Client,Warrior: Healing Purchase and Logging
+    Note over Client,Warrior: ⚗️ Healing Purchase and Logging
     Client->>Heal: PurchaseHeal (gRPC)
     Heal->>Heal: Validate & Process Payment
-    Heal->>Redis: LogHealingStarted (status: "started")
-    Note right of Redis: Stream: healing:logs:{warrior_id}<br/>Timeline: healing:logs:{warrior_id}:timeline
+    Heal->>Redis: 📝 LogHealingStarted (status: "started")
+    Note right of Redis: 💚 Stream: healing:logs:{participant_id}<br/>📅 Timeline: healing:logs:{participant_id}:timeline
     
     Heal->>Heal: Schedule HP Update (background goroutine)
     Heal->>Warrior: UpdateWarriorHealingState (is_healing=true)
-    Heal-->>Client: Healing started (duration)
+    Heal-->>Client: ✅ Healing started (duration)
     
-    Note over Heal,Redis: Progress Logging (Every 5 seconds)
+    Note over Heal,Redis: 📊 Progress Logging (Every 5 seconds)
     loop Every 5 seconds
         Heal->>Heal: Calculate progress percentage
-        Heal->>Redis: LogHealingProgress (status: "in_progress")
-        Note right of Redis: Progress: 0% → 100%<br/>Remaining seconds tracked
+        Heal->>Redis: 📈 LogHealingProgress (status: "in_progress")
+        Note right of Redis: 💚 Progress: 0% → 100%<br/>⏱️ Remaining seconds tracked
     end
     
-    Note over Heal,Warrior: Healing Completion
-    Heal->>Heal: Duration elapsed
+    Note over Heal,Warrior: 💉 Healing Completion
+    Heal->>Heal: ⏱️ Duration elapsed
     Heal->>Warrior: UpdateWarriorHP (gRPC)
     Heal->>Warrior: UpdateWarriorHealingState (is_healing=false)
-    Heal->>Redis: LogHealingCompleted (status: "completed")
-    Note right of Redis: Final log entry with HP update
+    Heal->>Redis: ✅ LogHealingCompleted (status: "completed")
+    Note right of Redis: 💚 Final log entry with HP update
     
-    Note over Client,Redis: Query Healing Logs
-    Client->>Heal: GetHealingLogs (warrior_id)
+    Note over Client,Redis: 📋 Query Healing Logs
+    Client->>Heal: GetHealingLogs (participant_id)
     Heal->>Redis: XRevRangeN (get latest entries)
-    Redis-->>Heal: Healing log entries
-    Heal-->>Client: Healing history with progress
+    Redis-->>Heal: 📊 Healing log entries
+    Heal-->>Client: 💚 Healing history with progress
 ```
 
 ### HealService Container Architecture
