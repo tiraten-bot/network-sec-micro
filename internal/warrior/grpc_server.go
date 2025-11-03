@@ -30,6 +30,13 @@ func (s *WarriorServiceServer) GetWarriorByUsername(ctx context.Context, req *pb
 		return nil, status.Errorf(codes.NotFound, "warrior not found: %v", err)
 	}
 
+	maxHP := w.MaxHP
+	if maxHP == 0 {
+		maxHP = w.TotalPower * 10 // Calculate if not set
+		if maxHP < 100 {
+			maxHP = 100
+		}
+	}
 	return &pb.GetWarriorByUsernameResponse{
 		Warrior: &pb.Warrior{
 			Id:           uint32(w.ID),
@@ -39,6 +46,8 @@ func (s *WarriorServiceServer) GetWarriorByUsername(ctx context.Context, req *pb
 			CoinBalance:  int32(w.CoinBalance),
 			TotalPower:   int32(w.TotalPower),
 			WeaponCount:  int32(w.WeaponCount),
+			CurrentHp:    int32(w.CurrentHP),
+			MaxHp:        int32(maxHP),
 			CreatedAt:    timestamppb.New(w.CreatedAt),
 			UpdatedAt:    timestamppb.New(w.UpdatedAt),
 		},
