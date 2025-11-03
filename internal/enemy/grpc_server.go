@@ -192,3 +192,42 @@ func (s *EnemyServiceServer) CheckEnemyCanBattle(ctx context.Context, req *pb.Ch
 	}, nil
 }
 
+// DeductEnemyCoins deducts coins from enemy's balance
+func (s *EnemyServiceServer) DeductEnemyCoins(ctx context.Context, req *pb.DeductEnemyCoinsRequest) (*pb.DeductEnemyCoinsResponse, error) {
+	enemyID, err := primitive.ObjectIDFromHex(req.EnemyId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid enemy ID: %v", err)
+	}
+
+	var enemy Enemy
+	if err := EnemyColl.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Errorf(codes.NotFound, "enemy not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get enemy: %v", err)
+	}
+
+	balanceBefore := enemy.CoinBalance
+	if balanceBefore < req.Amount {
+		return nil, status.Errorf(codes.InvalidArgument, "insufficient balance: %d < %d", balanceBefore, req.Amount)
+	}
+
+	balanceAfter := balanceBefore - req.Amount
+	updateData := bson.M{
+		"coin_balance": balanceAfter,
+		"updated_at":   time.Now(),
+	}
+
+	_, err = EnemyColl.UpdateOne(ctx, bson.M{"_id": enemyID}, bson.M{"$set": updateData})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update enemy coin balance: %v", err)
+	}
+
+	return &pb.DeductEnemyCoinsResponse{
+		Success:      true,
+		Message:      fmt.Sprintf("Deducted %d coins from enemy", req.Amount),
+		BalanceBefore: balanceBefore,
+		BalanceAfter:  balanceAfter,
+	}, nil
+}
+
