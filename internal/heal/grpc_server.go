@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "network-sec-micro/api/proto/heal"
+	"network-sec-micro/internal/heal/dto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -41,7 +42,13 @@ func (s *HealServiceServer) PurchaseHeal(ctx context.Context, req *pb.PurchaseHe
 		warriorRole = warrior.Role
 	}
 
-	record, err := s.service.PurchaseHeal(ctx, warriorID, healType, "", warriorRole)
+	cmd := dto.PurchaseHealCommand{
+		WarriorID:   warriorID,
+		HealType:    string(healType),
+		BattleID:    "",
+		WarriorRole: warriorRole,
+	}
+	record, err := s.service.PurchaseHeal(ctx, cmd)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -62,7 +69,10 @@ func (s *HealServiceServer) GetHealingHistory(ctx context.Context, req *pb.GetHe
 		return nil, status.Error(codes.InvalidArgument, "invalid warrior ID")
 	}
 
-	records, err := s.service.GetHealingHistory(ctx, warriorID)
+	query := dto.GetHealingHistoryQuery{
+		WarriorID: warriorID,
+	}
+	records, err := s.service.GetHealingHistory(ctx, query)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
