@@ -143,10 +143,31 @@ func UpdateWarriorHP(ctx context.Context, warriorID uint, newHP int32) error {
 }
 
 // SetWarriorHealingState sets warrior's healing state (is_healing, healing_until)
-// Note: This requires a new RPC method in warrior service. For now, we'll use a workaround.
 func SetWarriorHealingState(ctx context.Context, warriorID uint, isHealing bool, healingUntil *time.Time) error {
-	// TODO: Add UpdateWarriorHealingState RPC to warrior service
-	// For now, we'll log it and the state will be tracked in heal service
+	if warriorGrpcClient == nil {
+		return fmt.Errorf("warrior gRPC client not initialized")
+	}
+
+	var healingUntilSeconds int64
+	if healingUntil != nil {
+		healingUntilSeconds = healingUntil.Unix()
+	}
+
+	req := &pbWarrior.UpdateWarriorHealingStateRequest{
+		WarriorId:          uint32(warriorID),
+		IsHealing:          isHealing,
+		HealingUntilSeconds: healingUntilSeconds,
+	}
+
+	resp, err := warriorGrpcClient.UpdateWarriorHealingState(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to update warrior healing state: %w", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("failed to update warrior healing state: %s", resp.Message)
+	}
+
 	if isHealing && healingUntil != nil {
 		log.Printf("Warrior %d is now healing until %v", warriorID, healingUntil)
 	} else {
