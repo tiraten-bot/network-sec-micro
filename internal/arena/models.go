@@ -90,6 +90,10 @@ type ArenaMatch struct {
 	CurrentTurn int    `bson:"current_turn" json:"current_turn"`
 	MaxTurns    int    `bson:"max_turns" json:"max_turns"`
 	CurrentAttacker uint `bson:"current_attacker" json:"current_attacker"` // 1 or 2, indicates whose turn it is
+
+	// Spell windows (threshold announcements)
+	P1Below50Announced bool `bson:"p1_below50_announced" json:"p1_below50_announced"`
+	P2Below50Announced bool `bson:"p2_below50_announced" json:"p2_below50_announced"`
 	
 	// Result
 	Status      ArenaMatchStatus `bson:"status" json:"status"`
