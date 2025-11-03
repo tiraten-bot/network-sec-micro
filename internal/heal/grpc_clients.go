@@ -118,3 +118,27 @@ func DeductCoins(ctx context.Context, warriorID uint, amount int64, reason strin
 	return nil
 }
 
+// UpdateWarriorHP updates warrior's HP via gRPC
+func UpdateWarriorHP(ctx context.Context, warriorID uint, newHP int32) error {
+	if warriorGrpcClient == nil {
+		return fmt.Errorf("warrior gRPC client not initialized")
+	}
+
+	req := &pbWarrior.UpdateWarriorHPRequest{
+		WarriorId: uint32(warriorID),
+		NewHp:     newHP,
+	}
+
+	resp, err := warriorGrpcClient.UpdateWarriorHP(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to update warrior HP: %w", err)
+	}
+
+	if !resp.Success {
+		return fmt.Errorf("failed to update warrior HP: %s", resp.Message)
+	}
+
+	log.Printf("Updated warrior %d HP: %d -> %d", warriorID, resp.OldHp, resp.NewHp)
+	return nil
+}
+
