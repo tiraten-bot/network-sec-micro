@@ -305,8 +305,8 @@ func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand)
 				var updateErr error
 				switch participantType {
 				case "warrior":
-					warriorID, _ := strconv.ParseUint(participantID, 10, 32)
-					updateErr = UpdateWarriorHP(context.Background(), uint(warriorID), int32(hpAfter))
+					warriorIDUint, _ := strconv.ParseUint(participantID, 10, 32)
+					updateErr = UpdateWarriorHP(context.Background(), uint(warriorIDUint), int32(hpAfter))
 				case "dragon":
 					updateErr = UpdateDragonHP(context.Background(), participantID, int32(hpAfter))
 				case "enemy":
@@ -317,11 +317,11 @@ func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand)
 					log.Printf("Failed to apply healing HP after duration: %v", updateErr)
 					_ = LogHealingFailed(context.Background(), warriorID, participantName, healType, fmt.Sprintf("Failed to update HP: %v", updateErr))
 				} else {
-					// Clear healing state
-					switch participantType {
-					case "warrior":
-						warriorID, _ := strconv.ParseUint(participantID, 10, 32)
-						_ = SetWarriorHealingState(context.Background(), uint(warriorID), false, nil)
+				// Clear healing state
+				switch participantType {
+				case "warrior":
+					warriorIDUint, _ := strconv.ParseUint(participantID, 10, 32)
+					_ = SetWarriorHealingState(context.Background(), uint(warriorIDUint), false, nil)
 					case "dragon":
 						_ = SetDragonHealingState(context.Background(), participantID, false, nil)
 					case "enemy":
