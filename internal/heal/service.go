@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	pbWarrior "network-sec-micro/api/proto/warrior"
 	"network-sec-micro/internal/heal/dto"
 )
 
