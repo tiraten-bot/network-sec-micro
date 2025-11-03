@@ -1150,6 +1150,111 @@ sequenceDiagram
     Arena-->>Client2: Invitation rejected
 ```
 
+### Arena Service Event Flow
+
+```mermaid
+sequenceDiagram
+    participant Arena as Arena Service
+    participant Kafka as Kafka Events
+    participant Consumer as Event Consumers
+    
+    Note over Arena,Consumer: Invitation Lifecycle Events
+    Arena->>Kafka: arena.invitation.sent (challenger, opponent, expires_at)
+    Note right of Kafka: Topic: arena.invitation.sent
+    
+    alt Invitation Accepted
+        Arena->>Kafka: arena.invitation.accepted (challenger, opponent, match_id)
+        Arena->>Kafka: arena.match.started (player1, player2, match_id)
+        Note right of Kafka: Topics: arena.invitation.accepted<br/>arena.match.started
+    else Invitation Rejected
+        Arena->>Kafka: arena.invitation.rejected (challenger, opponent)
+        Note right of Kafka: Topic: arena.invitation.rejected
+    else Invitation Expired
+        Arena->>Kafka: arena.invitation.expired (challenger, opponent)
+        Note right of Kafka: Topic: arena.invitation.expired
+    end
+    
+    Note over Arena,Consumer: Match Completion Event
+    Arena->>Arena: Match ends (winner determined)
+    Arena->>Kafka: arena.match.completed (player1, player2, winner, match_id)
+    Note right of Kafka: Topic: arena.match.completed
+    Consumer->>Kafka: Consume match completed (analytics, notifications)
+```
+
+### Arena Service Event Types
+
+```mermaid
+graph TB
+    subgraph "Invitation Events"
+        E1[arena.invitation.sent<br/>Challenger sends invitation]
+        E2[arena.invitation.accepted<br/>Opponent accepts]
+        E3[arena.invitation.rejected<br/>Opponent rejects]
+        E4[arena.invitation.expired<br/>10 min timeout]
+        E5[arena.invitation.cancelled<br/>Challenger cancels]
+    end
+    
+    subgraph "Match Events"
+        E6[arena.match.started<br/>Both players accepted]
+        E7[arena.match.completed<br/>Winner determined]
+    end
+    
+    subgraph "Event Flow"
+        E1 -->|Opponent accepts| E2
+        E1 -->|Opponent rejects| E3
+        E1 -->|Timeout| E4
+        E1 -->|Challenger cancels| E5
+        E2 -->|Match created| E6
+        E6 -->|Match ends| E7
+    end
+    
+    style E1 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style E2 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style E3 fill:#8b0000,stroke:#001a4d,color:#ffffff
+    style E4 fill:#8b0000,stroke:#001a4d,color:#ffffff
+    style E5 fill:#8b0000,stroke:#001a4d,color:#ffffff
+    style E6 fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style E7 fill:#0d56b3,stroke:#001a4d,color:#ffffff
+```
+
+### Arena Service Complete Event Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> InvitationSent: POST /invitations
+    
+    InvitationSent --> InvitationAccepted: Opponent accepts
+    InvitationSent --> InvitationRejected: Opponent rejects
+    InvitationSent --> InvitationExpired: 10 min timeout
+    InvitationSent --> InvitationCancelled: Challenger cancels
+    
+    InvitationAccepted --> MatchStarted: Create match
+    MatchStarted --> MatchInProgress: Start battle
+    
+    MatchInProgress --> MatchCompleted: Winner determined
+    MatchInProgress --> MatchCompleted: Timeout (MaxTurns)
+    
+    InvitationRejected --> [*]
+    InvitationExpired --> [*]
+    InvitationCancelled --> [*]
+    MatchCompleted --> [*]
+    
+    note right of InvitationSent
+        Event: arena.invitation.sent
+    end note
+    
+    note right of InvitationAccepted
+        Event: arena.invitation.accepted
+    end note
+    
+    note right of MatchStarted
+        Event: arena.match.started
+    end note
+    
+    note right of MatchCompleted
+        Event: arena.match.completed
+    end note
+```
+
 ## API Documentation (Swagger/OpenAPI)
 
 Tüm HTTP servisleri için Swagger/OpenAPI dokümantasyonu mevcuttur. Swagger UI ile API endpoint'lerini test edebilir ve detaylı dokümantasyona erişebilirsiniz.
