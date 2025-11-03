@@ -1,6 +1,7 @@
 package coin
 
 import (
+    "context"
     "fmt"
     "os"
 
@@ -29,13 +30,9 @@ func CloseWarriorClient() {
 func GetWarriorByID(warriorID uint) (*pbWarrior.Warrior, error) {
     if warriorGrpcClient == nil { return nil, fmt.Errorf("warrior gRPC client not initialized") }
     req := &pbWarrior.GetWarriorByIDRequest{WarriorId: uint32(warriorID)}
-    resp, err := warriorGrpcClient.GetWarriorByID(contextBackground())
-    _ = req
-    _ = resp
-    _ = err
-    return nil, fmt.Errorf("not implemented")
+    resp, err := warriorGrpcClient.GetWarriorByID(context.Background(), req)
+    if err != nil { return nil, err }
+    return resp.Warrior, nil
 }
-
-func contextBackground() interface{} { return nil }
 
 
