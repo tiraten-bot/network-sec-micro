@@ -21,7 +21,7 @@ func NewService() *Service { return &Service{} }
 // Returns affected count (1 or 2 depending on effect) for feedback
 func (s *Service) CastSpell(ctx context.Context, cmd dto.CastArenaSpellCommand) (int, error) {
     st := SpellType(cmd.SpellType)
-    if st != SpellCallOfTheLightKing && st != SpellResistance && st != SpellRebirth && st != SpellDestroyTheLight {
+    if st != SpellCallOfTheLightKing && st != SpellResistance && st != SpellRebirth && st != SpellDestroyTheLight && st != SpellLightCrisis && st != SpellDarkCrisis {
         return 0, errors.New("invalid spell type")
     }
 
@@ -85,6 +85,10 @@ func (s *Service) CastSpell(ctx context.Context, cmd dto.CastArenaSpellCommand) 
         return 1, nil // caster revive capability
     case SpellDestroyTheLight:
         return 1, nil // opponent debuff stack incremented
+    case SpellLightCrisis:
+        return 1, nil // emergency light buff
+    case SpellDarkCrisis:
+        return 1, nil // emergency dark debuff
     default:
         return 0, fmt.Errorf("spell not implemented: %s", st)
     }
