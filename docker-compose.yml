@@ -279,6 +279,34 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # Arena Service (HTTP API + gRPC)
+  arena:
+    build:
+      context: .
+      dockerfile: dockerfiles/arena.dockerfile
+    container_name: arena-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: arena_db
+      WARRIOR_GRPC_ADDR: warrior:50052
+      KAFKA_BROKERS: kafka:9092
+      GIN_MODE: release
+      PORT: 8087
+      GRPC_PORT: 50055
+    ports:
+      - "8087:8087"
+      - "50055:50055"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      warrior:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
   # Fiber API Gateway
   fiber-gateway:
     build:
@@ -294,6 +322,7 @@ services:
       UPSTREAM_WEAPON: http://weapon:8081
       UPSTREAM_BATTLE: http://battle:8085
       UPSTREAM_BATTLESPELL: http://battlespell:8086
+      UPSTREAM_ARENA: http://arena:8087
       # Kafka/Redis optional if used by config rules
       REDIS_ADDR: redis:6379
     ports:
@@ -308,6 +337,8 @@ services:
       weapon:
         condition: service_started
       battlespell:
+        condition: service_started
+      arena:
         condition: service_started
     networks:
       - warrior-network
