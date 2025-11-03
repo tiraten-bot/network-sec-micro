@@ -7,6 +7,7 @@ import (
 	"os"
 
 	pbWarrior "network-sec-micro/api/proto/warrior"
+    pbArenaSpell "network-sec-micro/api/proto/arenaspell"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -14,6 +15,8 @@ import (
 
 var warriorGrpcClient pbWarrior.WarriorServiceClient
 var warriorGrpcConn *grpc.ClientConn
+var arenaspellGrpcClient pbArenaSpell.ArenaSpellServiceClient
+var arenaspellGrpcConn *grpc.ClientConn
 
 // InitWarriorClient initializes the gRPC client connection to warrior service
 func InitWarriorClient(addr string) error {
@@ -41,6 +44,54 @@ func CloseWarriorClient() {
 	if warriorGrpcConn != nil {
 		warriorGrpcConn.Close()
 	}
+}
+
+// InitArenaSpellClient initializes the gRPC client connection to arenaspell service
+func InitArenaSpellClient(addr string) error {
+    if addr == "" {
+        addr = os.Getenv("ARENASPELL_GRPC_ADDR")
+        if addr == "" {
+            addr = "localhost:50056"
+        }
+    }
+
+    conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        return fmt.Errorf("failed to connect to arenaspell gRPC: %w", err)
+    }
+
+    arenaspellGrpcClient = pbArenaSpell.NewArenaSpellServiceClient(conn)
+    arenaspellGrpcConn = conn
+    log.Printf("Connected to ArenaSpell gRPC service at %s", addr)
+    return nil
+}
+
+func CloseArenaSpellClient() {
+    if arenaspellGrpcConn != nil {
+        arenaspellGrpcConn.Close()
+    }
+}
+
+// CastArenaSpellViaGRPC proxies to arenaspell.CastSpell
+func CastArenaSpellViaGRPC(ctx context.Context, matchID string, spellType string, casterID uint, casterUsername, casterRole string) (int32, error) {
+    if arenaspellGrpcClient == nil {
+        return 0, fmt.Errorf("arenaspell gRPC client not initialized")
+    }
+    req := &pbArenaSpell.CastArenaSpellRequest{
+        MatchId:        matchID,
+        SpellType:      spellType,
+        CasterUserId:   uint32(casterID),
+        CasterUsername: casterUsername,
+        CasterRole:     casterRole,
+    }
+    resp, err := arenaspellGrpcClient.CastSpell(ctx, req)
+    if err != nil {
+        return 0, err
+    }
+    if !resp.Success {
+        return 0, fmt.Errorf(resp.Message)
+    }
+    return resp.AffectedCount, nil
 }
 
 // GetWarriorByUsername gets warrior info via gRPC
