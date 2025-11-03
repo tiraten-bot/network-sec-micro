@@ -1,18 +1,14 @@
 package battle
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"math/rand"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "log"
+    "math/rand"
+    "time"
 
-	"network-sec-micro/internal/battle/dto"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+    "network-sec-micro/internal/battle/dto"
 )
 
 // Attack performs an attack in a team-based battle
@@ -20,19 +16,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	ctx := context.Background()
 
 	// Get battle
-	battleID, err := primitive.ObjectIDFromHex(cmd.BattleID)
-	if err != nil {
-		return nil, nil, errors.New("invalid battle ID")
-	}
-
-	var battle Battle
-	err = BattleColl.FindOne(ctx, bson.M{"_id": battleID}).Decode(&battle)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, nil, errors.New("battle not found")
-		}
-		return nil, nil, fmt.Errorf("failed to get battle: %w", err)
-	}
+    if cmd.BattleID == "" { return nil, nil, errors.New("invalid battle ID") }
+    battle, err := GetRepository().GetBattleByID(ctx, cmd.BattleID)
+    if err != nil { return nil, nil, fmt.Errorf("failed to get battle: %w", err) }
 
 	// Validate battle status
 	if battle.Status != BattleStatusInProgress {
@@ -45,34 +31,12 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	}
 
 	// Get attacker participant
-	var attacker BattleParticipant
-	err = BattleParticipantColl.FindOne(ctx, bson.M{
-		"battle_id":      battleID,
-		"participant_id": cmd.AttackerID,
-		"is_alive":      true,
-	}).Decode(&attacker)
-
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, nil, errors.New("attacker not found or already defeated")
-		}
-		return nil, nil, fmt.Errorf("failed to get attacker: %w", err)
-	}
+    attacker, err := GetRepository().GetParticipantByIDs(ctx, battle.ID, cmd.AttackerID)
+    if err != nil { return nil, nil, fmt.Errorf("failed to get attacker: %w", err) }
 
 	// Get target participant
-	var target BattleParticipant
-	err = BattleParticipantColl.FindOne(ctx, bson.M{
-		"battle_id":      battleID,
-		"participant_id": cmd.TargetID,
-		"is_alive":      true,
-	}).Decode(&target)
-
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, nil, errors.New("target not found or already defeated")
-		}
-		return nil, nil, fmt.Errorf("failed to get target: %w", err)
-	}
+    target, err := GetRepository().GetParticipantByIDs(ctx, battle.ID, cmd.TargetID)
+    if err != nil { return nil, nil, fmt.Errorf("failed to get target: %w", err) }
 
 	// Validate: attacker and target must be on different sides
 	if attacker.Side == target.Side {
@@ -92,11 +56,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		damage = int(float64(damage) * 1.5)
 	}
 
-	targetHPBefore := target.HP
-	target.HP -= damage
-	if target.HP < 0 {
-		target.HP = 0
-	}
+    targetHPBefore := target.HP
+    target.HP -= damage
+    if target.HP < 0 { target.HP = 0 }
 
 	// Track damage for kill attribution
 	killTracker.AddDamage(battleID, target.ParticipantID, attacker.ParticipantID)
@@ -164,13 +126,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		updateTarget["defeated_at"] = target.DefeatedAt
 	}
 
-	_, err = BattleParticipantColl.UpdateOne(ctx,
-		bson.M{"_id": target.ID},
-		bson.M{"$set": updateTarget},
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to update target: %w", err)
-	}
+    if err := GetRepository().UpdateParticipantByIDs(ctx, battle.ID, target.ParticipantID, updateTarget); err != nil {
+        return nil, nil, fmt.Errorf("failed to update target: %w", err)
+    }
 
 	// Increment turn
 	battle.CurrentTurn++
@@ -178,8 +136,8 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	battle.UpdatedAt = time.Now()
 
 	// Create turn record
-	turn := &BattleTurn{
-		BattleID:        battle.ID,
+    turn := &BattleTurn{
+        BattleID:        battle.ID,
 		TurnNumber:      battle.CurrentTurn,
 		AttackerID:      attacker.ParticipantID,
 		AttackerName:    attacker.Name,
@@ -196,24 +154,22 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		TargetDefeated:  targetDefeated,
 		CreatedAt:       time.Now(),
 	}
-
-	_, err = BattleTurnColl.InsertOne(ctx, turn)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to record turn: %w", err)
-	}
+    if err := GetRepository().InsertTurn(ctx, turn); err != nil { return nil, nil, fmt.Errorf("failed to record turn: %w", err) }
 
 	// Note: We only log to Redis when a participant is defeated (see above)
 	// No need to log every attack, only deaths are logged in simplified format
 
 	// Check if a team has been eliminated
-	lightAlive, err := s.CheckTeamStatus(ctx, battleID, TeamSideLight)
+    lightAliveCount, err := GetRepository().CountAliveBySide(ctx, battle.ID, TeamSideLight)
 	if err != nil {
 		log.Printf("Warning: failed to check light team status: %v", err)
 	}
-	darkAlive, err := s.CheckTeamStatus(ctx, battleID, TeamSideDark)
+    darkAliveCount, err := GetRepository().CountAliveBySide(ctx, battle.ID, TeamSideDark)
 	if err != nil {
 		log.Printf("Warning: failed to check dark team status: %v", err)
 	}
+    lightAlive := lightAliveCount > 0
+    darkAlive := darkAliveCount > 0
 
 	// Determine battle result
 	if !lightAlive && !darkAlive {
@@ -228,16 +184,12 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	}
 
 	// Update battle
-	updateData := bson.M{
-		"current_turn": battle.CurrentTurn,
-		"current_participant_index": battle.CurrentParticipantIndex,
-		"updated_at": time.Now(),
-	}
-
-	_, err = BattleColl.UpdateOne(ctx, bson.M{"_id": battle.ID}, bson.M{"$set": updateData})
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to update battle: %w", err)
-	}
+    updateData := map[string]interface{}{
+        "current_turn": battle.CurrentTurn,
+        "current_participant_index": battle.CurrentParticipantIndex,
+        "updated_at": time.Now(),
+    }
+    if err := GetRepository().UpdateBattleFields(ctx, battle.ID, updateData); err != nil { return nil, nil, fmt.Errorf("failed to update battle: %w", err) }
 
 	return &battle, turn, nil
 }
