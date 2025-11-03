@@ -1408,31 +1408,37 @@ stateDiagram-v2
     end note
 ```
 
-### Heal Service Battle/Arena Integration
+### 💚 Heal Service Battle/Arena Integration 🌿
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Battle as Battle Service
-    participant Arena as Arena Service
-    participant Heal as Heal Service
-    participant Warrior as Warrior Service (gRPC)
+    participant Battle as ⚔️ Battle Service
+    participant Arena as 🏟️ Arena Service
+    participant Heal as 💚 Heal Service
+    participant Warrior as 🛡️ Warrior Service (gRPC)
+    participant Dragon as 🐉 Dragon Service (gRPC)
+    participant Enemy as 👹 Enemy Service (gRPC)
     participant Kafka
 
-    Note over Client,Kafka: Battle Start with Healing Check
+    Note over Client,Kafka: ⚔️ Battle Start with Healing Check
     Client->>Battle: POST /api/battles (start battle)
     Battle->>Warrior: GetWarriorByID (gRPC, participant IDs)
     Warrior-->>Battle: Warrior info (is_healing, healing_until)
+    Battle->>Dragon: CheckDragonCanBattle (gRPC, dragon participants)
+    Dragon-->>Battle: Dragon battle eligibility
+    Battle->>Enemy: CheckEnemyCanBattle (gRPC, enemy participants)
+    Enemy-->>Battle: Enemy battle eligibility
     
-    alt Warrior is healing
+    alt Participant is healing
         Battle->>Battle: CheckWarriorCanBattle (validation)
-        Battle-->>Client: Error: Warrior is healing (remaining time)
-    else Warrior not healing
+        Battle-->>Client: ⚠️ Error: Participant is healing (remaining time)
+    else All participants ready
         Battle->>Battle: Start battle (create participants)
-        Battle-->>Client: Battle started
+        Battle-->>Client: ✅ Battle started
     end
     
-    Note over Client,Kafka: Arena Match Start with Healing Check
+    Note over Client,Kafka: 🏟️ Arena Match Start with Healing Check
     Client->>Arena: POST /api/v1/arena/invitations/accept
     Arena->>Warrior: GetWarriorByID (gRPC, challenger_id)
     Warrior-->>Arena: Challenger info (is_healing)
@@ -1440,17 +1446,17 @@ sequenceDiagram
     Warrior-->>Arena: Opponent info (is_healing)
     
     alt Challenger or Opponent is healing
-        Arena-->>Client: Error: Warrior is healing (cannot start match)
+        Arena-->>Client: ⚠️ Error: Warrior is healing (cannot start match)
     else Both warriors ready
         Arena->>Arena: Create match
-        Arena-->>Client: Match started
+        Arena-->>Client: ✅ Match started
     end
     
-    Note over Client,Kafka: Battle/Arena Completion Triggers Healing
+    Note over Client,Kafka: 💚 Battle/Arena Completion Triggers Healing
     Battle->>Kafka: battle.completed event
     Arena->>Kafka: arena.match.completed event
     Heal->>Kafka: Consume battle.completed / arena.match.completed
-    Heal->>Heal: Log healing availability (warriors can now heal)
+    Heal->>Heal: 📝 Log healing availability (participants can now heal)
 ```
 
 ### Heal Service Event Flow
