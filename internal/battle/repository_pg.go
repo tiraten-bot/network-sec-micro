@@ -37,6 +37,11 @@ func (r *sqlRepo) GetBattleByID(ctx context.Context, id string) (*Battle, error)
         CompletedAt: row.CompletedAt,
         CreatedAt: row.CreatedAt,
         UpdatedAt: row.UpdatedAt,
+        WagerAmount: row.WagerAmount,
+        LightEmperorID: row.LightEmperorID,
+        DarkEmperorID: row.DarkEmperorID,
+        LightEmperorApproved: row.LightEmperorApproved,
+        DarkEmperorApproved: row.DarkEmperorApproved,
     }
     return b, nil
 }
@@ -58,6 +63,11 @@ func (r *sqlRepo) CreateBattle(ctx context.Context, b *Battle) (string, error) {
         CompletedAt: b.CompletedAt,
         CreatedAt: b.CreatedAt,
         UpdatedAt: b.UpdatedAt,
+        WagerAmount: b.WagerAmount,
+        LightEmperorID: b.LightEmperorID,
+        DarkEmperorID: b.DarkEmperorID,
+        LightEmperorApproved: b.LightEmperorApproved,
+        DarkEmperorApproved: b.DarkEmperorApproved,
     }
     if tx := db.WithContext(ctx).Create(row); tx.Error != nil { return "", tx.Error }
     return fmt.Sprintf("%d", row.ID), nil
