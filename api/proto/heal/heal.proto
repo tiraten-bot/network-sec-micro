@@ -17,9 +17,10 @@ service HealService {
 
 // Request to purchase heal
 message PurchaseHealRequest {
-  string warrior_id = 1;
-  string heal_type = 2; // "full", "partial", "emperor_full", "emperor_partial", "dragon"
-  string warrior_role = 3; // Warrior role for RBAC (e.g., "light_emperor", "warrior", "dragon")
+  string participant_id = 1; // Warrior/Dragon/Enemy ID
+  string participant_type = 2; // "warrior", "dragon", "enemy"
+  string heal_type = 3; // "full", "partial", "emperor_full", "emperor_partial", "dragon"
+  string participant_role = 4; // Role for RBAC (e.g., "light_emperor", "warrior", "dragon")
 }
 
 // Response after purchase
