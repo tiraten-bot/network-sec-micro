@@ -10,6 +10,7 @@ wire:
 	cd cmd/battlespell && wire
 	cd cmd/arena && wire
 	cd cmd/arenaspell && wire
+	cd cmd/heal && wire || echo "Wire generation skipped for heal (dependency issue)"
 
 # Generate protobuf code
 proto:
