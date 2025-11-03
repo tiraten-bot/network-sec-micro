@@ -18,43 +18,91 @@ func NewService() *Service {
 	return &Service{}
 }
 
-// PurchaseHeal processes a healing purchase
-func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType HealType, battleID string) (*HealingRecord, error) {
-	// Get warrior info
-	warrior, err := GetWarriorByID(ctx, warriorID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get warrior: %w", err)
-	}
-
-	// Get current HP from battle logs (if battleID provided)
-	currentHP := 0
-	if battleID != "" {
-		hp, err := GetBattleLogLastHP(ctx, battleID, warriorID)
-		if err != nil {
-			log.Printf("Warning: Could not get HP from battle logs: %v. Using warrior default", err)
-			// Fallback: assume warrior has some HP (could be calculated from total_power)
-			// For now, we'll need to get HP from warrior service or assume it's 0
-			currentHP = 0
-		} else {
-			currentHP = hp
-		}
-	}
-
-	// Calculate max HP from total power (if not available from warrior service)
-	maxHP := int(warrior.TotalPower) * 10
-	if maxHP < 100 {
-		maxHP = 100 // Minimum HP
-	}
-
-	// Select heal package
+// GetHealPackageByType returns heal package by type with role validation
+func GetHealPackageByType(healType HealType, role string) (HealPackage, error) {
 	var packageInfo HealPackage
 	switch healType {
 	case HealTypeFull:
 		packageInfo = FullHealPackage
 	case HealTypePartial:
 		packageInfo = PartialHealPackage
+	case HealTypeEmperorFull:
+		packageInfo = EmperorFullHealPackage
+	case HealTypeEmperorPartial:
+		packageInfo = EmperorPartialHealPackage
+	case HealTypeDragon:
+		packageInfo = DragonHealPackage
 	default:
-		return nil, errors.New("invalid heal type")
+		return HealPackage{}, errors.New("invalid heal type")
+	}
+
+	// Check role permission
+	warriorRole := normalizeRole(role)
+	if !canUsePackage(warriorRole, packageInfo.RequiredRole) {
+		return HealPackage{}, fmt.Errorf("role '%s' cannot use %s package (requires %s)", role, healType, packageInfo.RequiredRole)
+	}
+
+	return packageInfo, nil
+}
+
+// normalizeRole normalizes role string for comparison
+func normalizeRole(role string) string {
+	if role == "light_emperor" || role == "dark_emperor" {
+		return "emperor"
+	}
+	// Assume dragon role is passed as "dragon" or similar
+	if role == "dragon" {
+		return "dragon"
+	}
+	return "warrior"
+}
+
+// canUsePackage checks if role can use the package
+func canUsePackage(userRole, requiredRole string) bool {
+	if requiredRole == "warrior" {
+		return true // All roles can use warrior packages
+	}
+	return userRole == requiredRole
+}
+
+// PurchaseHeal processes a healing purchase
+func (s *Service) PurchaseHeal(ctx context.Context, warriorID uint, healType HealType, battleID string, warriorRole string) (*HealingRecord, error) {
+	// Get warrior info
+	warrior, err := GetWarriorByID(ctx, warriorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get warrior: %w", err)
+	}
+
+	// Check if warrior is already healing
+	if warrior.CurrentHp > 0 { // If we have HP info, check healing state
+		// TODO: Check IsHealing field from warrior service
+		// For now, we'll check healing records for active healing
+	}
+
+	// Get current HP from battle logs (if battleID provided) or warrior service
+	currentHP := int(warrior.CurrentHp)
+	if currentHP == 0 && battleID != "" {
+		hp, err := GetBattleLogLastHP(ctx, battleID, warriorID)
+		if err != nil {
+			log.Printf("Warning: Could not get HP from battle logs: %v. Using warrior default", err)
+		} else {
+			currentHP = hp
+		}
+	}
+
+	// Calculate max HP from total power
+	maxHP := int(warrior.MaxHp)
+	if maxHP == 0 {
+		maxHP = int(warrior.TotalPower) * 10
+		if maxHP < 100 {
+			maxHP = 100 // Minimum HP
+		}
+	}
+
+	// Get heal package with role validation
+	packageInfo, err := GetHealPackageByType(healType, warriorRole)
+	if err != nil {
+		return nil, err
 	}
 
 	// Calculate healing amount
