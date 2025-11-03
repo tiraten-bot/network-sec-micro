@@ -35,6 +35,8 @@ func (r *sqlRepo) SaveHealingRecord(ctx context.Context, record *HealingRecord) 
 		HPBefore:     record.HPBefore,
 		HPAfter:      record.HPAfter,
 		CoinsSpent:   record.CoinsSpent,
+		Duration:     record.Duration,
+		CompletedAt:  record.CompletedAt,
 		CreatedAt:    record.CreatedAt,
 	}
 
@@ -69,6 +71,8 @@ func (r *sqlRepo) GetHealingHistory(ctx context.Context, warriorID uint) ([]*Hea
 			HPBefore:     row.HPBefore,
 			HPAfter:      row.HPAfter,
 			CoinsSpent:   row.CoinsSpent,
+			Duration:     row.Duration,
+			CompletedAt:  row.CompletedAt,
 			CreatedAt:    row.CreatedAt,
 		})
 	}
