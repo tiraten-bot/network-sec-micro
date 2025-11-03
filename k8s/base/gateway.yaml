@@ -27,6 +27,8 @@ spec:
               value: http://dragon:8084
             - name: UPSTREAM_WEAPON
               value: http://weapon:8081
+            - name: UPSTREAM_HEAL
+              value: http://heal:50058
             - name: REDIS_ADDR
               value: redis:6379
           ports:
