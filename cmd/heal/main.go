@@ -42,9 +42,11 @@ func main() {
 		log.Fatalf("Failed to connect to Coin gRPC: %v", err)
 	}
 
-	// Initialize service and gRPC server
-	service := heal.NewService()
-	grpcServer := heal.NewHealServiceServer(service)
+	// Initialize service and gRPC server using Wire
+	service, grpcServer, err := InitializeApp()
+	if err != nil {
+		log.Fatalf("Failed to initialize app: %v", err)
+	}
 
 	// Setup graceful shutdown
 	shutdown := make(chan os.Signal, 1)
