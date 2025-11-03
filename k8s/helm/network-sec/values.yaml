@@ -29,6 +29,8 @@ replicas:
 env:
   kafkaBrokers: kafka:9092
   redisAddr: redis:6379
+  warriorGrpcAddr: warrior:50052
+  coinGrpcAddr: coin:50051
   postgres:
     host: postgres
     port: 5432
