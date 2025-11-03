@@ -1663,5 +1663,111 @@ Token almak için `/api/login` endpoint'ini kullanabilirsiniz.
 ### Notlar
 
 - **Coin Service**: gRPC servis olduğu için protobuf dosyalarından dokümantasyon oluşturulabilir (`api/proto/coin/coin.proto`)
+- **Heal Service**: gRPC servis olduğu için protobuf dosyalarından dokümantasyon oluşturulabilir (`api/proto/heal/heal.proto`)
 - **Enemy Service**: Şu anda HTTP endpoint'leri implement edilmemiştir (sadece Kafka consumer)
-- **API Gateway**: Gateway üzerinden erişilen servislerin dokümantasyonları kendi servis portlarından erişilebilir
+- **API Gateway**: Gateway üzerinden erişilen servislerin dokümantasyonları kendi servis portlarından erişilebilir. HealService gRPC proxy route: `/heal.HealService`
+
+## HealService Deployment
+
+### Docker Compose Deployment
+
+```mermaid
+graph TB
+    subgraph "Docker Compose Services"
+        DCPG[PostgreSQL<br/>heal_db]
+        DCR[Redis<br/>Healing State Cache]
+        DCK[Kafka<br/>Events]
+        DCH[Heal Service<br/>:50058]
+        DCW[Warrior Service<br/>:50052]
+        DCC[Coin Service<br/>:50051]
+        DCGW[Gateway<br/>:8090]
+    end
+    
+    DCH -->|Read/Write| DCPG
+    DCH -->|Cache| DCR
+    DCH -->|Consume Events| DCK
+    DCH -->|gRPC| DCW
+    DCH -->|gRPC| DCC
+    DCGW -->|gRPC Proxy| DCH
+    
+    style DCH fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style DCPG fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCR fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCK fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style DCW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style DCC fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style DCGW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+```
+
+### Kubernetes Deployment
+
+```mermaid
+graph TB
+    subgraph "Kubernetes Namespace: network-sec"
+        KSPG[PostgreSQL<br/>StatefulSet]
+        KSR[Redis<br/>StatefulSet]
+        KSK[Kafka<br/>StatefulSet]
+        KSH[Heal Service<br/>Deployment]
+        KSW[Warrior Service<br/>Deployment]
+        KSC[Coin Service<br/>Deployment]
+        KSGW[Gateway<br/>Deployment]
+        KSSH[Heal Service<br/>Service :50058]
+        KSING[Ingress]
+    end
+    
+    KSH -->|Read/Write| KSPG
+    KSH -->|Cache| KSR
+    KSH -->|Consume Events| KSK
+    KSH -->|gRPC| KSW
+    KSH -->|gRPC| KSC
+    KSSH -.->|Exposes| KSH
+    KSGW -->|gRPC Proxy| KSSH
+    KSING -->|Routes| KSGW
+    
+    style KSH fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSPG fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSR fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSK fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KSW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style KSC fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style KSGW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style KSSH fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style KSING fill:#08315c,stroke:#001a4d,color:#ffffff
+```
+
+### HealService Container Architecture
+
+```mermaid
+graph TB
+    subgraph "HealService Container"
+        APP[Heal Service<br/>Go Application]
+        GRPC[gRPC Server<br/>:50058]
+        DB[PostgreSQL Client<br/>GORM]
+        REDIS[Redis Client]
+        KAFKA[Kafka Consumer]
+        GRPCW[Warrior gRPC<br/>Client]
+        GRPCC[Coin gRPC<br/>Client]
+    end
+    
+    APP --> GRPC
+    APP --> DB
+    APP --> REDIS
+    APP --> KAFKA
+    APP --> GRPCW
+    APP --> GRPCC
+    
+    GRPC -->|Listen| EXTERNAL[External Clients]
+    DB -->|Connect| PG[(PostgreSQL)]
+    REDIS -->|Connect| RD[(Redis)]
+    KAFKA -->|Consume| KF[(Kafka)]
+    GRPCW -->|Call| W[Warrior Service]
+    GRPCC -->|Call| C[Coin Service]
+    
+    style APP fill:#0d56b3,stroke:#001a4d,color:#ffffff
+    style GRPC fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style DB fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style REDIS fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style KAFKA fill:#133e7c,stroke:#001a4d,color:#ffffff
+    style GRPCW fill:#0b3d91,stroke:#001a4d,color:#ffffff
+    style GRPCC fill:#0b3d91,stroke:#001a4d,color:#ffffff
+```
