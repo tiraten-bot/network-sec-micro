@@ -19,9 +19,8 @@ func main() {
         log.Fatalf("arenaspell db init failed: %v", err)
     }
 
-    svc := arenaspell.NewService()
-    h := arenaspell.NewHandler(svc)
-    grpcSrv := arenaspell.NewArenaSpellServiceServer(svc)
+    svc, h, grpcSrv, err := InitializeApp()
+    if err != nil { log.Fatalf("arenaspell wire init failed: %v", err) }
 
     // gRPC server
     go func() {
