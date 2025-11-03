@@ -109,6 +109,13 @@ type Battle struct {
     CompletedAt   *time.Time         `json:"completed_at,omitempty"`
     CreatedAt     time.Time          `json:"created_at"`
     UpdatedAt     time.Time          `json:"updated_at"`
+
+    // Emperor wager (optional)
+    WagerAmount   int                `json:"wager_amount"`
+    LightEmperorID string            `json:"light_emperor_id"`
+    DarkEmperorID  string            `json:"dark_emperor_id"`
+    LightEmperorApproved bool        `json:"light_emperor_approved"`
+    DarkEmperorApproved  bool        `json:"dark_emperor_approved"`
 }
 
 // CollectionName returns the MongoDB collection name
