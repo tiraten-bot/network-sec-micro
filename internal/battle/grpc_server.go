@@ -1,18 +1,17 @@
 package battle
 
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "time"
 
-	pb "network-sec-micro/api/proto/battle"
-	"network-sec-micro/internal/battle/dto"
+    pb "network-sec-micro/api/proto/battle"
+    "network-sec-micro/internal/battle/dto"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
+    "go.mongodb.org/mongo-driver/bson/primitive"
+    "google.golang.org/grpc/codes"
+    "google.golang.org/grpc/status"
+    "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // BattleServiceServer implements the BattleService gRPC server
@@ -30,18 +29,16 @@ func NewBattleServiceServer(service *Service) *BattleServiceServer {
 
 // GetBattleByID gets battle by ID
 func (s *BattleServiceServer) GetBattleByID(ctx context.Context, req *pb.GetBattleByIDRequest) (*pb.GetBattleByIDResponse, error) {
-	battleID, err := primitive.ObjectIDFromHex(req.BattleId)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid battle ID")
-	}
+    if _, err := primitive.ObjectIDFromHex(req.BattleId); err != nil {
+        return nil, status.Error(codes.InvalidArgument, "invalid battle ID")
+    }
 
-	var battle Battle
-	err = BattleColl.FindOne(ctx, bson.M{"_id": battleID}).Decode(&battle)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "battle not found")
-	}
+    battle, err := GetRepository().GetBattleByID(ctx, req.BattleId)
+    if err != nil {
+        return nil, status.Error(codes.NotFound, "battle not found")
+    }
 
-	pbBattle := convertBattleToProto(&battle)
+    pbBattle := convertBattleToProto(battle)
 	return &pb.GetBattleByIDResponse{
 		Battle: pbBattle,
 	}, nil
