@@ -17,6 +17,9 @@ service EnemyService {
   
   // CheckEnemyCanBattle checks if an enemy can participate in battles (not healing)
   rpc CheckEnemyCanBattle(CheckEnemyCanBattleRequest) returns (CheckEnemyCanBattleResponse);
+  
+  // DeductEnemyCoins deducts coins from enemy's balance
+  rpc DeductEnemyCoins(DeductEnemyCoinsRequest) returns (DeductEnemyCoinsResponse);
 }
 
 // Enemy represents an enemy entity
@@ -28,9 +31,10 @@ message Enemy {
   int32 health = 5;          // Current HP
   int32 max_health = 6;      // Maximum HP
   int32 attack_power = 7;    // Attack power
-  string created_by = 8;     // Creator username (dark emperor/king)
-  bool is_healing = 9;       // Is currently healing
-  int64 healing_until_seconds = 10; // Unix timestamp when healing completes (0 if not healing)
+  int64 coin_balance = 8;    // Enemy's coin balance
+  string created_by = 9;     // Creator username (dark emperor/king)
+  bool is_healing = 10;      // Is currently healing
+  int64 healing_until_seconds = 11; // Unix timestamp when healing completes (0 if not healing)
 }
 
 // GetEnemyByIDRequest requests an enemy by ID
