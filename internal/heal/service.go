@@ -8,14 +8,19 @@ import (
 	"time"
 
 	pbWarrior "network-sec-micro/api/proto/warrior"
+	"network-sec-micro/internal/heal/dto"
 )
 
-// Service handles healing business logic
-type Service struct{}
+// Service handles healing business logic with CQRS pattern
+type Service struct {
+	repo Repository
+}
 
 // NewService creates a new heal service
 func NewService() *Service {
-	return &Service{}
+	return &Service{
+		repo: GetRepository(),
+	}
 }
 
 // GetHealPackageByType returns heal package by type with role validation
