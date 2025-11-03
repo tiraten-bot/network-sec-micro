@@ -163,3 +163,14 @@ func PublishBattleCompletedEvent(battleID string, battleType BattleType, warrior
 	return nil
 }
 
+// PublishBattleWagerResolved publishes wager resolution after team battle
+func PublishBattleWagerResolved(battleID string, winnerSide TeamSide, wagerAmount int, lightEmperorID, darkEmperorID string) error {
+    publisher := GetKafkaPublisher()
+    if publisher == nil { return fmt.Errorf("kafka publisher not initialized") }
+    event := kafka.NewBattleWagerResolvedEvent(battleID, string(winnerSide), wagerAmount, lightEmperorID, darkEmperorID)
+    topic := kafka.TopicBattleWagerResolved
+    if err := publisher.Publish(topic, event); err != nil { return fmt.Errorf("failed to publish battle wager resolved: %w", err) }
+    log.Printf("Published battle wager resolved: battle=%s winner=%s amount=%d", battleID, winnerSide, wagerAmount)
+    return nil
+}
+
