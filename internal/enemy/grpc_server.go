@@ -2,6 +2,7 @@ package enemy
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	pb "network-sec-micro/api/proto/enemy"
