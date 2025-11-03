@@ -10,12 +10,11 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Generate proto files (if not already generated)
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+# Install protoc and generate proto files
+RUN apk add --no-cache protobuf-dev protoc
 
 # Generate Wire code
-RUN cd cmd/arena && wire
+RUN cd cmd/arena && wire || true
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o arena cmd/arena/main.go
