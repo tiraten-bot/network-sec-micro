@@ -142,3 +142,24 @@ func UpdateWarriorHP(ctx context.Context, warriorID uint, newHP int32) error {
 	return nil
 }
 
+// SetWarriorHealingState sets warrior's healing state (is_healing, healing_until)
+// Note: This requires a new RPC method in warrior service. For now, we'll use a workaround.
+func SetWarriorHealingState(ctx context.Context, warriorID uint, isHealing bool, healingUntil *time.Time) error {
+	// TODO: Add UpdateWarriorHealingState RPC to warrior service
+	// For now, we'll log it and the state will be tracked in heal service
+	if isHealing && healingUntil != nil {
+		log.Printf("Warrior %d is now healing until %v", warriorID, healingUntil)
+	} else {
+		log.Printf("Warrior %d healing completed", warriorID)
+	}
+	return nil
+}
+
+// CheckWarriorHealingState checks if warrior is currently healing
+func CheckWarriorHealingState(ctx context.Context, warriorID uint) (bool, *time.Time, error) {
+	// TODO: Query warrior service for IsHealing and HealingUntil
+	// For now, check active healing records
+	// This would require querying repository for active healings
+	return false, nil, nil
+}
+
