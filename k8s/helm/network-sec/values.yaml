@@ -8,6 +8,7 @@ images:
   coin:    { repository: coin,    tag: latest, pullPolicy: IfNotPresent }
   battle:  { repository: battle,  tag: latest, pullPolicy: IfNotPresent }
   battlespell: { repository: battlespell, tag: latest, pullPolicy: IfNotPresent }
+  arena: { repository: arena, tag: latest, pullPolicy: IfNotPresent }
   gateway: { repository: fiber-gateway, tag: latest, pullPolicy: IfNotPresent }
 
 replicas:
@@ -18,6 +19,7 @@ replicas:
   coin: 1
   battle: 1
   battlespell: 1
+  arena: 1
   gateway: 1
 
 env:
@@ -42,6 +44,7 @@ env:
     weaponDB: weapon_db
     battleDB: battle_db
     battlespellDB: battlespell_db
+    arenaDB: arena_db
 
 battlespell:
   replicas: 1
@@ -72,6 +75,40 @@ battlespell:
     type: ClusterIP
     port: 8086
     grpcPort: 50054
+
+arena:
+  replicas: 1
+  image:
+    repository: arena
+    tag: latest
+    pullPolicy: IfNotPresent
+  mongodb:
+    database: arena_db
+  warriorGrpcAddr: warrior:50052
+  kafkaBrokers: kafka:9092
+  ginMode: release
+  ports:
+    http: 8087
+    grpc: 50055
+  probes:
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 30
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  service:
+    type: ClusterIP
+    ports:
+      http: 8087
+      grpc: 50055
 
 ingress:
   enabled: true
