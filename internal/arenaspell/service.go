@@ -25,6 +25,10 @@ func (s *Service) CastSpell(ctx context.Context, cmd dto.CastArenaSpellCommand) 
         return 0, errors.New("invalid spell type")
     }
 
+    if !st.CanBeCastBy(cmd.CasterRole) {
+        return 0, fmt.Errorf("role %s cannot cast spell %s", cmd.CasterRole, cmd.SpellType)
+    }
+
     matchID, err := primitive.ObjectIDFromHex(cmd.MatchID)
     if err != nil {
         return 0, errors.New("invalid match ID")
