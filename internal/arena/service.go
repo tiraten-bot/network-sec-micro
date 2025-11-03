@@ -20,16 +20,11 @@ import (
 )
 
 // Service handles arena business logic with CQRS pattern
-type Service struct {
-	battleServiceURL string
-}
+type Service struct{}
 
 // NewService creates a new arena service
 func NewService() *Service {
-	battleURL := getEnv("BATTLE_SERVICE_URL", "http://localhost:8085")
-	return &Service{
-		battleServiceURL: battleURL,
-	}
+	return &Service{}
 }
 
 const (
@@ -319,62 +314,173 @@ func (s *Service) CancelInvitation(ctx context.Context, cmd dto.CancelInvitation
 	return nil
 }
 
-// startArenaBattle starts a 1v1 arena battle via Battle Service HTTP API
-func (s *Service) startArenaBattle(ctx context.Context, player1ID uint, player1Name string, player2ID uint, player2Name string) (string, error) {
-	// Create arena battle request to battle service
-	type ArenaBattleRequest struct {
-		Player1ID   uint   `json:"player1_id"`
-		Player1Name string `json:"player1_name"`
-		Player2ID   uint   `json:"player2_id"`
-		Player2Name string `json:"player2_name"`
-		BattleType  string `json:"battle_type"` // "arena"
-	}
-
-	reqBody := ArenaBattleRequest{
-		Player1ID:   player1ID,
-		Player1Name: player1Name,
-		Player2ID:   player2ID,
-		Player2Name: player2Name,
-		BattleType:  "arena",
-	}
-
-	jsonData, err := json.Marshal(reqBody)
+// PerformAttack performs an attack in an arena match
+func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID, attackerID uint) (*ArenaMatch, error) {
+	var match ArenaMatch
+	err := MatchColl.FindOne(ctx, bson.M{"_id": matchID}).Decode(&match)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("match not found")
+		}
+		return nil, fmt.Errorf("failed to get match: %w", err)
 	}
 
-	// Call battle service
-	url := fmt.Sprintf("%s/api/arena/start", s.battleServiceURL)
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, jsonData)
+	if match.Status != MatchStatusInProgress {
+		return nil, errors.New("match is not in progress")
+	}
+
+	// Validate attacker
+	var attackerHP, attackerAttack *int
+	var defenderHP, defenderDefense *int
+	var defenderID uint
+	var attackerName, defenderName string
+
+	if attackerID == match.Player1ID {
+		if match.CurrentAttacker != 1 && match.CurrentAttacker != 0 {
+			return nil, errors.New("not your turn")
+		}
+		attackerHP = &match.Player1HP
+		attackerAttack = &match.Player1Attack
+		defenderHP = &match.Player2HP
+		defenderDefense = &match.Player2Defense
+		defenderID = match.Player2ID
+		attackerName = match.Player1Name
+		defenderName = match.Player2Name
+	} else if attackerID == match.Player2ID {
+		if match.CurrentAttacker != 2 {
+			return nil, errors.New("not your turn")
+		}
+		attackerHP = &match.Player2HP
+		attackerAttack = &match.Player2Attack
+		defenderHP = &match.Player1HP
+		defenderDefense = &match.Player1Defense
+		defenderID = match.Player1ID
+		attackerName = match.Player2Name
+		defenderName = match.Player1Name
+	} else {
+		return nil, errors.New("you are not a participant in this match")
+	}
+
+	// Calculate damage
+	damage := *attackerAttack - *defenderDefense
+	if damage < 10 {
+		damage = 10 // Minimum damage
+	}
+
+	// Apply damage
+	*defenderHP -= damage
+	if *defenderHP < 0 {
+		*defenderHP = 0
+	}
+
+	// Update match
+	match.CurrentTurn++
+	// Switch attacker for next turn
+	if match.CurrentAttacker == 1 {
+		match.CurrentAttacker = 2
+	} else {
+		match.CurrentAttacker = 1
+	}
+
+	// Update HP values
+	if attackerID == match.Player1ID {
+		match.Player2HP = *defenderHP
+	} else {
+		match.Player1HP = *defenderHP
+	}
+
+	// Check if match is over
+	if *defenderHP <= 0 {
+		// Defender is defeated
+		match.Status = MatchStatusCompleted
+		now := time.Now()
+		match.CompletedAt = &now
+
+		// Set winner
+		if attackerID == match.Player1ID {
+			winnerID := match.Player1ID
+			match.WinnerID = &winnerID
+			match.WinnerName = match.Player1Name
+		} else {
+			winnerID := match.Player2ID
+			match.WinnerID = &winnerID
+			match.WinnerName = match.Player2Name
+		}
+
+		// Publish match completed event
+		go func() {
+			if err := PublishMatchCompleted(
+				match.ID.Hex(),
+				match.Player1ID,
+				match.Player1Name,
+				match.Player2ID,
+				match.Player2Name,
+				match.WinnerID,
+				match.WinnerName,
+				match.ID.Hex(),
+			); err != nil {
+				log.Printf("Failed to publish match completed event: %v", err)
+			}
+		}()
+	} else if match.CurrentTurn >= match.MaxTurns {
+		// Match timeout - draw (or determine winner by HP)
+		if match.Player1HP > match.Player2HP {
+			winnerID := match.Player1ID
+			match.WinnerID = &winnerID
+			match.WinnerName = match.Player1Name
+		} else if match.Player2HP > match.Player1HP {
+			winnerID := match.Player2ID
+			match.WinnerID = &winnerID
+			match.WinnerName = match.Player2Name
+		}
+		// If equal HP, no winner (draw)
+
+		match.Status = MatchStatusCompleted
+		now := time.Now()
+		match.CompletedAt = &now
+
+		go func() {
+			if err := PublishMatchCompleted(
+				match.ID.Hex(),
+				match.Player1ID,
+				match.Player1Name,
+				match.Player2ID,
+				match.Player2Name,
+				match.WinnerID,
+				match.WinnerName,
+				match.ID.Hex(),
+			); err != nil {
+				log.Printf("Failed to publish match completed event: %v", err)
+			}
+		}()
+	}
+
+	match.UpdatedAt = time.Now()
+
+	updateData := bson.M{
+		"player1_hp":      match.Player1HP,
+		"player2_hp":      match.Player2HP,
+		"current_turn":    match.CurrentTurn,
+		"current_attacker": match.CurrentAttacker,
+		"status":          match.Status,
+		"updated_at":      match.UpdatedAt,
+	}
+
+	if match.CompletedAt != nil {
+		updateData["completed_at"] = match.CompletedAt
+	}
+	if match.WinnerID != nil {
+		updateData["winner_id"] = *match.WinnerID
+		updateData["winner_name"] = match.WinnerName
+	}
+
+	_, err = MatchColl.UpdateOne(ctx, bson.M{"_id": matchID}, bson.M{"$set": updateData})
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to update match: %w", err)
 	}
 
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to call battle service: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("battle service returned error: %d - %s", resp.StatusCode, string(body))
-	}
-
-	// Parse response
-	type ArenaBattleResponse struct {
-		BattleID string `json:"battle_id"`
-	}
-
-	var battleResp ArenaBattleResponse
-	if err := json.NewDecoder(resp.Body).Decode(&battleResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return battleResp.BattleID, nil
+	log.Printf("Arena attack: %s dealt %d damage to %s (HP: %d)", attackerName, damage, defenderName, *defenderHP)
+	return &match, nil
 }
 
 // markInvitationAsExpired marks an invitation as expired
