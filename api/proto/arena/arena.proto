@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package arena;
+
+option go_package = "network-sec-micro/api/proto/arena";
+
+// Arena Service (gRPC methods for service-to-service communication)
+service ArenaService {
+  // Get warrior info by username (for invitation validation)
+  rpc GetWarriorByUsername(GetWarriorByUsernameRequest) returns (GetWarriorByUsernameResponse);
+  
+  // Get warrior info by ID (for match creation)
+  rpc GetWarriorByID(GetWarriorByIDRequest) returns (GetWarriorByIDResponse);
+}
+
+// Request to get warrior by username
+message GetWarriorByUsernameRequest {
+  string username = 1;
+}
+
+// Response with warrior info
+message GetWarriorByUsernameResponse {
+  Warrior warrior = 1;
+}
+
+// Request to get warrior by ID
+message GetWarriorByIDRequest {
+  uint32 warrior_id = 1;
+}
+
+// Response with warrior info
+message GetWarriorByIDResponse {
+  Warrior warrior = 1;
+}
+
+// Warrior information
+message Warrior {
+  uint32 id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  int32 total_power = 5;
+  int32 attack_power = 6;
+  int32 defense = 7;
+  int32 coin_balance = 8;
+  int32 weapon_count = 9;
+}
+
