@@ -24,3 +24,10 @@ type CancelInvitationRequest struct {
 type AttackInArenaRequest struct {
 	MatchID string `json:"match_id" binding:"required"`
 }
+
+// ApplyArenaSpellRequest is the payload for arenaspell effect application
+type ApplyArenaSpellRequest struct {
+    MatchID   string `json:"match_id" binding:"required"`
+    CasterID  uint   `json:"caster_id" binding:"required"`
+    SpellType string `json:"spell_type" binding:"required"`
+}
