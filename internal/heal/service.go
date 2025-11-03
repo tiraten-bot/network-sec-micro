@@ -193,15 +193,53 @@ func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand)
 		log.Printf("Warning: Failed to save healing record: %v", err)
 	}
 
-	// Schedule HP update after duration (in production, use background job)
+	// Log healing started to Redis
+	if err := LogHealingStarted(ctx, record); err != nil {
+		log.Printf("Warning: Failed to log healing started: %v", err)
+	}
+
+	// Schedule HP update after duration with progress logging (in production, use background job)
 	go func() {
-		time.Sleep(time.Duration(packageInfo.Duration) * time.Second)
-		if err := UpdateWarriorHP(context.Background(), warriorID, int32(hpAfter)); err != nil {
-			log.Printf("Failed to apply healing HP after duration: %v", err)
-		} else {
-			// Clear healing state
-			_ = SetWarriorHealingState(context.Background(), warriorID, false, nil)
-			log.Printf("Healing completed for warrior %d: HP updated to %d", warriorID, hpAfter)
+		remaining := packageInfo.Duration
+		ticker := time.NewTicker(5 * time.Second) // Log progress every 5 seconds
+		defer ticker.Stop()
+
+		done := make(chan bool)
+		go func() {
+			time.Sleep(time.Duration(packageInfo.Duration) * time.Second)
+			done <- true
+		}()
+
+		for {
+			select {
+			case <-ticker.C:
+				remaining -= 5
+				if remaining < 0 {
+					remaining = 0
+				}
+				progress := float64(packageInfo.Duration-remaining) / float64(packageInfo.Duration) * 100.0
+				if err := LogHealingProgress(context.Background(), warriorID, warrior.Username, healType, remaining, packageInfo.Duration, progress); err != nil {
+					log.Printf("Warning: Failed to log healing progress: %v", err)
+				}
+			case <-done:
+				// Apply HP update
+				if err := UpdateWarriorHP(context.Background(), warriorID, int32(hpAfter)); err != nil {
+					log.Printf("Failed to apply healing HP after duration: %v", err)
+					_ = LogHealingFailed(context.Background(), warriorID, warrior.Username, healType, fmt.Sprintf("Failed to update HP: %v", err))
+				} else {
+					// Clear healing state
+					_ = SetWarriorHealingState(context.Background(), warriorID, false, nil)
+					// Update record completion
+					record.CompletedAt = &time.Time{}
+					*record.CompletedAt = time.Now()
+					// Log healing completed
+					if err := LogHealingCompleted(context.Background(), record); err != nil {
+						log.Printf("Warning: Failed to log healing completed: %v", err)
+					}
+					log.Printf("Healing completed for warrior %d: HP updated to %d", warriorID, hpAfter)
+				}
+				return
+			}
 		}
 	}()
 
