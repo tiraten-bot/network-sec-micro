@@ -56,11 +56,29 @@ func main() {
 	// Initialize service and handler manually (bypass Wire)
 	service := dragon.NewService()
 	handler := dragon.NewHandler(service)
+	grpcServer := dragon.NewDragonServiceServer(service)
 
 	// Setup graceful shutdown
-	defer func() {
-		log.Println("Shutting down...")
-		dragon.CloseKafkaPublisher()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Start gRPC server
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		grpcPort = "50059"
+	}
+	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatalf("Failed to listen on gRPC port %s: %v", grpcPort, err)
+	}
+	grpcSrv := grpc.NewServer()
+	pb.RegisterDragonServiceServer(grpcSrv, grpcServer)
+
+	go func() {
+		log.Printf("Dragon gRPC server starting on port %s", grpcPort)
+		if err := grpcSrv.Serve(grpcLis); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
 	}()
 
 	// Create Gin router
@@ -93,8 +111,17 @@ func main() {
 		port = "8084"
 	}
 
-	log.Printf("Dragon service starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	log.Printf("Dragon HTTP service starting on port %s", port)
+	go func() {
+		if err := r.Run(":" + port); err != nil {
+			log.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	<-sigChan
+	log.Println("Shutting down Dragon service...")
+	grpcSrv.GracefulStop()
+	dragon.CloseKafkaPublisher()
+	log.Println("Dragon service stopped")
 }
