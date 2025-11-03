@@ -245,8 +245,8 @@ func (s *Service) PurchaseHeal(ctx context.Context, cmd dto.PurchaseHealCommand)
 	// Convert warriorID for legacy compatibility
 	var warriorID uint
 	if participantType == "warrior" {
-		warriorID, _ = strconv.ParseUint(participantID, 10, 32)
-		warriorID = uint(warriorID)
+		warriorIDUint, _ := strconv.ParseUint(participantID, 10, 32)
+		warriorID = uint(warriorIDUint)
 	}
 
 	// Create healing record
