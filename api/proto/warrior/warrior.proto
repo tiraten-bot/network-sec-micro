@@ -71,6 +71,19 @@ message UpdateWarriorHPResponse {
   int32 new_hp = 4;
 }
 
+// Request to update healing state
+message UpdateWarriorHealingStateRequest {
+  uint32 warrior_id = 1;
+  bool is_healing = 2;
+  int64 healing_until_seconds = 3; // Unix timestamp (0 if not healing)
+}
+
+// Response after updating healing state
+message UpdateWarriorHealingStateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 // Warrior model
 message Warrior {
   uint32 id = 1;
