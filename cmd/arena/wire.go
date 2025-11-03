@@ -9,8 +9,8 @@ import (
 )
 
 // InitializeApp initializes the application using Wire (CQRS pattern)
-func InitializeApp() (*arena.Service, *arena.Handler, error) {
+func InitializeApp() (*arena.Service, *arena.Handler, *arena.ArenaServiceServer, error) {
 	wire.Build(arena.ProviderSet)
-	return nil, nil, nil
+	return nil, nil, nil, nil
 }
 
