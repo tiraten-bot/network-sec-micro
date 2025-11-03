@@ -21,4 +21,6 @@ func (r *redisRepo) GetBattleByID(ctx context.Context, id string) (*Battle, erro
     return &b, nil
 }
 
+// The rest of repository methods are handled by SQL for persistence; Redis remains read/log cache.
+
 
