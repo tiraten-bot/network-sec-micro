@@ -371,12 +371,11 @@ func (h *Handler) GetDragonsByCreator(c *gin.Context) {
 		dtoDragons = append(dtoDragons, dtoDragon)
 	}
 
-		c.JSON(200, dto.GetDragonsByCreatorResponse{
-			Success: true,
-			Dragons: dtoDragons,
-			Count:   len(dtoDragons),
-		})
-	}
+	c.JSON(200, dto.GetDragonsByCreatorResponse{
+		Success: true,
+		Dragons: dtoDragons,
+		Count:   len(dtoDragons),
+	})
 }
 
 // ReviveDragon godoc
