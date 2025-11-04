@@ -32,6 +32,16 @@ type WeaponRepairEvent struct {
     OrderID   string `json:"order_id"`
 }
 
+// ArmorRepairEvent event to deduct coins for armor repair
+type ArmorRepairEvent struct {
+    Type      string `json:"type"`
+    OwnerType string `json:"owner_type"`
+    OwnerID   string `json:"owner_id"`
+    Cost      int    `json:"cost"`
+    ArmorID   string `json:"armor_id"`
+    OrderID   string `json:"order_id"`
+}
+
 // ArmorPurchaseEvent represents the event structure for armor purchase
 type ArmorPurchaseEvent struct {
     EventType     string `json:"event_type"`
