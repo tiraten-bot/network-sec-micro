@@ -85,7 +85,7 @@ func (s *Service) oldStartBattle(cmd dto.StartBattleCommand) (*Battle, error) {
 		return nil, fmt.Errorf("failed to create battle: %w", err)
 	}
 
-	battle.ID = result.InsertedID.(primitive.ObjectID)
+    battle.ID = result.InsertedID.(primitive.ObjectID).Hex()
 
 	// Start the battle
 	battle.Status = BattleStatusInProgress
@@ -110,8 +110,8 @@ func (s *Service) oldStartBattle(cmd dto.StartBattleCommand) (*Battle, error) {
 	}()
 
 	// Publish battle started event
-	go PublishBattleStartedEvent(
-		battle.ID.Hex(),
+    go PublishBattleStartedEvent(
+        battle.ID,
 		battle.BattleType,
 		battle.WarriorID,
 		battle.WarriorName,
