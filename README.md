@@ -1159,15 +1159,15 @@ sequenceDiagram
 
 ```mermaid
 %%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#1f1f1f',
-    'primaryTextColor': '#f0f0f0',
-    'primaryBorderColor': '#6b6b6b',
-    'lineColor': '#6b6b6b',
-    'tertiaryColor': '#3c3c3c',
-    'clusterBkg': '#1f1f1f',
-    'clusterBorder': '#6b6b6b'
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#1f1f1f",
+    "primaryTextColor": "#f0f0f0",
+    "primaryBorderColor": "#6b6b6b",
+    "lineColor": "#6b6b6b",
+    "tertiaryColor": "#3c3c3c",
+    "clusterBkg": "#1f1f1f",
+    "clusterBorder": "#6b6b6b"
   }
 }}%%
 graph TB
@@ -1192,12 +1192,12 @@ graph TB
 
 ```mermaid
 %%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#2b2b2b',
-    'primaryTextColor': '#e0e0e0',
-    'primaryBorderColor': '#5a5a5a',
-    'lineColor': '#5a5a5a'
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#2b2b2b",
+    "primaryTextColor": "#e0e0e0",
+    "primaryBorderColor": "#5a5a5a",
+    "lineColor": "#5a5a5a"
   }
 }}%%
 flowchart LR
