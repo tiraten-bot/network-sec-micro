@@ -32,6 +32,19 @@ type WeaponRepairEvent struct {
     OrderID   string `json:"order_id"`
 }
 
+// ArmorPurchaseEvent represents the event structure for armor purchase
+type ArmorPurchaseEvent struct {
+    EventType     string `json:"event_type"`
+    Timestamp     string `json:"timestamp"`
+    SourceService string `json:"source_service"`
+    ArmorID       string `json:"armor_id"`
+    BuyerID       uint   `json:"buyer_id"`
+    BuyerName     string `json:"buyer_name"`
+    ArmorName     string `json:"armor_name"`
+    ArmorPrice    int    `json:"armor_price"`
+    OwnerType     string `json:"owner_type"`
+}
+
 // HandleWeaponPurchase handles weapon purchase events from Kafka
 func (s *CoinServiceServer) HandleWeaponPurchase(event WeaponPurchaseEvent) error {
 	log.Printf("Received weapon purchase event: %+v", event)
@@ -79,6 +92,22 @@ func ProcessKafkaMessage(message []byte) error {
                     _, err := server.DeductCoins(ctx, &pb.DeductCoinsRequest{WarriorId: uint32(id64), Amount: int64(repair.Cost), Reason: "weapon_repair"})
                     if err != nil { log.Printf("Failed to deduct coins for repair: %v", err) }
                 }
+            }
+            return nil
+        }
+    }
+
+    // Try to unmarshal as armor purchase event
+    var armorEvent ArmorPurchaseEvent
+    if err := json.Unmarshal(message, &armorEvent); err == nil {
+        if armorEvent.EventType == "armor_purchased" {
+            // Deduct coins (only for warrior ownerType in this simple flow)
+            if armorEvent.OwnerType == "warrior" {
+                ctx := context.Background()
+                service := NewService()
+                server := NewCoinServiceServer(service)
+                _, err := server.DeductCoins(ctx, &pb.DeductCoinsRequest{WarriorId: uint32(armorEvent.BuyerID), Amount: int64(armorEvent.ArmorPrice), Reason: "armor_purchase: " + armorEvent.ArmorName})
+                if err != nil { log.Printf("Failed to deduct coins for armor purchase: %v", err) }
             }
             return nil
         }
