@@ -43,8 +43,29 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		return nil, nil, errors.New("cannot attack teammate")
 	}
 
-	// Calculate damage
-	damage := s.calculateParticipantDamage(attacker.AttackPower, target.Defense)
+    // Fetch attacker's weapon (if any) and include its damage
+    bonusDamage := 0
+    var usedWeaponID string
+    {
+        ownerType := string(attacker.Type)
+        ownerID := attacker.ParticipantID
+        // For warriors, repository stores numeric IDs; warrior usernames may be needed by weapon service.
+        // We assume owner_id matches what weapon service stores (username or id) depending on integration.
+        if ws, err := ListWeaponsByOwner(ctx, ownerType, ownerID); err == nil {
+            // pick highest damage non-broken weapon
+            maxD := 0
+            for _, w := range ws {
+                if w.IsBroken { continue }
+                if int(w.Damage) > maxD {
+                    maxD = int(w.Damage)
+                    usedWeaponID = w.Id
+                }
+            }
+            bonusDamage = maxD
+        }
+    }
+    // Calculate damage
+    damage := s.calculateParticipantDamage(attacker.AttackPower+bonusDamage, target.Defense)
 
 	// Critical hit chance (10% for warriors, 5% for others)
 	critChance := 0.1
@@ -62,6 +83,12 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 
 	// Track damage for kill attribution
 	killTracker.AddDamage(battleID, target.ParticipantID, attacker.ParticipantID)
+
+    // Apply wear to used weapon
+    if usedWeaponID != "" {
+        wear := int32(1 + rand.Intn(3)) // 1-3 wear per attack
+        _, _ = ApplyWeaponWear(ctx, usedWeaponID, wear)
+    }
 
 	// Check if target is defeated
 	targetDefeated := target.HP <= 0
