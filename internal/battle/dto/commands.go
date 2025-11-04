@@ -26,6 +26,11 @@ type StartBattleCommand struct {
     LightEmperorID string          `json:"light_emperor_id"`
     DarkEmperorID  string          `json:"dark_emperor_id"`
     RequireEmperorApproval bool    `json:"require_emperor_approval"`
+    // Legacy single battle fields (optional)
+    BattleType   string `json:"battle_type,omitempty"`
+    WarriorName  string `json:"warrior_name,omitempty"`
+    OpponentID   string `json:"opponent_id,omitempty"`
+    OpponentName string `json:"opponent_name,omitempty"`
 }
 
 // AttackCommand represents a command to perform an attack in battle
