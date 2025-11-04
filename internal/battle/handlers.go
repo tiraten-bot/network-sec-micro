@@ -150,10 +150,9 @@ func (h *Handler) Attack(c *gin.Context) {
 		return
 	}
 
-	// Get participants for response
-	battleID, _ := primitive.ObjectIDFromHex(req.BattleID)
-	lightParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battleID, "light")
-	darkParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battleID, "dark")
+    // Get participants for response
+    lightParts, _ := GetRepository().FindParticipants(c.Request.Context(), req.BattleID, "light")
+    darkParts, _ := GetRepository().FindParticipants(c.Request.Context(), req.BattleID, "dark")
 
 	response := gin.H{
         "battle": ToBattleResponse(battle, lightParts, darkParts),
@@ -202,7 +201,7 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		BattleID: objectID,
 	}
 
-	battle, lightParts, darkParts, err := h.Service.GetBattle(query)
+    battle, err := h.Service.GetBattle(query)
 	if err != nil {
 		if err.Error() == "battle not found" {
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{
@@ -218,9 +217,12 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		return
 	}
 
-	// RBAC check: Check if user is a participant or has admin access
-	user, _ := GetCurrentUser(c)
-	userIDStr := fmt.Sprintf("%d", user.UserID)
+    // Fetch participants for RBAC check
+    lightParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "light")
+    darkParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "dark")
+    // RBAC check: Check if user is a participant or has admin access
+    user, _ := GetCurrentUser(c)
+    userIDStr := fmt.Sprintf("%d", user.UserID)
 	hasAccess := false
 	
 	// Check if user is a participant
