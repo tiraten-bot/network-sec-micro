@@ -159,8 +159,8 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	}
 
 	// Legacy single battle logic below
-	// Get warrior info
-	warrior, err := GetWarriorByUsername(ctx, cmd.WarriorName)
+	// Get warrior info (use battle.WarriorName for legacy battles)
+	warrior, err := GetWarriorByUsername(ctx, battle.WarriorName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get warrior info: %w", err)
 	}
@@ -168,7 +168,7 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	// Get warrior's weapons for bonus damage
 	weaponBonus := 0
 	var usedWeaponID string
-	if ws, err := ListWeaponsByOwner(ctx, "warrior", cmd.WarriorName); err == nil {
+	if ws, err := ListWeaponsByOwner(ctx, "warrior", battle.WarriorName); err == nil {
 		maxD := 0
 		for _, w := range ws {
 			if w.IsBroken { continue }
