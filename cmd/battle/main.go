@@ -134,6 +134,7 @@ func main() {
 		battle.CloseBattlespellClient()
 		battle.CloseRedisClient()
 		battle.CloseWeaponClient()
+		battle.CloseArmorClient()
 		battle.CloseHealClient()
 	}()
 
