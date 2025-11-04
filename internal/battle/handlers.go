@@ -608,6 +608,8 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		})
 }
 
+}
+
 // ReviveDragon godoc
 // @Summary Revive a dragon in battle
 // @Description Revives a defeated dragon participant if it can still revive (max 3 times)
