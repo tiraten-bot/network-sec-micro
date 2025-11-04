@@ -21,9 +21,24 @@ message RepairWeaponRequest {
   string owner_type = 1; // warrior | enemy | dragon
   string owner_id = 2;   // username or id
   string weapon_id = 3;
+  string owner_role = 4; // Role for RBAC-based pricing (e.g., "light_emperor", "warrior")
 }
 
 message RepairWeaponResponse {
+  bool accepted = 1;       // accepted for processing
+  string order_id = 2;
+  int32 cost = 3;
+  string status = 4;       // pending | completed | failed
+}
+
+message RepairArmorRequest {
+  string owner_type = 1; // warrior | enemy | dragon
+  string owner_id = 2;   // username or id
+  string armor_id = 3;
+  string owner_role = 4; // Role for RBAC-based pricing (e.g., "light_emperor", "warrior")
+}
+
+message RepairArmorResponse {
   bool accepted = 1;       // accepted for processing
   string order_id = 2;
   int32 cost = 3;
@@ -39,11 +54,13 @@ message RepairOrderRecord {
   string id = 1;
   string owner_type = 2;
   string owner_id = 3;
-  string weapon_id = 4;
-  int32 cost = 5;
-  string status = 6;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp completed_at = 8;
+  string weapon_id = 4;    // For weapon repairs
+  string armor_id = 5;     // For armor repairs
+  string item_type = 6;    // "weapon" | "armor"
+  int32 cost = 7;
+  string status = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp completed_at = 10;
 }
 
 message GetRepairHistoryResponse {
