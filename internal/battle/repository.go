@@ -25,7 +25,7 @@ func GetRepository() Repository {
     if defaultRepo != nil { return defaultRepo }
     // For stability, use Mongo-backed repo by default
     _ = os.Getenv("BATTLE_STORE")
-    defaultRepo = &mongoRepo{}
+    defaultRepo = &sqlRepo{}
     return defaultRepo
 }
 
