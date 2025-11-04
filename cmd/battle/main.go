@@ -87,6 +87,15 @@ func main() {
 		log.Printf("Warning: Failed to connect to Weapon gRPC: %v", err)
 	}
 
+	// Initialize Armor gRPC client (optional)
+	armorAddr := os.Getenv("ARMOR_GRPC_ADDR")
+	if armorAddr == "" {
+		armorAddr = "localhost:50059"
+	}
+	if err := battle.InitArmorClient(armorAddr); err != nil {
+		log.Printf("Warning: Failed to connect to Armor gRPC: %v", err)
+	}
+
 	// Initialize Redis client for battle logs
 	if err := battle.InitRedisClient(); err != nil {
 		log.Printf("Warning: Failed to connect to Redis (battle logs will not be available): %v", err)
