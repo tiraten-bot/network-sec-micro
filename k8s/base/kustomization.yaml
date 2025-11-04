@@ -20,6 +20,7 @@ resources:
   - battlespell.yaml
   - arena.yaml
   - heal.yaml
+  - repair.yaml
   - gateway.yaml
 
 
