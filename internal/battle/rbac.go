@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strconv"
 
+	"network-sec-micro/internal/battle/dto"
+
 	"github.com/gin-gonic/gin"
 )
 
