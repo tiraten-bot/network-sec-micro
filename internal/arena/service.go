@@ -362,8 +362,36 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
         }
     }
 
-    // Calculate damage
-    damage := (*attackerAttack + bonusDamage) - *defenderDefense
+    // Include armor bonus defense and HP for defender
+    armorDefenseBonus := 0
+    armorHPBonus := 0
+    var defenderUsername string
+    if defenderID == match.Player1ID {
+        defenderUsername = match.Player1Name
+    } else {
+        defenderUsername = match.Player2Name
+    }
+    if defenderUsername != "" {
+        if armors, err := ListArmorsByOwner(ctx, "warrior", defenderUsername); err == nil {
+            maxDef := 0
+            totalHPBonus := 0
+            var usedArmorID string
+            for _, a := range armors {
+                if a.IsBroken { continue }
+                if int(a.Defense) > maxDef { 
+                    maxDef = int(a.Defense)
+                    totalHPBonus = int(a.HpBonus)
+                    usedArmorID = a.Id 
+                }
+            }
+            armorDefenseBonus = maxDef
+            armorHPBonus = totalHPBonus
+            if usedArmorID != "" { _, _ = ApplyArmorWear(ctx, usedArmorID, 1) }
+        }
+    }
+
+    // Calculate damage (defender gets armor defense bonus)
+    damage := (*attackerAttack + bonusDamage) - (*defenderDefense + armorDefenseBonus)
 	if damage < 10 {
 		damage = 10 // Minimum damage
 	}
