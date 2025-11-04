@@ -196,6 +196,22 @@ func CalculateWarriorPowerViaWeapon(ctx context.Context, username string) (total
     return resp.TotalPower, resp.WeaponCount, nil
 }
 
+// ListWeaponsByOwner fetches weapons for any owner type
+func ListWeaponsByOwner(ctx context.Context, ownerType, ownerID string) ([]*pbWeapon.Weapon, error) {
+    if weaponGrpcClient == nil {
+        return nil, fmt.Errorf("weapon gRPC client not initialized")
+    }
+    resp, err := weaponGrpcClient.ListOwnerWeapons(ctx, &pbWeapon.ListOwnerWeaponsRequest{OwnerType: ownerType, OwnerId: ownerID})
+    if err != nil { return nil, err }
+    return resp.Weapons, nil
+}
+
+// ApplyWeaponWear reduces durability
+func ApplyWeaponWear(ctx context.Context, weaponID string, wear int32) (*pbWeapon.ApplyWearResponse, error) {
+    if weaponGrpcClient == nil { return nil, fmt.Errorf("weapon gRPC client not initialized") }
+    return weaponGrpcClient.ApplyWear(ctx, &pbWeapon.ApplyWearRequest{WeaponId: weaponID, Wear: wear})
+}
+
 // AddCoins adds coins to warrior's balance via gRPC
 func AddCoins(ctx context.Context, warriorID uint, amount int64, reason string) error {
 	if coinGrpcClient == nil {
