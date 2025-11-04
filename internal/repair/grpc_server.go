@@ -10,6 +10,7 @@ import (
 
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
+    "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GrpcServer struct {
@@ -52,8 +53,8 @@ func (g *GrpcServer) GetRepairHistory(ctx context.Context, req *pb.GetRepairHist
     out := make([]*pb.RepairOrderRecord, 0, len(orders))
     for _, o := range orders {
         rec := &pb.RepairOrderRecord{Id: fmt.Sprintf("%d", o.ID), OwnerType: o.OwnerType, OwnerId: o.OwnerID, WeaponId: o.WeaponID, Cost: int32(o.Cost), Status: string(o.Status)}
-        rec.CreatedAt = &pb.Timestamp{Seconds: o.CreatedAt.Unix()}
-        if o.CompletedAt != nil { rec.CompletedAt = &pb.Timestamp{Seconds: o.CompletedAt.Unix()} }
+        rec.CreatedAt = timestamppb.New(o.CreatedAt)
+        if o.CompletedAt != nil { rec.CompletedAt = timestamppb.New(*o.CompletedAt) }
         out = append(out, rec)
     }
     return &pb.GetRepairHistoryResponse{Orders: out}, nil
