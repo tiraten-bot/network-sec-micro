@@ -335,6 +335,33 @@ services:
       - warrior-network
     restart: unless-stopped
 
+  # Repair Service (gRPC)
+  repair:
+    build:
+      context: .
+      dockerfile: dockerfiles/repair.dockerfile
+    container_name: repair-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME_REPAIR: repair_db
+      KAFKA_BROKERS: kafka:9092
+      WEAPON_GRPC_ADDR: weapon:50057
+    ports:
+      - "50061:50061"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      weapon:
+        condition: service_started
+    networks:
+      - warrior-network
+    restart: unless-stopped
+
   # Heal Service (gRPC)
   heal:
     build:
