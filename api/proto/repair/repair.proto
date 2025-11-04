@@ -10,6 +10,9 @@ service RepairService {
   // Request a repair for a weapon; performs coin deduction via Kafka asynchronously
   rpc RepairWeapon(RepairWeaponRequest) returns (RepairWeaponResponse);
 
+  // Request a repair for an armor; performs coin deduction via Kafka asynchronously
+  rpc RepairArmor(RepairArmorRequest) returns (RepairArmorResponse);
+
   // Get repair orders for an owner
   rpc GetRepairHistory(GetRepairHistoryRequest) returns (GetRepairHistoryResponse);
 }
