@@ -319,8 +319,8 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
 	// Get participants for each battle
 	responses := make([]*dto.BattleResponse, len(battles))
 	for i, battle := range battles {
-		lightParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battle.ID, "light")
-		darkParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battle.ID, "dark")
+        lightParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "light")
+        darkParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "dark")
         responses[i] = ToBattleResponse(&battle, lightParts, darkParts)
 	}
 
