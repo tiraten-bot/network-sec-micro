@@ -10,11 +10,11 @@ graph TB
         WEB[Web Client]
         API[API Client]
     end
-    
+
     subgraph "API Gateway Layer"
-        LB[Load Balancer]
+        FG[Fiber Gateway<br/>(HTTP/gRPC h2c)]
     end
-    
+
     subgraph "Microservices Layer"
         W[Warrior Service<br/>HTTP :8080]
         WP[Weapon Service<br/>HTTP :8081]
@@ -24,30 +24,36 @@ graph TB
         B[Battle Service<br/>HTTP :8085]
         BS[Battlespell Service<br/>HTTP :8086]
         A[Arena Service<br/>HTTP :8087]
+        AS[Arenaspell Service]
         H[Heal Service<br/>gRPC :50058]
+        R[Repair Service<br/>gRPC :50061]
     end
-    
+
     subgraph "Data Layer"
-        PG[(PostgreSQL<br/>Warrior Data)]
-        MG[(MongoDB<br/>Weapon/Enemy/Dragon/Battle)]
-        MY[(MySQL<br/>Coin Transactions)]
+        PG[(PostgreSQL)]
+        MG[(MongoDB)]
+        MY[(MySQL)]
+        RD[(Redis)]
     end
-    
+
     subgraph "Event Layer"
-        K[Kafka<br/>Event Streaming]
-        Z[Zookeeper<br/>Kafka Coordination]
+        K[Kafka]
+        Z[Zookeeper]
     end
-    
-    WEB --> LB
-    API --> LB
-    LB --> W
-    LB --> WP
-    LB --> E
-    LB --> D
-    LB --> B
-    LB --> BS
-    LB --> A
-    
+
+    WEB --> FG
+    API --> FG
+    FG --> W
+    FG --> WP
+    FG --> E
+    FG --> D
+    FG --> B
+    FG --> BS
+    FG --> A
+    FG --> AS
+    FG --> H
+    FG --> R
+
     W -.->|gRPC| C
     E -.->|gRPC| W
     D -.->|gRPC| W
@@ -57,9 +63,12 @@ graph TB
     B -.->|gRPC| H
     BS -.->|gRPC| B
     A -.->|gRPC| W
+    AS -.->|gRPC| A
     H -.->|gRPC| W
     H -.->|gRPC| C
-    
+    R -.->|gRPC| WP
+    R -.->|gRPC| C
+
     W --> PG
     WP --> MG
     E --> MG
@@ -67,34 +76,47 @@ graph TB
     B --> MG
     C --> MY
     H --> PG
-    
+    R --> PG
+    FG --> RD
+    B --> RD
+
     WP -->|Events| K
     E -->|Events| K
     D -->|Events| K
     B -->|Events| K
     A -->|Events| K
+    R -->|Events| K
     C -->|Consume| K
     WP -->|Consume| K
     W -->|Consume| K
     H -->|Consume| K
-    
+
     K --> Z
-    
-    style WEB fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style API fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style LB fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style W fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style WP fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style C fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style E fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style D fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style B fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style H fill:#0b3d91,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style PG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style MG fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style MY fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style K fill:#0d56b3,stroke:#001a4d,stroke-width:3px,color:#ffffff
-    style Z fill:#133e7c,stroke:#001a4d,stroke-width:3px,color:#ffffff
+
+    %% Colors
+    style WEB fill:#0077cc,stroke:#003a70,stroke-width:3px,color:#ffffff
+    style API fill:#3399ff,stroke:#003a70,stroke-width:3px,color:#ffffff
+    style FG fill:#7e57c2,stroke:#4527a0,stroke-width:3px,color:#ffffff
+
+    style W fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:#ffffff
+    style WP fill:#43a047,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    style C fill:#f9a825,stroke:#ff6f00,stroke-width:3px,color:#1f1400
+    style E fill:#e53935,stroke:#b71c1c,stroke-width:3px,color:#ffffff
+    style D fill:#fb8c00,stroke:#e65100,stroke-width:3px,color:#1f1400
+    style B fill:#00897b,stroke:#004d40,stroke-width:3px,color:#ffffff
+    style BS fill:#5e35b1,stroke:#311b92,stroke-width:3px,color:#ffffff
+    style A fill:#ec407a,stroke:#ad1457,stroke-width:3px,color:#ffffff
+    style AS fill:#8e24aa,stroke:#4a148c,stroke-width:3px,color:#ffffff
+    style H fill:#00acc1,stroke:#006064,stroke-width:3px,color:#ffffff
+    style R fill:#7cb342,stroke:#33691e,stroke-width:3px,color:#1a220f
+
+    style PG fill:#546e7a,stroke:#263238,stroke-width:3px,color:#ffffff
+    style MG fill:#455a64,stroke:#1c313a,stroke-width:3px,color:#ffffff
+    style MY fill:#607d8b,stroke:#37474f,stroke-width:3px,color:#ffffff
+    style RD fill:#d32f2f,stroke:#b71c1c,stroke-width:3px,color:#ffffff
+
+    style K fill:#fdd835,stroke:#f9a825,stroke-width:3px,color:#1f1400
+    style Z fill:#8d6e63,stroke:#5d4037,stroke-width:3px,color:#ffffff
 ```
 
 ## Service Communication Flow
