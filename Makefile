@@ -21,6 +21,7 @@ proto:
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		api/proto/coin/coin.proto \
 		api/proto/weapon/weapon.proto \
+		api/proto/armor/armor.proto \
 		api/proto/warrior/warrior.proto \
 		api/proto/battle/battle.proto \
 		api/proto/battlespell/battlespell.proto \
@@ -42,6 +43,7 @@ build:
 	go build -o bin/battlespell cmd/battlespell/main.go
 	go build -o bin/arena cmd/arena/main.go
 	go build -o bin/heal cmd/heal/main.go
+	go build -o bin/armor cmd/armor/main.go
 
 run:
 	go run cmd/warrior/main.go
