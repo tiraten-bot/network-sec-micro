@@ -24,9 +24,19 @@ type Weapon struct {
 	Damage      int                `bson:"damage" json:"damage"`
 	Price       int                `bson:"price" json:"price"`
 	CreatedBy   string             `bson:"created_by" json:"created_by"` // warrior username
-	OwnedBy     []string           `bson:"owned_by" json:"owned_by"`     // list of warrior usernames
+    OwnedBy     []string           `bson:"owned_by" json:"owned_by"`     // legacy: list of warrior usernames
+    Durability  int                `bson:"durability" json:"durability"`
+    MaxDurability int              `bson:"max_durability" json:"max_durability"`
+    IsBroken    bool               `bson:"is_broken" json:"is_broken"`
+    Owners      []OwnerRef         `bson:"owners,omitempty" json:"owners,omitempty"` // generalized ownership
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
+// OwnerRef for polymorphic ownership
+type OwnerRef struct {
+    OwnerType string `bson:"owner_type" json:"owner_type"` // warrior | enemy | dragon
+    OwnerID   string `bson:"owner_id" json:"owner_id"`     // username or entity id
 }
 
 // CollectionName returns the MongoDB collection name
