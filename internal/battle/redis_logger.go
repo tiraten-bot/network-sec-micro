@@ -107,8 +107,8 @@ func LogBattleStart(ctx context.Context, battle *Battle, message string) error {
 		return fmt.Errorf("redis client not initialized")
 	}
 
-	logEntry := BattleLogEntry{
-		BattleID:     battle.ID.Hex(),
+    logEntry := BattleLogEntry{
+        BattleID:     battle.ID,
 		TurnNumber:   0,
 		Timestamp:    battle.CreatedAt,
 		EventType:    "battle_start",
@@ -122,7 +122,7 @@ func LogBattleStart(ctx context.Context, battle *Battle, message string) error {
 		return fmt.Errorf("failed to marshal log entry: %w", err)
 	}
 
-	streamKey := fmt.Sprintf("battle:logs:%s", battle.ID.Hex())
+    streamKey := fmt.Sprintf("battle:logs:%s", battle.ID)
 	_, err = redisClient.XAdd(ctx, &redis.XAddArgs{
 		Stream: streamKey,
 		Values: map[string]interface{}{
@@ -139,8 +139,8 @@ func LogBattleEnd(ctx context.Context, battle *Battle, message string) error {
 		return fmt.Errorf("redis client not initialized")
 	}
 
-	logEntry := BattleLogEntry{
-		BattleID:     battle.ID.Hex(),
+    logEntry := BattleLogEntry{
+        BattleID:     battle.ID,
 		TurnNumber:   battle.CurrentTurn,
 		Timestamp:    time.Now(),
 		EventType:    "battle_end",
@@ -156,7 +156,7 @@ func LogBattleEnd(ctx context.Context, battle *Battle, message string) error {
 		return fmt.Errorf("failed to marshal log entry: %w", err)
 	}
 
-	streamKey := fmt.Sprintf("battle:logs:%s", battle.ID.Hex())
+    streamKey := fmt.Sprintf("battle:logs:%s", battle.ID)
 	_, err = redisClient.XAdd(ctx, &redis.XAddArgs{
 		Stream: streamKey,
 		Values: map[string]interface{}{
