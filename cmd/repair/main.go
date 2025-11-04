@@ -7,6 +7,7 @@ import (
 
     pb "network-sec-micro/api/proto/repair"
     pbWeapon "network-sec-micro/api/proto/weapon"
+    pbArmor "network-sec-micro/api/proto/armor"
     "network-sec-micro/internal/repair"
 
     "google.golang.org/grpc"
