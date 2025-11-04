@@ -24,12 +24,16 @@ package main
 import (
 	"log"
 	"os"
+    "net"
+    "sync"
 
 	"network-sec-micro/internal/weapon"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
+    pbWeapon "network-sec-micro/api/proto/weapon"
+    "google.golang.org/grpc"
 )
 
 func main() {
@@ -85,14 +89,30 @@ func main() {
 	// Swagger docs
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8081"
-	}
+    // Start HTTP and gRPC servers
+    httpPort := os.Getenv("PORT"); if httpPort == "" { httpPort = "8081" }
+    grpcPort := os.Getenv("GRPC_PORT"); if grpcPort == "" { grpcPort = "50057" }
 
-	log.Printf("Weapon service starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+    var wg sync.WaitGroup
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        log.Printf("Weapon HTTP service starting on :%s", httpPort)
+        if err := r.Run(":" + httpPort); err != nil {
+            log.Fatalf("Failed to start HTTP server: %v", err)
+        }
+    }()
+
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        lis, err := net.Listen("tcp", ":"+grpcPort)
+        if err != nil { log.Fatalf("gRPC listen error: %v", err) }
+        s := grpc.NewServer()
+        pbWeapon.RegisterWeaponServiceServer(s, weapon.NewWeaponServiceServer())
+        log.Printf("Weapon gRPC service starting on :%s", grpcPort)
+        if err := s.Serve(lis); err != nil { log.Fatalf("gRPC serve error: %v", err) }
+    }()
+
+    wg.Wait()
 }
