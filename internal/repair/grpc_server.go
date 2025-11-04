@@ -7,6 +7,7 @@ import (
 
     pb "network-sec-micro/api/proto/repair"
     pbWeapon "network-sec-micro/api/proto/weapon"
+    pbArmor "network-sec-micro/api/proto/armor"
 
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
@@ -17,10 +18,11 @@ type GrpcServer struct {
     pb.UnimplementedRepairServiceServer
     svc *Service
     weaponClient pbWeapon.WeaponServiceClient
+    armorClient  pbArmor.ArmorServiceClient
 }
 
-func NewGrpcServer(svc *Service, weaponClient pbWeapon.WeaponServiceClient) *GrpcServer {
-    return &GrpcServer{svc: svc, weaponClient: weaponClient}
+func NewGrpcServer(svc *Service, weaponClient pbWeapon.WeaponServiceClient, armorClient pbArmor.ArmorServiceClient) *GrpcServer {
+    return &GrpcServer{svc: svc, weaponClient: weaponClient, armorClient: armorClient}
 }
 
 func (g *GrpcServer) RepairWeapon(ctx context.Context, req *pb.RepairWeaponRequest) (*pb.RepairWeaponResponse, error) {
