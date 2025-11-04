@@ -360,7 +360,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 
 		tempBattleForLog := currentBattle
 		tempBattleForLog.WarriorHP = warriorHPBefore
-		if err := LogBattleTurn(oppCtx, currentBattle.ID, opponentTurn, &tempBattleForLog, oppEventType, oppMessage); err != nil {
+		// Convert battle.ID string to primitive.ObjectID for logging (legacy)
+		currentBattleOID, _ := primitive.ObjectIDFromHex(currentBattle.ID)
+		if err := LogBattleTurn(oppCtx, currentBattleOID, opponentTurn, &tempBattleForLog, oppEventType, oppMessage); err != nil {
 			log.Printf("Warning: failed to log opponent turn to Redis: %v", err)
 		}
 
