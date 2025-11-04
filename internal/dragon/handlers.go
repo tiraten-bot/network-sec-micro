@@ -230,10 +230,11 @@ func (h *Handler) GetDragon(c *gin.Context) {
 		dtoDragon.KilledAt = &killedAtStr
 	}
 
-	c.JSON(200, dto.GetDragonResponse{
-		Success: true,
-		Dragon:  dtoDragon,
-	})
+    c.JSON(200, dto.GetDragonResponse{
+        Success: true,
+        Dragon:  dtoDragon,
+    })
+}
 }
 }
 
