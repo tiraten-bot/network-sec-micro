@@ -275,6 +275,14 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
 		return
 	}
 
+    // Default: regular warriors see their own battles unless overridden by role
+    query := dto.GetBattlesByWarriorQuery{
+        WarriorID: user.UserID,
+        Status:    c.DefaultQuery("status", "all"),
+        Limit:     20,
+        Offset:    0,
+    }
+
 	status := c.DefaultQuery("status", "all")
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
