@@ -1194,9 +1194,9 @@ sequenceDiagram
 }}%%
 graph TB
     subgraph Repair[Repair Service Container]
-        APP[Repair App (Go)]
-        GRPC[gRPC Server :50061]
-        DB[PostgreSQL Client (GORM)]
+        APP["Repair App (Go)"]
+        GRPC["gRPC Server :50061"]
+        DB["PostgreSQL Client (GORM)"]
         KAFKA[Kafka Producer]
         WCLI[Weapon gRPC Client]
     end
