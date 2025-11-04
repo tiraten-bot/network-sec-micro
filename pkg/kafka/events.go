@@ -116,9 +116,38 @@ func NewEnemyDestroyedEvent(enemyID, enemyType, enemyName string, enemyLevel, en
     }
 }
 
+// ArmorPurchaseEvent represents an armor purchase event
+type ArmorPurchaseEvent struct {
+	Event
+	ArmorID      string `json:"armor_id"`
+	BuyerID      uint   `json:"buyer_id"`
+	BuyerName    string `json:"buyer_name"`
+	ArmorName    string `json:"armor_name"`
+	ArmorPrice   int    `json:"armor_price"`
+	OwnerType    string `json:"owner_type"` // "warrior" | "enemy" | "dragon"
+}
+
+// NewArmorPurchaseEvent creates a new armor purchase event
+func NewArmorPurchaseEvent(armorID, buyerName, armorName string, buyerID, armorPrice int, ownerType string) *ArmorPurchaseEvent {
+	return &ArmorPurchaseEvent{
+		Event: Event{
+			EventType:     "armor_purchased",
+			Timestamp:     time.Now(),
+			SourceService: "armor",
+		},
+		ArmorID:    armorID,
+		BuyerID:    uint(buyerID),
+		BuyerName:  buyerName,
+		ArmorName:  armorName,
+		ArmorPrice: armorPrice,
+		OwnerType:  ownerType,
+	}
+}
+
 // Topic names
 const (
 	TopicWeaponPurchase = "weapon.purchase"
+	TopicArmorPurchase  = "armor.purchase"
 	TopicCoinDeduct     = "coin.deduct"
 	TopicDragonDeath    = "dragon.death"
 	TopicDragonRevival  = "dragon.revival"
