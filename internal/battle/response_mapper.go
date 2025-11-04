@@ -6,8 +6,8 @@ import (
 
 func ToParticipantResponse(p *BattleParticipant) *dto.ParticipantResponse {
     resp := &dto.ParticipantResponse{
-        ID:            p.ID.Hex(),
-        BattleID:      p.BattleID.Hex(),
+        ID:            p.ID,
+        BattleID:      p.BattleID,
         ParticipantID: p.ParticipantID,
         Name:          p.Name,
         Type:          string(p.Type),
@@ -29,7 +29,7 @@ func ToParticipantResponse(p *BattleParticipant) *dto.ParticipantResponse {
 
 func ToBattleResponse(b *Battle, lightParticipants []*BattleParticipant, darkParticipants []*BattleParticipant) *dto.BattleResponse {
     resp := &dto.BattleResponse{
-        ID:                      b.ID.Hex(),
+        ID:                      b.ID,
         BattleType:              string(b.BattleType),
         LightSideName:           b.LightSideName,
         DarkSideName:            b.DarkSideName,
