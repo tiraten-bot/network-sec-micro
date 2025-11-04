@@ -282,17 +282,18 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
         Limit:     20,
         Offset:    0,
     }
-
-	status := c.DefaultQuery("status", "all")
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-
-	var query dto.GetBattlesByWarriorQuery
-	query = dto.GetBattlesByWarriorQuery{
-		Status: status,
-		Limit:  limit,
-		Offset: offset,
-	}
+    
+    // Override with query params if provided
+    if limitStr := c.Query("limit"); limitStr != "" {
+        if limit, err := strconv.Atoi(limitStr); err == nil {
+            query.Limit = limit
+        }
+    }
+    if offsetStr := c.Query("offset"); offsetStr != "" {
+        if offset, err := strconv.Atoi(offsetStr); err == nil {
+            query.Offset = offset
+        }
+    }
 
 	// Apply RBAC: Emperors see all, Kings see faction, Warriors see only their own
 	if err := GetBattlesWithRBAC(c, &query); err != nil {
