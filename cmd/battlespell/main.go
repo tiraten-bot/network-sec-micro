@@ -9,6 +9,7 @@ import (
 
 	pb "network-sec-micro/api/proto/battlespell"
 	"network-sec-micro/internal/battlespell"
+	docs "network-sec-micro/cmd/battlespell/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -17,6 +18,7 @@ import (
 )
 
 func main() {
+    _ = docs.SwaggerInfo // ensure docs package is linked
 	// Initialize database
 	if err := battlespell.InitDatabase(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
