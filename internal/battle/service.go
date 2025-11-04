@@ -153,6 +153,12 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		return s.handleBattleTimeout(ctx, &battle)
 	}
 
+	// Handle team battle vs legacy single battle
+	if battle.BattleType == BattleTypeTeam {
+		return s.performTeamBattleAttack(ctx, &battle, cmd)
+	}
+
+	// Legacy single battle logic below
 	// Get warrior info
 	warrior, err := GetWarriorByUsername(ctx, cmd.WarriorName)
 	if err != nil {
@@ -180,25 +186,20 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	// Get opponent's armors for defense bonus (if opponent is warrior/enemy/dragon)
 	opponentDefenseBonus := 0
 	var usedArmorID string
-	if battle.BattleType == BattleTypeTeam {
-		// For team battles, get target participant's armor
-		// This will be handled in team battle attack logic
-	} else {
-		// For legacy single battles, check opponent type
-		if battle.OpponentType == "warrior" || battle.OpponentType == "enemy" || battle.OpponentType == "dragon" {
-			if armors, err := ListArmorsByOwner(ctx, battle.OpponentType, battle.OpponentID); err == nil {
-				maxDef := 0
-				for _, a := range armors {
-					if a.IsBroken { continue }
-					if int(a.Defense) > maxDef { 
-						maxDef = int(a.Defense)
-						usedArmorID = a.Id 
-					}
+	// For legacy single battles, check opponent type
+	if battle.OpponentType == "warrior" || battle.OpponentType == "enemy" || battle.OpponentType == "dragon" {
+		if armors, err := ListArmorsByOwner(ctx, battle.OpponentType, battle.OpponentID); err == nil {
+			maxDef := 0
+			for _, a := range armors {
+				if a.IsBroken { continue }
+				if int(a.Defense) > maxDef { 
+					maxDef = int(a.Defense)
+					usedArmorID = a.Id 
 				}
-				opponentDefenseBonus = maxDef
-				if usedArmorID != "" { 
-					_, _ = ApplyArmorWear(ctx, usedArmorID, 1) 
-				}
+			}
+			opponentDefenseBonus = maxDef
+			if usedArmorID != "" { 
+				_, _ = ApplyArmorWear(ctx, usedArmorID, 1) 
 			}
 		}
 	}
