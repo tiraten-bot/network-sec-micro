@@ -9,6 +9,7 @@ import (
 	pbWarrior "network-sec-micro/api/proto/warrior"
     pbArenaSpell "network-sec-micro/api/proto/arenaspell"
     pbWeapon "network-sec-micro/api/proto/weapon"
+    pbArmor "network-sec-micro/api/proto/armor"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,6 +21,8 @@ var arenaspellGrpcClient pbArenaSpell.ArenaSpellServiceClient
 var arenaspellGrpcConn *grpc.ClientConn
 var weaponGrpcClient pbWeapon.WeaponServiceClient
 var weaponGrpcConn *grpc.ClientConn
+var armorGrpcClient pbArmor.ArmorServiceClient
+var armorGrpcConn *grpc.ClientConn
 
 // InitWarriorClient initializes the gRPC client connection to warrior service
 func InitWarriorClient(addr string) error {
