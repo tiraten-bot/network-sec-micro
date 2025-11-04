@@ -1223,8 +1223,10 @@ graph TB
   }
 }}%%
 flowchart LR
-    Client((Client)) --> GW[API Gateway (h2c gRPC proxy)] --> RepairUp[(repair:50061)]
-    Client --> GW --> WeaponUp[(weapon:50057)]
+    Client((Client)) --> GW["API Gateway\nh2c gRPC proxy"]
+    GW --> RepairUp[(repair:50061)]
+    Client --> GW
+    GW --> WeaponUp[(weapon:50057)]
 ```
 
 ### Arena Service Workflow
