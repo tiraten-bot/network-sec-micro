@@ -494,6 +494,209 @@ func (s *Service) handleBattleTimeout(ctx context.Context, battle *Battle) (*Bat
 	return s.completeBattle(ctx, battle, result, winnerName, winnerID)
 }
 
+// performTeamBattleAttack handles team battle participant-based attacks
+func (s *Service) performTeamBattleAttack(ctx context.Context, battle *Battle, cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
+	if cmd.AttackerID == "" || cmd.TargetID == "" {
+		return nil, nil, errors.New("attacker_id and target_id are required for team battles")
+	}
+
+	// Get attacker and target participants
+	attacker, err := GetRepository().GetParticipantByIDs(ctx, battle.ID, cmd.AttackerID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("attacker participant not found: %w", err)
+	}
+
+	target, err := GetRepository().GetParticipantByIDs(ctx, battle.ID, cmd.TargetID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("target participant not found: %w", err)
+	}
+
+	// Validate they're on different sides
+	if attacker.Side == target.Side {
+		return nil, nil, errors.New("attacker and target must be on different sides")
+	}
+
+	// Validate attacker is alive
+	if !attacker.IsAlive {
+		return nil, nil, errors.New("attacker is not alive")
+	}
+
+	// Validate target is alive
+	if !target.IsAlive {
+		return nil, nil, errors.New("target is not alive")
+	}
+
+	// Get attacker's weapons for bonus damage
+	weaponBonus := 0
+	var usedWeaponID string
+	if string(attacker.Type) == "warrior" || string(attacker.Type) == "enemy" || string(attacker.Type) == "dragon" {
+		if ws, err := ListWeaponsByOwner(ctx, string(attacker.Type), attacker.ParticipantID); err == nil {
+			maxD := 0
+			for _, w := range ws {
+				if w.IsBroken { continue }
+				if int(w.Damage) > maxD { 
+					maxD = int(w.Damage)
+					usedWeaponID = w.Id 
+				}
+			}
+			weaponBonus = maxD
+			if usedWeaponID != "" { 
+				_, _ = ApplyWeaponWear(ctx, usedWeaponID, 1) 
+			}
+		}
+	}
+
+	// Get target's armors for defense bonus
+	targetDefenseBonus := 0
+	var usedArmorID string
+	if string(target.Type) == "warrior" || string(target.Type) == "enemy" || string(target.Type) == "dragon" {
+		if armors, err := ListArmorsByOwner(ctx, string(target.Type), target.ParticipantID); err == nil {
+			maxDef := 0
+			for _, a := range armors {
+				if a.IsBroken { continue }
+				if int(a.Defense) > maxDef { 
+					maxDef = int(a.Defense)
+					usedArmorID = a.Id 
+				}
+			}
+			targetDefenseBonus = maxDef
+			if usedArmorID != "" { 
+				_, _ = ApplyArmorWear(ctx, usedArmorID, 1) 
+			}
+		}
+	}
+
+	// Calculate damage
+	attackerPower := attacker.AttackPower + weaponBonus
+	targetDefense := target.Defense + targetDefenseBonus
+	damage := s.calculateDamage(attackerPower, targetDefense)
+
+	// Critical hit chance (10%)
+	isCritical := rand.Float64() < 0.1
+	if isCritical {
+		damage = int(float64(damage) * 1.5)
+	}
+
+	// Apply damage
+	targetHPBefore := target.HP
+	target.HP -= damage
+	if target.HP < 0 {
+		target.HP = 0
+	}
+
+	// Check if target is defeated
+	targetDefeated := target.HP <= 0
+	if targetDefeated {
+		target.IsAlive = false
+		target.IsDefeated = true
+		now := time.Now()
+		target.DefeatedAt = &now
+	}
+
+	// Update target participant
+	updateTarget := map[string]interface{}{
+		"hp": target.HP,
+		"is_alive": target.IsAlive,
+		"is_defeated": target.IsDefeated,
+		"updated_at": time.Now(),
+	}
+	if target.DefeatedAt != nil {
+		updateTarget["defeated_at"] = target.DefeatedAt
+	}
+	if err := GetRepository().UpdateParticipantByIDs(ctx, battle.ID, target.ParticipantID, updateTarget); err != nil {
+		return nil, nil, fmt.Errorf("failed to update target participant: %w", err)
+	}
+
+	// Increment battle turn
+	battle.CurrentTurn++
+	battle.CurrentParticipantIndex++
+	battle.UpdatedAt = time.Now()
+
+	// Create turn record
+	turn := &BattleTurn{
+		BattleID:      battle.ID,
+		TurnNumber:    battle.CurrentTurn,
+		AttackerID:    attacker.ParticipantID,
+		AttackerName:  attacker.Name,
+		AttackerType:  attacker.Type,
+		AttackerSide:  attacker.Side,
+		TargetID:      target.ParticipantID,
+		TargetName:    target.Name,
+		TargetType:    target.Type,
+		TargetSide:    target.Side,
+		DamageDealt:   damage,
+		CriticalHit:   isCritical,
+		TargetHPBefore: targetHPBefore,
+		TargetHPAfter: target.HP,
+		TargetDefeated: targetDefeated,
+		CreatedAt:     time.Now(),
+	}
+
+	if err := GetRepository().InsertTurn(ctx, turn); err != nil {
+		return nil, nil, fmt.Errorf("failed to record turn: %w", err)
+	}
+
+	// Check if battle is complete (one side has no alive participants)
+	lightAlive, err := GetRepository().CountAliveBySide(ctx, battle.ID, TeamSideLight)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to count light side: %w", err)
+	}
+	darkAlive, err := GetRepository().CountAliveBySide(ctx, battle.ID, TeamSideDark)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to count dark side: %w", err)
+	}
+
+	if lightAlive == 0 {
+		// Dark side wins
+		return s.completeTeamBattle(ctx, battle, BattleResultDarkVictory)
+	} else if darkAlive == 0 {
+		// Light side wins
+		return s.completeTeamBattle(ctx, battle, BattleResultLightVictory)
+	}
+
+	// Update battle
+	updateData := map[string]interface{}{
+		"current_turn": battle.CurrentTurn,
+		"current_participant_index": battle.CurrentParticipantIndex,
+		"updated_at": battle.UpdatedAt,
+	}
+	if err := GetRepository().UpdateBattleFields(ctx, battle.ID, updateData); err != nil {
+		return nil, nil, fmt.Errorf("failed to update battle: %w", err)
+	}
+
+	return battle, turn, nil
+}
+
+// completeTeamBattle marks a team battle as completed
+func (s *Service) completeTeamBattle(ctx context.Context, battle *Battle, result BattleResult) (*Battle, *BattleTurn, error) {
+	now := time.Now()
+	battle.Status = BattleStatusCompleted
+	battle.Result = result
+	battle.CompletedAt = &now
+
+	if result == BattleResultLightVictory {
+		battle.WinnerSide = TeamSideLight
+	} else if result == BattleResultDarkVictory {
+		battle.WinnerSide = TeamSideDark
+	}
+
+	updateData := map[string]interface{}{
+		"status": battle.Status,
+		"result": battle.Result,
+		"winner_side": battle.WinnerSide,
+		"completed_at": battle.CompletedAt,
+		"updated_at": now,
+	}
+	if err := GetRepository().UpdateBattleFields(ctx, battle.ID, updateData); err != nil {
+		return nil, nil, fmt.Errorf("failed to complete battle: %w", err)
+	}
+
+	// Publish battle completed event
+	go PublishBattleCompletedEvent(battle.ID, string(result))
+
+	return battle, nil, nil
+}
+
 // Helper functions
 func (s *Service) calculateDamage(attackerPower, targetDefense int) int {
 	baseDamage := attackerPower - targetDefense
