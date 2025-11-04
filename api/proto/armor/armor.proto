@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package armor;
+
+option go_package = "network-sec-micro/api/proto/armor";
+
+import "google/protobuf/timestamp.proto";
+
+// Armor Service (gRPC methods for service-to-service communication)
+service ArmorService {
+  // Get armor details (for other services)
+  rpc GetArmor(GetArmorRequest) returns (GetArmorResponse);
+  
+  // Calculate entity's total defense based on owned armors
+  rpc CalculateDefense(CalculateDefenseRequest) returns (CalculateDefenseResponse);
+
+  // List armors by owner (supports warrior, enemy, dragon)
+  rpc ListOwnerArmors(ListOwnerArmorsRequest) returns (ListOwnerArmorsResponse);
+
+  // Apply wear/damage to an armor; may mark as broken when durability reaches 0
+  rpc ApplyWear(ApplyWearRequest) returns (ApplyWearResponse);
+}
+
+// Request to get armor
+message GetArmorRequest {
+  string armor_id = 1;
+}
+
+// Response with armor details
+message GetArmorResponse {
+  Armor armor = 1;
+}
+
+// Request to calculate defense
+message CalculateDefenseRequest {
+  string owner_type = 1; // "warrior" | "enemy" | "dragon"
+  string owner_id = 2;   // warrior username or entity id
+}
+
+// Response with calculated defense
+message CalculateDefenseResponse {
+  string owner_type = 1;
+  string owner_id = 2;
+  int32 base_defense = 3;
+  int32 armor_bonus = 4;
+  int32 total_defense = 5;
+  int32 armor_count = 6;
+}
+
+// Armor model
+message Armor {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4; // "common", "rare", "legendary"
+  int32 defense = 5;
+  int32 hp_bonus = 6; // Additional HP provided by armor
+  int32 price = 7;
+  string created_by = 8;
+  repeated string owned_by = 9; // legacy warrior usernames
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+
+  // Durability fields
+  int32 durability = 12;        // current durability (0..max_durability)
+  int32 max_durability = 13;    // maximum durability
+  bool is_broken = 14;          // derived from durability == 0
+
+  // Generalized ownership (supports warrior/enemy/dragon)
+  repeated OwnerRef owners = 15; // when set, preferred over owned_by
+}
+
+// Owner reference to support multiple entity types
+message OwnerRef {
+  string owner_type = 1; // "warrior" | "enemy" | "dragon"
+  string owner_id = 2;   // id or username depending on type
+}
+
+// Request to list armors by owner
+message ListOwnerArmorsRequest {
+  string owner_type = 1; // "warrior" | "enemy" | "dragon"
+  string owner_id = 2;   // warrior username or entity id
+}
+
+// Response listing owner's armors
+message ListOwnerArmorsResponse {
+  repeated Armor armors = 1;
+}
+
+// Request to apply wear to an armor
+message ApplyWearRequest {
+  string armor_id = 1;
+  int32 wear = 2; // how much durability to reduce
+}
+
+// Response after applying wear
+message ApplyWearResponse {
+  string armor_id = 1;
+  int32 durability = 2;
+  bool is_broken = 3;
+}
+
