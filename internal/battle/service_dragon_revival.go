@@ -277,7 +277,7 @@ func (s *Service) DarkEmperorJoinBattle(ctx context.Context, battleID primitive.
 	defense := 200
 
 	participant := &BattleParticipant{
-		BattleID:      battleID,
+		BattleID:      battleID.Hex(),
 		ParticipantID: darkEmperorUserID,
 		Name:          darkEmperorUsername,
 		Type:          ParticipantTypeDarkEmperor,
@@ -458,7 +458,7 @@ func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID 
 		// This ensures every enemy gets multiplied, not randomly
 		for copyNum := 1; copyNum <= multiplier-1; copyNum++ {
 			newEnemy := &BattleParticipant{
-				BattleID:      battleID,
+				BattleID:      battleID.Hex(),
 				ParticipantID: fmt.Sprintf("%s_copy_%d_%d", template.ParticipantID, now.Unix(), copyNum), // Unique ID
 				Name:          fmt.Sprintf("%s (Copy %d)", template.Name, copyNum),
 				Type:          ParticipantTypeEnemy,
@@ -499,7 +499,6 @@ func (s *Service) SacrificeDragonAndReviveEnemies(ctx context.Context, battleID 
 		}
 	}()
 
-	totalAffected := revivedCount + multipliedCount
 	log.Printf("Dark Emperor %s sacrificed dragon %s (revival_count=%d, sacrificed=%v) - Revived: %d, Multiplied: %d (multiplier=%dx) in battle %s",
 		darkEmperorUsername, dragonParticipant.Name, revivalCount, dragonSacrificed, revivedCount, multipliedCount, multiplier, battleID.Hex())
 
