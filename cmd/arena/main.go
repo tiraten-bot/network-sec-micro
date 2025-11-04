@@ -58,6 +58,15 @@ func main() {
         log.Printf("Warning: Failed to connect to Weapon gRPC: %v", err)
     }
 
+    // Initialize Armor gRPC client (optional)
+    armorAddr := os.Getenv("ARMOR_GRPC_ADDR")
+    if armorAddr == "" {
+        armorAddr = "localhost:50059"
+    }
+    if err := arena.InitArmorClient(armorAddr); err != nil {
+        log.Printf("Warning: Failed to connect to Armor gRPC: %v", err)
+    }
+
 	// Set Gin to release mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
@@ -94,6 +103,7 @@ func main() {
 		arena.CloseWarriorClient()
         arena.CloseArenaSpellClient()
         arena.CloseWeaponClient()
+        arena.CloseArmorClient()
 	}()
 
 	// Create Gin router
