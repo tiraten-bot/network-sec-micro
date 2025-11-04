@@ -445,3 +445,4 @@ func (h *Handler) ReviveDragon(c *gin.Context) {
 		Success: true,
 		Dragon:  dtoDragon,
 	})
+}
