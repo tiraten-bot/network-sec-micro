@@ -360,7 +360,7 @@ func (s *Service) publishDragonDeathEvent(dragon Dragon, killerUsername string) 
 	weaponTypes := []string{"sword", "bow", "staff", "dagger", "axe", "mace", "spear", "wand"}
 	randomWeaponType := weaponTypes[rand.Intn(len(weaponTypes))]
 
-	event := DragonDeathEvent{
+    event := DragonDeathEvent{
 		EventType:       "dragon_death",
 		Timestamp:       time.Now().Format(time.RFC3339),
 		SourceService:   "dragon",
@@ -368,9 +368,6 @@ func (s *Service) publishDragonDeathEvent(dragon Dragon, killerUsername string) 
 		DragonName:      dragon.Name,
 		DragonType:      string(dragon.Type),
 		DragonLevel:     dragon.Level,
-        DragonMaxHealth: dragon.MaxHealth,
-        DragonAttack:    dragon.AttackPower,
-        DragonDefense:   dragon.Defense,
 		KillerUsername:  killerUsername,
 		LootWeaponType: randomWeaponType,
 		LootWeaponName: fmt.Sprintf("%s of %s", randomWeaponType, dragon.Name),
