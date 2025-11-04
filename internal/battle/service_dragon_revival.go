@@ -515,7 +515,7 @@ func LogBattleEvent(ctx context.Context, battleID primitive.ObjectID, eventType 
 	}
 
 	// Convert to JSON
-	data, err := json.Marshal(logEntry)
+	_, err := json.Marshal(logEntry)
 	if err != nil {
 		return fmt.Errorf("failed to marshal log entry: %w", err)
 	}
