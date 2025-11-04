@@ -695,7 +695,7 @@ func (s *Service) completeTeamBattle(ctx context.Context, battle *Battle, result
 	go func() {
 		_ = PublishBattleCompletedEvent(
 			battle.ID,
-			string(battle.BattleType),
+			battle.BattleType,
 			0, // No single warrior ID in team battles
 			"Team Battle",
 			string(result),
