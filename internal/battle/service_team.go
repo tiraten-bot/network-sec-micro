@@ -195,7 +195,7 @@ func (s *Service) StartBattle(cmd dto.StartBattleCommand) (*Battle, []*BattlePar
         // Publish battle started event
         go PublishBattleStartedEvent(
             battle.ID,
-            string(battle.BattleType),
+            battle.BattleType,
             0, // No single warrior ID in team battles
             "Team Battle",
             "",
