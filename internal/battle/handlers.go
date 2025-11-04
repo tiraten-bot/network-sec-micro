@@ -220,9 +220,6 @@ func (h *Handler) GetBattle(c *gin.Context) {
     // Fetch participants for RBAC check
     lightParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "light")
     darkParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "dark")
-    // Fetch participants for RBAC and check
-    lightParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "light")
-    darkParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "dark")
     user, _ := GetCurrentUser(c)
     userIDStr := fmt.Sprintf("%d", user.UserID)
     hasAccess := false
