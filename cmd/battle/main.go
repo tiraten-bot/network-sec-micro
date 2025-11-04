@@ -116,11 +116,13 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize service, handler, and gRPC server using Wire
-	service, handler, grpcServer, err := InitializeApp()
+	// Initialize handler and service using Wire
+	handler, err := InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize app with Wire: %v", err)
 	}
+	// Create gRPC server manually
+	grpcServer := battle.NewBattleServiceServer(handler.Service)
 
 	// Setup graceful shutdown
 	shutdown := make(chan os.Signal, 1)
