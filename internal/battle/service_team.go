@@ -5,7 +5,6 @@ import (
     "errors"
     "fmt"
     "log"
-    "math/rand"
     "time"
 
     "network-sec-micro/internal/battle/dto"
