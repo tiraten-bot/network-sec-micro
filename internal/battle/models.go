@@ -111,6 +111,11 @@ type Battle struct {
     WarriorName   string             `json:"warrior_name,omitempty"`
     OpponentID    string             `json:"opponent_id,omitempty"`
     OpponentName  string             `json:"opponent_name,omitempty"`
+    OpponentType  string             `json:"opponent_type,omitempty"`
+    WarriorHP     int                `json:"warrior_hp,omitempty"`
+    WarriorMaxHP  int                `json:"warrior_max_hp,omitempty"`
+    OpponentHP    int                `json:"opponent_hp,omitempty"`
+    OpponentMaxHP int                `json:"opponent_max_hp,omitempty"`
 	
 	// Timestamps
     StartedAt     *time.Time         `json:"started_at,omitempty"`
