@@ -101,6 +101,30 @@
       "quota": {"enabled": true, "daily": 2000, "hourly": 200, "key_header": "Authorization"},
       "load_balancing": "round_robin",
       "outlier_detection": {"enabled": true, "failure_threshold": 5, "eject_duration_sec": 30}
+    },
+    {
+      "name": "weapon gRPC",
+      "hosts": ["localhost"],
+      "path_prefix": "/weapon.WeaponService",
+      "grpc_proxy": true,
+      "upstreams": ["http://localhost:50057"],
+      "rate_limit": {"enabled": true, "rps": 60, "burst": 100, "key_header": "Authorization"},
+      "circuit_breaker": {"enabled": true, "failure_ratio": 0.5, "min_requests": 10, "interval_sec": 30, "timeout_sec": 20},
+      "quota": {"enabled": true, "daily": 3000, "hourly": 300, "key_header": "Authorization"},
+      "load_balancing": "round_robin",
+      "outlier_detection": {"enabled": true, "failure_threshold": 5, "eject_duration_sec": 30}
+    },
+    {
+      "name": "repair gRPC",
+      "hosts": ["localhost"],
+      "path_prefix": "/repair.RepairService",
+      "grpc_proxy": true,
+      "upstreams": ["http://localhost:50061"],
+      "rate_limit": {"enabled": true, "rps": 30, "burst": 50, "key_header": "Authorization"},
+      "circuit_breaker": {"enabled": true, "failure_ratio": 0.5, "min_requests": 10, "interval_sec": 30, "timeout_sec": 20},
+      "quota": {"enabled": true, "daily": 2000, "hourly": 200, "key_header": "Authorization"},
+      "load_balancing": "round_robin",
+      "outlier_detection": {"enabled": true, "failure_threshold": 5, "eject_duration_sec": 30}
     }
   ]
 }
