@@ -8,6 +8,7 @@ import (
     pb "network-sec-micro/api/proto/battle"
     "network-sec-micro/internal/battle/dto"
 
+    "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/bson/primitive"
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
@@ -83,7 +84,7 @@ func (s *BattleServiceServer) GetBattleParticipants(ctx context.Context, req *pb
 		return nil, status.Error(codes.InvalidArgument, "invalid battle ID")
 	}
 
-	filter := primitive.M{
+    filter := bson.M{
 		"battle_id": battleID,
 	}
 
@@ -155,8 +156,8 @@ func (s *BattleServiceServer) CastSpell(ctx context.Context, req *pb.CastSpellRe
 
 // Helper functions to convert between internal models and proto
 func convertBattleToProto(b *Battle) *pb.Battle {
-	pbBattle := &pb.Battle{
-		Id:                    b.ID.Hex(),
+    pbBattle := &pb.Battle{
+        Id:                    b.ID,
 		BattleType:            string(b.BattleType),
 		LightSideName:         b.LightSideName,
 		DarkSideName:          b.DarkSideName,
@@ -186,9 +187,9 @@ func convertBattleToProto(b *Battle) *pb.Battle {
 }
 
 func convertParticipantToProto(p *BattleParticipant) *pb.BattleParticipant {
-	pbParticipant := &pb.BattleParticipant{
-		Id:            p.ID.Hex(),
-		BattleId:     p.BattleID.Hex(),
+    pbParticipant := &pb.BattleParticipant{
+        Id:            p.ID,
+        BattleId:      p.BattleID,
 		ParticipantId: p.ParticipantID,
 		Name:          p.Name,
 		Type:          string(p.Type),
