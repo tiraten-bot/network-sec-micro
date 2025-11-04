@@ -1188,6 +1188,23 @@ graph TB
     WCLI -->|Call| WeaponSvc[Weapon Service]
 ```
 
+### Gateway Routing (gRPC)
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#2b2b2b',
+    'primaryTextColor': '#e0e0e0',
+    'primaryBorderColor': '#5a5a5a',
+    'lineColor': '#5a5a5a'
+  }
+}}%%
+flowchart LR
+    Client((Client)) --> GW[API Gateway (h2c gRPC proxy)] --> RepairUp[(repair:50061)]
+    Client --> GW --> WeaponUp[(weapon:50057)]
+```
+
 ### Arena Service Workflow
 
 ```mermaid
