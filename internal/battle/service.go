@@ -691,8 +691,20 @@ func (s *Service) completeTeamBattle(ctx context.Context, battle *Battle, result
 		return nil, nil, fmt.Errorf("failed to complete battle: %w", err)
 	}
 
-	// Publish battle completed event
-	go PublishBattleCompletedEvent(battle.ID, string(result))
+	// Publish battle completed event (simplified signature for team battles)
+	go func() {
+		_ = PublishBattleCompletedEvent(
+			battle.ID,
+			string(battle.BattleType),
+			0, // No single warrior ID in team battles
+			"Team Battle",
+			string(result),
+			string(battle.WinnerSide),
+			0, // Coins earned (calculated separately)
+			0, // Experience gained (calculated separately)
+			battle.CurrentTurn,
+		)
+	}()
 
 	return battle, nil, nil
 }
