@@ -9,6 +9,9 @@ import (
     "time"
 
     "network-sec-micro/internal/battle/dto"
+    "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
+    "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // StartBattle creates and starts a new team-based battle
