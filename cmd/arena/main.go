@@ -10,6 +10,7 @@ import (
 
 	pb "network-sec-micro/api/proto/arena"
 	"network-sec-micro/internal/arena"
+	docs "network-sec-micro/cmd/arena/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -18,6 +19,7 @@ import (
 )
 
 func main() {
+    _ = docs.SwaggerInfo // ensure docs package is linked
     // Initialize Redis client (for Redis-backed repo)
     if err := arena.InitRedisClient(); err != nil {
         log.Printf("Warning: Arena Redis init failed: %v", err)
