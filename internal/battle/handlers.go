@@ -287,7 +287,8 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	query := dto.GetBattlesByWarriorQuery{
+	var query dto.GetBattlesByWarriorQuery
+	query = dto.GetBattlesByWarriorQuery{
 		Status: status,
 		Limit:  limit,
 		Offset: offset,
