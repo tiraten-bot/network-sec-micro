@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	RepairService_RepairWeapon_FullMethodName     = "/repair.RepairService/RepairWeapon"
+	RepairService_RepairArmor_FullMethodName      = "/repair.RepairService/RepairArmor"
 	RepairService_GetRepairHistory_FullMethodName = "/repair.RepairService/GetRepairHistory"
 )
 
@@ -29,6 +30,8 @@ const (
 type RepairServiceClient interface {
 	// Request a repair for a weapon; performs coin deduction via Kafka asynchronously
 	RepairWeapon(ctx context.Context, in *RepairWeaponRequest, opts ...grpc.CallOption) (*RepairWeaponResponse, error)
+	// Request a repair for an armor; performs coin deduction via Kafka asynchronously
+	RepairArmor(ctx context.Context, in *RepairArmorRequest, opts ...grpc.CallOption) (*RepairArmorResponse, error)
 	// Get repair orders for an owner
 	GetRepairHistory(ctx context.Context, in *GetRepairHistoryRequest, opts ...grpc.CallOption) (*GetRepairHistoryResponse, error)
 }
@@ -51,6 +54,16 @@ func (c *repairServiceClient) RepairWeapon(ctx context.Context, in *RepairWeapon
 	return out, nil
 }
 
+func (c *repairServiceClient) RepairArmor(ctx context.Context, in *RepairArmorRequest, opts ...grpc.CallOption) (*RepairArmorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepairArmorResponse)
+	err := c.cc.Invoke(ctx, RepairService_RepairArmor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *repairServiceClient) GetRepairHistory(ctx context.Context, in *GetRepairHistoryRequest, opts ...grpc.CallOption) (*GetRepairHistoryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetRepairHistoryResponse)
@@ -67,6 +80,8 @@ func (c *repairServiceClient) GetRepairHistory(ctx context.Context, in *GetRepai
 type RepairServiceServer interface {
 	// Request a repair for a weapon; performs coin deduction via Kafka asynchronously
 	RepairWeapon(context.Context, *RepairWeaponRequest) (*RepairWeaponResponse, error)
+	// Request a repair for an armor; performs coin deduction via Kafka asynchronously
+	RepairArmor(context.Context, *RepairArmorRequest) (*RepairArmorResponse, error)
 	// Get repair orders for an owner
 	GetRepairHistory(context.Context, *GetRepairHistoryRequest) (*GetRepairHistoryResponse, error)
 	mustEmbedUnimplementedRepairServiceServer()
@@ -81,6 +96,9 @@ type UnimplementedRepairServiceServer struct{}
 
 func (UnimplementedRepairServiceServer) RepairWeapon(context.Context, *RepairWeaponRequest) (*RepairWeaponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RepairWeapon not implemented")
+}
+func (UnimplementedRepairServiceServer) RepairArmor(context.Context, *RepairArmorRequest) (*RepairArmorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RepairArmor not implemented")
 }
 func (UnimplementedRepairServiceServer) GetRepairHistory(context.Context, *GetRepairHistoryRequest) (*GetRepairHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepairHistory not implemented")
@@ -124,6 +142,24 @@ func _RepairService_RepairWeapon_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepairService_RepairArmor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RepairArmorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepairServiceServer).RepairArmor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepairService_RepairArmor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepairServiceServer).RepairArmor(ctx, req.(*RepairArmorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RepairService_GetRepairHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRepairHistoryRequest)
 	if err := dec(in); err != nil {
@@ -152,6 +188,10 @@ var RepairService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RepairWeapon",
 			Handler:    _RepairService_RepairWeapon_Handler,
+		},
+		{
+			MethodName: "RepairArmor",
+			Handler:    _RepairService_RepairArmor_Handler,
 		},
 		{
 			MethodName: "GetRepairHistory",
