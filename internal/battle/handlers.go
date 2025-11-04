@@ -495,9 +495,9 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		return
 	}
 
-	// RBAC check: Check if user is a participant or has admin access
-	user, _ := GetCurrentUser(c)
-	userIDStr := fmt.Sprintf("%d", user.UserID)
+    // RBAC check: Check if user is a participant or has admin access
+    user, _ := GetCurrentUser(c)
+    userIDStr := fmt.Sprintf("%d", user.UserID)
 	hasAccess := false
 	
 	// Check if user is a participant
