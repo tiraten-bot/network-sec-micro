@@ -354,15 +354,15 @@ graph LR
 
 ```mermaid
 %%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#0b3d91',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#001a4d',
-    'lineColor': '#001a4d',
-    'tertiaryColor': '#0d56b3',
-    'clusterBkg': '#0b3d91',
-    'clusterBorder': '#001a4d'
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#0b3d91",
+    "primaryTextColor": "#ffffff",
+    "primaryBorderColor": "#001a4d",
+    "lineColor": "#001a4d",
+    "tertiaryColor": "#0d56b3",
+    "clusterBkg": "#0b3d91",
+    "clusterBorder": "#001a4d"
   }
 }}%%
 flowchart LR
@@ -395,15 +395,15 @@ flowchart LR
 
 ```mermaid
 %%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#0b3d91',
-    'primaryTextColor': '#ffffff',
-    'primaryBorderColor': '#001a4d',
-    'lineColor': '#001a4d',
-    'tertiaryColor': '#0d56b3',
-    'clusterBkg': '#0b3d91',
-    'clusterBorder': '#001a4d'
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#0b3d91",
+    "primaryTextColor": "#ffffff",
+    "primaryBorderColor": "#001a4d",
+    "lineColor": "#001a4d",
+    "tertiaryColor": "#0d56b3",
+    "clusterBkg": "#0b3d91",
+    "clusterBorder": "#001a4d"
   }
 }}%%
 graph TB
@@ -2059,15 +2059,15 @@ graph TB
 
 ```mermaid
 %%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#2b2b2b',
-    'primaryTextColor': '#e0e0e0',
-    'primaryBorderColor': '#5a5a5a',
-    'lineColor': '#5a5a5a',
-    'tertiaryColor': '#3a3a3a',
-    'clusterBkg': '#2b2b2b',
-    'clusterBorder': '#5a5a5a'
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#2b2b2b",
+    "primaryTextColor": "#e0e0e0",
+    "primaryBorderColor": "#5a5a5a",
+    "lineColor": "#5a5a5a",
+    "tertiaryColor": "#3a3a3a",
+    "clusterBkg": "#2b2b2b",
+    "clusterBorder": "#5a5a5a"
   }
 }}%%
 sequenceDiagram
