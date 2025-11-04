@@ -102,6 +102,8 @@ type Battle struct {
 	Status        BattleStatus       `bson:"status" json:"status"`
 	Result        BattleResult       `bson:"result,omitempty" json:"result,omitempty"`
 	WinnerSide    TeamSide           `bson:"winner_side,omitempty" json:"winner_side,omitempty"`
+	WinnerName    string             `bson:"winner_name,omitempty" json:"winner_name,omitempty"` // Legacy: winner name
+	WinnerID      string             `bson:"winner_id,omitempty" json:"winner_id,omitempty"`     // Legacy: winner ID
 	
 	// Rewards (calculated after battle)
 	CoinsEarned   map[string]int     `bson:"coins_earned,omitempty" json:"coins_earned,omitempty"` // participant_id -> coins
