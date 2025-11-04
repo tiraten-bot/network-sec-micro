@@ -82,7 +82,6 @@ func (s *DragonServiceServer) UpdateDragonHP(ctx context.Context, req *pb.Update
 		return nil, status.Errorf(codes.Internal, "failed to get dragon: %v", err)
 	}
 
-	oldHP := dragon.Health
 	newHP := int(req.NewHp)
 	if newHP > dragon.MaxHealth {
 		newHP = dragon.MaxHealth
@@ -169,8 +168,7 @@ func (s *DragonServiceServer) CheckDragonCanBattle(ctx context.Context, req *pb.
 
 	if dragon.IsHealing && dragon.HealingUntil != nil {
 		now := time.Now()
-		if now.Before(*dragon.HealingUntil) {
-			remaining := time.Until(*dragon.HealingUntil).Seconds()
+        if now.Before(*dragon.HealingUntil) {
 			return &pb.CheckDragonCanBattleResponse{
 				CanBattle:           false,
 				Reason:              "dragon is currently healing",
@@ -178,7 +176,7 @@ func (s *DragonServiceServer) CheckDragonCanBattle(ctx context.Context, req *pb.
 			}, nil
 		}
 		// Healing expired, clear state
-		_ = s.UpdateDragonHealingState(ctx, &pb.UpdateDragonHealingStateRequest{
+        _, _ = s.UpdateDragonHealingState(ctx, &pb.UpdateDragonHealingStateRequest{
 			DragonId:           req.DragonId,
 			IsHealing:          false,
 			HealingUntilSeconds: 0,
