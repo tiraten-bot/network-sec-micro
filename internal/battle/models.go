@@ -28,6 +28,9 @@ type BattleType string
 
 const (
 	BattleTypeTeam BattleType = "team" // Team battle (light vs dark)
+    // Legacy single battles
+    BattleTypeEnemy  BattleType = "enemy"
+    BattleTypeDragon BattleType = "dragon"
 )
 
 // TeamSide represents which side a participant is on
@@ -103,6 +106,11 @@ type Battle struct {
 	
 	// Metadata
 	CreatedBy     string             `bson:"created_by" json:"created_by"` // Creator username
+    // Legacy single battle metadata (optional)
+    WarriorID     uint               `json:"warrior_id,omitempty"`
+    WarriorName   string             `json:"warrior_name,omitempty"`
+    OpponentID    string             `json:"opponent_id,omitempty"`
+    OpponentName  string             `json:"opponent_name,omitempty"`
 	
 	// Timestamps
     StartedAt     *time.Time         `json:"started_at,omitempty"`
