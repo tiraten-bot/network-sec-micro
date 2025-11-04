@@ -1155,6 +1155,39 @@ sequenceDiagram
     end
 ```
 
+### Repair Container Architecture
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1f1f1f',
+    'primaryTextColor': '#f0f0f0',
+    'primaryBorderColor': '#6b6b6b',
+    'lineColor': '#6b6b6b',
+    'tertiaryColor': '#3c3c3c',
+    'clusterBkg': '#1f1f1f',
+    'clusterBorder': '#6b6b6b'
+  }
+}}%%
+graph TB
+    subgraph Repair[Repair Service Container]
+        APP[Repair App (Go)]
+        GRPC[gRPC Server :50061]
+        DB[PostgreSQL Client (GORM)]
+        KAFKA[Kafka Producer]
+        WCLI[Weapon gRPC Client]
+    end
+    GRPC -->|Listen| EXT[External Clients]
+    APP --> GRPC
+    APP --> DB
+    APP --> KAFKA
+    APP --> WCLI
+    DB -->|Connect| PSQL[(PostgreSQL)]
+    KAFKA -->|Publish| KTopic[(weapon.repair)]
+    WCLI -->|Call| WeaponSvc[Weapon Service]
+```
+
 ### Arena Service Workflow
 
 ```mermaid
