@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	WeaponService_GetWeapon_FullMethodName             = "/weapon.WeaponService/GetWeapon"
 	WeaponService_CalculateWarriorPower_FullMethodName = "/weapon.WeaponService/CalculateWarriorPower"
+	WeaponService_ListOwnerWeapons_FullMethodName      = "/weapon.WeaponService/ListOwnerWeapons"
+	WeaponService_ApplyWear_FullMethodName             = "/weapon.WeaponService/ApplyWear"
 )
 
 // WeaponServiceClient is the client API for WeaponService service.
@@ -33,6 +35,10 @@ type WeaponServiceClient interface {
 	GetWeapon(ctx context.Context, in *GetWeaponRequest, opts ...grpc.CallOption) (*GetWeaponResponse, error)
 	// Calculate warrior's total power based on owned weapons
 	CalculateWarriorPower(ctx context.Context, in *CalculateWarriorPowerRequest, opts ...grpc.CallOption) (*CalculateWarriorPowerResponse, error)
+	// List weapons by owner (supports warrior, enemy, dragon)
+	ListOwnerWeapons(ctx context.Context, in *ListOwnerWeaponsRequest, opts ...grpc.CallOption) (*ListOwnerWeaponsResponse, error)
+	// Apply wear/damage to a weapon; may mark as broken when durability reaches 0
+	ApplyWear(ctx context.Context, in *ApplyWearRequest, opts ...grpc.CallOption) (*ApplyWearResponse, error)
 }
 
 type weaponServiceClient struct {
@@ -63,6 +69,26 @@ func (c *weaponServiceClient) CalculateWarriorPower(ctx context.Context, in *Cal
 	return out, nil
 }
 
+func (c *weaponServiceClient) ListOwnerWeapons(ctx context.Context, in *ListOwnerWeaponsRequest, opts ...grpc.CallOption) (*ListOwnerWeaponsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListOwnerWeaponsResponse)
+	err := c.cc.Invoke(ctx, WeaponService_ListOwnerWeapons_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *weaponServiceClient) ApplyWear(ctx context.Context, in *ApplyWearRequest, opts ...grpc.CallOption) (*ApplyWearResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApplyWearResponse)
+	err := c.cc.Invoke(ctx, WeaponService_ApplyWear_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WeaponServiceServer is the server API for WeaponService service.
 // All implementations must embed UnimplementedWeaponServiceServer
 // for forward compatibility.
@@ -73,6 +99,10 @@ type WeaponServiceServer interface {
 	GetWeapon(context.Context, *GetWeaponRequest) (*GetWeaponResponse, error)
 	// Calculate warrior's total power based on owned weapons
 	CalculateWarriorPower(context.Context, *CalculateWarriorPowerRequest) (*CalculateWarriorPowerResponse, error)
+	// List weapons by owner (supports warrior, enemy, dragon)
+	ListOwnerWeapons(context.Context, *ListOwnerWeaponsRequest) (*ListOwnerWeaponsResponse, error)
+	// Apply wear/damage to a weapon; may mark as broken when durability reaches 0
+	ApplyWear(context.Context, *ApplyWearRequest) (*ApplyWearResponse, error)
 	mustEmbedUnimplementedWeaponServiceServer()
 }
 
@@ -88,6 +118,12 @@ func (UnimplementedWeaponServiceServer) GetWeapon(context.Context, *GetWeaponReq
 }
 func (UnimplementedWeaponServiceServer) CalculateWarriorPower(context.Context, *CalculateWarriorPowerRequest) (*CalculateWarriorPowerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CalculateWarriorPower not implemented")
+}
+func (UnimplementedWeaponServiceServer) ListOwnerWeapons(context.Context, *ListOwnerWeaponsRequest) (*ListOwnerWeaponsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOwnerWeapons not implemented")
+}
+func (UnimplementedWeaponServiceServer) ApplyWear(context.Context, *ApplyWearRequest) (*ApplyWearResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyWear not implemented")
 }
 func (UnimplementedWeaponServiceServer) mustEmbedUnimplementedWeaponServiceServer() {}
 func (UnimplementedWeaponServiceServer) testEmbeddedByValue()                       {}
@@ -146,6 +182,42 @@ func _WeaponService_CalculateWarriorPower_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WeaponService_ListOwnerWeapons_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOwnerWeaponsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WeaponServiceServer).ListOwnerWeapons(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WeaponService_ListOwnerWeapons_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WeaponServiceServer).ListOwnerWeapons(ctx, req.(*ListOwnerWeaponsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WeaponService_ApplyWear_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApplyWearRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WeaponServiceServer).ApplyWear(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WeaponService_ApplyWear_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WeaponServiceServer).ApplyWear(ctx, req.(*ApplyWearRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WeaponService_ServiceDesc is the grpc.ServiceDesc for WeaponService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +232,14 @@ var WeaponService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CalculateWarriorPower",
 			Handler:    _WeaponService_CalculateWarriorPower_Handler,
+		},
+		{
+			MethodName: "ListOwnerWeapons",
+			Handler:    _WeaponService_ListOwnerWeapons_Handler,
+		},
+		{
+			MethodName: "ApplyWear",
+			Handler:    _WeaponService_ApplyWear_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
