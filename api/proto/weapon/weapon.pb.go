@@ -236,17 +236,23 @@ func (x *CalculateWarriorPowerResponse) GetWeaponCount() int32 {
 
 // Weapon model
 type Weapon struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"` // "common", "rare", "legendary"
-	Damage        int32                  `protobuf:"varint,5,opt,name=damage,proto3" json:"damage,omitempty"`
-	Price         int32                  `protobuf:"varint,6,opt,name=price,proto3" json:"price,omitempty"`
-	CreatedBy     string                 `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	OwnedBy       []string               `protobuf:"bytes,8,rep,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Type        string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"` // "common", "rare", "legendary"
+	Damage      int32                  `protobuf:"varint,5,opt,name=damage,proto3" json:"damage,omitempty"`
+	Price       int32                  `protobuf:"varint,6,opt,name=price,proto3" json:"price,omitempty"`
+	CreatedBy   string                 `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	OwnedBy     []string               `protobuf:"bytes,8,rep,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"` // legacy warrior usernames
+	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// Durability fields
+	Durability    int32 `protobuf:"varint,11,opt,name=durability,proto3" json:"durability,omitempty"`                            // current durability (0..max_durability)
+	MaxDurability int32 `protobuf:"varint,12,opt,name=max_durability,json=maxDurability,proto3" json:"max_durability,omitempty"` // maximum durability
+	IsBroken      bool  `protobuf:"varint,13,opt,name=is_broken,json=isBroken,proto3" json:"is_broken,omitempty"`                // derived from durability == 0
+	// Generalized ownership (supports warrior/enemy/dragon) - optional for now
+	Owners        []*OwnerRef `protobuf:"bytes,14,rep,name=owners,proto3" json:"owners,omitempty"` // when set, preferred over owned_by
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -351,6 +357,299 @@ func (x *Weapon) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Weapon) GetDurability() int32 {
+	if x != nil {
+		return x.Durability
+	}
+	return 0
+}
+
+func (x *Weapon) GetMaxDurability() int32 {
+	if x != nil {
+		return x.MaxDurability
+	}
+	return 0
+}
+
+func (x *Weapon) GetIsBroken() bool {
+	if x != nil {
+		return x.IsBroken
+	}
+	return false
+}
+
+func (x *Weapon) GetOwners() []*OwnerRef {
+	if x != nil {
+		return x.Owners
+	}
+	return nil
+}
+
+// Owner reference to support multiple entity types
+type OwnerRef struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OwnerType     string                 `protobuf:"bytes,1,opt,name=owner_type,json=ownerType,proto3" json:"owner_type,omitempty"` // "warrior" | "enemy" | "dragon"
+	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`       // id or username depending on type
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OwnerRef) Reset() {
+	*x = OwnerRef{}
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OwnerRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OwnerRef) ProtoMessage() {}
+
+func (x *OwnerRef) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OwnerRef.ProtoReflect.Descriptor instead.
+func (*OwnerRef) Descriptor() ([]byte, []int) {
+	return file_api_proto_weapon_weapon_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *OwnerRef) GetOwnerType() string {
+	if x != nil {
+		return x.OwnerType
+	}
+	return ""
+}
+
+func (x *OwnerRef) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+// Request to list weapons by owner
+type ListOwnerWeaponsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OwnerType     string                 `protobuf:"bytes,1,opt,name=owner_type,json=ownerType,proto3" json:"owner_type,omitempty"` // "warrior" | "enemy" | "dragon"
+	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`       // warrior username or entity id
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListOwnerWeaponsRequest) Reset() {
+	*x = ListOwnerWeaponsRequest{}
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOwnerWeaponsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOwnerWeaponsRequest) ProtoMessage() {}
+
+func (x *ListOwnerWeaponsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOwnerWeaponsRequest.ProtoReflect.Descriptor instead.
+func (*ListOwnerWeaponsRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_weapon_weapon_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListOwnerWeaponsRequest) GetOwnerType() string {
+	if x != nil {
+		return x.OwnerType
+	}
+	return ""
+}
+
+func (x *ListOwnerWeaponsRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+// Response listing owner's weapons
+type ListOwnerWeaponsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Weapons       []*Weapon              `protobuf:"bytes,1,rep,name=weapons,proto3" json:"weapons,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListOwnerWeaponsResponse) Reset() {
+	*x = ListOwnerWeaponsResponse{}
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOwnerWeaponsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOwnerWeaponsResponse) ProtoMessage() {}
+
+func (x *ListOwnerWeaponsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOwnerWeaponsResponse.ProtoReflect.Descriptor instead.
+func (*ListOwnerWeaponsResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_weapon_weapon_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListOwnerWeaponsResponse) GetWeapons() []*Weapon {
+	if x != nil {
+		return x.Weapons
+	}
+	return nil
+}
+
+// Request to apply wear to a weapon
+type ApplyWearRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WeaponId      string                 `protobuf:"bytes,1,opt,name=weapon_id,json=weaponId,proto3" json:"weapon_id,omitempty"`
+	Wear          int32                  `protobuf:"varint,2,opt,name=wear,proto3" json:"wear,omitempty"` // how much durability to reduce
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyWearRequest) Reset() {
+	*x = ApplyWearRequest{}
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyWearRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyWearRequest) ProtoMessage() {}
+
+func (x *ApplyWearRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyWearRequest.ProtoReflect.Descriptor instead.
+func (*ApplyWearRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_weapon_weapon_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ApplyWearRequest) GetWeaponId() string {
+	if x != nil {
+		return x.WeaponId
+	}
+	return ""
+}
+
+func (x *ApplyWearRequest) GetWear() int32 {
+	if x != nil {
+		return x.Wear
+	}
+	return 0
+}
+
+// Response after applying wear
+type ApplyWearResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WeaponId      string                 `protobuf:"bytes,1,opt,name=weapon_id,json=weaponId,proto3" json:"weapon_id,omitempty"`
+	Durability    int32                  `protobuf:"varint,2,opt,name=durability,proto3" json:"durability,omitempty"`
+	IsBroken      bool                   `protobuf:"varint,3,opt,name=is_broken,json=isBroken,proto3" json:"is_broken,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyWearResponse) Reset() {
+	*x = ApplyWearResponse{}
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyWearResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyWearResponse) ProtoMessage() {}
+
+func (x *ApplyWearResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_weapon_weapon_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyWearResponse.ProtoReflect.Descriptor instead.
+func (*ApplyWearResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_weapon_weapon_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ApplyWearResponse) GetWeaponId() string {
+	if x != nil {
+		return x.WeaponId
+	}
+	return ""
+}
+
+func (x *ApplyWearResponse) GetDurability() int32 {
+	if x != nil {
+		return x.Durability
+	}
+	return 0
+}
+
+func (x *ApplyWearResponse) GetIsBroken() bool {
+	if x != nil {
+		return x.IsBroken
+	}
+	return false
+}
+
 var File_api_proto_weapon_weapon_proto protoreflect.FileDescriptor
 
 const file_api_proto_weapon_weapon_proto_rawDesc = "" +
@@ -369,7 +668,7 @@ const file_api_proto_weapon_weapon_proto_rawDesc = "" +
 	"\fweapon_bonus\x18\x03 \x01(\x05R\vweaponBonus\x12\x1f\n" +
 	"\vtotal_power\x18\x04 \x01(\x05R\n" +
 	"totalPower\x12!\n" +
-	"\fweapon_count\x18\x05 \x01(\x05R\vweaponCount\"\xc0\x02\n" +
+	"\fweapon_count\x18\x05 \x01(\x05R\vweaponCount\"\xce\x03\n" +
 	"\x06Weapon\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -384,10 +683,37 @@ const file_api_proto_weapon_weapon_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xb7\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1e\n" +
+	"\n" +
+	"durability\x18\v \x01(\x05R\n" +
+	"durability\x12%\n" +
+	"\x0emax_durability\x18\f \x01(\x05R\rmaxDurability\x12\x1b\n" +
+	"\tis_broken\x18\r \x01(\bR\bisBroken\x12(\n" +
+	"\x06owners\x18\x0e \x03(\v2\x10.weapon.OwnerRefR\x06owners\"D\n" +
+	"\bOwnerRef\x12\x1d\n" +
+	"\n" +
+	"owner_type\x18\x01 \x01(\tR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x02 \x01(\tR\aownerId\"S\n" +
+	"\x17ListOwnerWeaponsRequest\x12\x1d\n" +
+	"\n" +
+	"owner_type\x18\x01 \x01(\tR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x02 \x01(\tR\aownerId\"D\n" +
+	"\x18ListOwnerWeaponsResponse\x12(\n" +
+	"\aweapons\x18\x01 \x03(\v2\x0e.weapon.WeaponR\aweapons\"C\n" +
+	"\x10ApplyWearRequest\x12\x1b\n" +
+	"\tweapon_id\x18\x01 \x01(\tR\bweaponId\x12\x12\n" +
+	"\x04wear\x18\x02 \x01(\x05R\x04wear\"m\n" +
+	"\x11ApplyWearResponse\x12\x1b\n" +
+	"\tweapon_id\x18\x01 \x01(\tR\bweaponId\x12\x1e\n" +
+	"\n" +
+	"durability\x18\x02 \x01(\x05R\n" +
+	"durability\x12\x1b\n" +
+	"\tis_broken\x18\x03 \x01(\bR\bisBroken2\xd0\x02\n" +
 	"\rWeaponService\x12@\n" +
 	"\tGetWeapon\x12\x18.weapon.GetWeaponRequest\x1a\x19.weapon.GetWeaponResponse\x12d\n" +
-	"\x15CalculateWarriorPower\x12$.weapon.CalculateWarriorPowerRequest\x1a%.weapon.CalculateWarriorPowerResponseB$Z\"network-sec-micro/api/proto/weaponb\x06proto3"
+	"\x15CalculateWarriorPower\x12$.weapon.CalculateWarriorPowerRequest\x1a%.weapon.CalculateWarriorPowerResponse\x12U\n" +
+	"\x10ListOwnerWeapons\x12\x1f.weapon.ListOwnerWeaponsRequest\x1a .weapon.ListOwnerWeaponsResponse\x12@\n" +
+	"\tApplyWear\x12\x18.weapon.ApplyWearRequest\x1a\x19.weapon.ApplyWearResponseB$Z\"network-sec-micro/api/proto/weaponb\x06proto3"
 
 var (
 	file_api_proto_weapon_weapon_proto_rawDescOnce sync.Once
@@ -401,28 +727,39 @@ func file_api_proto_weapon_weapon_proto_rawDescGZIP() []byte {
 	return file_api_proto_weapon_weapon_proto_rawDescData
 }
 
-var file_api_proto_weapon_weapon_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_api_proto_weapon_weapon_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_api_proto_weapon_weapon_proto_goTypes = []any{
 	(*GetWeaponRequest)(nil),              // 0: weapon.GetWeaponRequest
 	(*GetWeaponResponse)(nil),             // 1: weapon.GetWeaponResponse
 	(*CalculateWarriorPowerRequest)(nil),  // 2: weapon.CalculateWarriorPowerRequest
 	(*CalculateWarriorPowerResponse)(nil), // 3: weapon.CalculateWarriorPowerResponse
 	(*Weapon)(nil),                        // 4: weapon.Weapon
-	(*timestamppb.Timestamp)(nil),         // 5: google.protobuf.Timestamp
+	(*OwnerRef)(nil),                      // 5: weapon.OwnerRef
+	(*ListOwnerWeaponsRequest)(nil),       // 6: weapon.ListOwnerWeaponsRequest
+	(*ListOwnerWeaponsResponse)(nil),      // 7: weapon.ListOwnerWeaponsResponse
+	(*ApplyWearRequest)(nil),              // 8: weapon.ApplyWearRequest
+	(*ApplyWearResponse)(nil),             // 9: weapon.ApplyWearResponse
+	(*timestamppb.Timestamp)(nil),         // 10: google.protobuf.Timestamp
 }
 var file_api_proto_weapon_weapon_proto_depIdxs = []int32{
-	4, // 0: weapon.GetWeaponResponse.weapon:type_name -> weapon.Weapon
-	5, // 1: weapon.Weapon.created_at:type_name -> google.protobuf.Timestamp
-	5, // 2: weapon.Weapon.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 3: weapon.WeaponService.GetWeapon:input_type -> weapon.GetWeaponRequest
-	2, // 4: weapon.WeaponService.CalculateWarriorPower:input_type -> weapon.CalculateWarriorPowerRequest
-	1, // 5: weapon.WeaponService.GetWeapon:output_type -> weapon.GetWeaponResponse
-	3, // 6: weapon.WeaponService.CalculateWarriorPower:output_type -> weapon.CalculateWarriorPowerResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4,  // 0: weapon.GetWeaponResponse.weapon:type_name -> weapon.Weapon
+	10, // 1: weapon.Weapon.created_at:type_name -> google.protobuf.Timestamp
+	10, // 2: weapon.Weapon.updated_at:type_name -> google.protobuf.Timestamp
+	5,  // 3: weapon.Weapon.owners:type_name -> weapon.OwnerRef
+	4,  // 4: weapon.ListOwnerWeaponsResponse.weapons:type_name -> weapon.Weapon
+	0,  // 5: weapon.WeaponService.GetWeapon:input_type -> weapon.GetWeaponRequest
+	2,  // 6: weapon.WeaponService.CalculateWarriorPower:input_type -> weapon.CalculateWarriorPowerRequest
+	6,  // 7: weapon.WeaponService.ListOwnerWeapons:input_type -> weapon.ListOwnerWeaponsRequest
+	8,  // 8: weapon.WeaponService.ApplyWear:input_type -> weapon.ApplyWearRequest
+	1,  // 9: weapon.WeaponService.GetWeapon:output_type -> weapon.GetWeaponResponse
+	3,  // 10: weapon.WeaponService.CalculateWarriorPower:output_type -> weapon.CalculateWarriorPowerResponse
+	7,  // 11: weapon.WeaponService.ListOwnerWeapons:output_type -> weapon.ListOwnerWeaponsResponse
+	9,  // 12: weapon.WeaponService.ApplyWear:output_type -> weapon.ApplyWearResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_weapon_weapon_proto_init() }
@@ -436,7 +773,7 @@ func file_api_proto_weapon_weapon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_weapon_weapon_proto_rawDesc), len(file_api_proto_weapon_weapon_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
