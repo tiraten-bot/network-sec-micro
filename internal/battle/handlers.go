@@ -99,7 +99,7 @@ func (h *Handler) StartBattle(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, dto.ToBattleResponse(battle, lightParts, darkParts))
+    c.JSON(http.StatusCreated, ToBattleResponse(battle, lightParts, darkParts))
 }
 
 // Attack godoc
@@ -156,11 +156,11 @@ func (h *Handler) Attack(c *gin.Context) {
 	darkParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battleID, "dark")
 
 	response := gin.H{
-		"battle": dto.ToBattleResponse(battle, lightParts, darkParts),
+        "battle": ToBattleResponse(battle, lightParts, darkParts),
 	}
 
 	if turn != nil {
-		response["turn"] = dto.ToBattleTurnResponse(turn)
+        response["turn"] = ToBattleTurnResponse(turn)
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -248,7 +248,7 @@ func (h *Handler) GetBattle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.ToBattleResponse(battle, lightParts, darkParts))
+    c.JSON(http.StatusOK, ToBattleResponse(battle, lightParts, darkParts))
 }
 
 // GetMyBattles godoc
@@ -318,7 +318,7 @@ func (h *Handler) GetMyBattles(c *gin.Context) {
 	for i, battle := range battles {
 		lightParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battle.ID, "light")
 		darkParts, _ := h.Service.GetBattleParticipants(c.Request.Context(), battle.ID, "dark")
-		responses[i] = dto.ToBattleResponse(&battle, lightParts, darkParts)
+        responses[i] = ToBattleResponse(&battle, lightParts, darkParts)
 	}
 
 	c.JSON(http.StatusOK, dto.BattlesListResponse{
@@ -372,7 +372,7 @@ func (h *Handler) GetBattleTurns(c *gin.Context) {
 
 	responses := make([]*dto.BattleTurnResponse, len(turns))
 	for i, turn := range turns {
-		responses[i] = dto.ToBattleTurnResponse(&turn)
+        responses[i] = ToBattleTurnResponse(&turn)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -623,7 +623,7 @@ func (h *Handler) ReviveDragon(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":    true,
-		"participant": dto.ToParticipantResponse(participant),
+        "participant": ToParticipantResponse(participant),
 		"message":    fmt.Sprintf("Dragon %s revived successfully", participant.Name),
 	})
 }
@@ -696,7 +696,7 @@ func (h *Handler) DarkEmperorJoinBattle(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":    true,
-		"participant": dto.ToParticipantResponse(participant),
+        "participant": ToParticipantResponse(participant),
 		"message":    fmt.Sprintf("Dark Emperor %s joined the battle!", user.Username),
 	})
 }
