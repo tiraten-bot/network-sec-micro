@@ -495,12 +495,13 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		return
 	}
 
-    // RBAC check: Check if user is a participant or has admin access
+    // Fetch participants for RBAC and check
+    lightParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "light")
+    darkParts, _ := GetRepository().FindParticipants(c.Request.Context(), battle.ID, "dark")
     user, _ := GetCurrentUser(c)
     userIDStr := fmt.Sprintf("%d", user.UserID)
-	hasAccess := false
-	
-	// Check if user is a participant
+    hasAccess := false
+    // Check if user is a participant
 	for _, p := range lightParts {
 		if p.ParticipantID == userIDStr {
 			hasAccess = true
