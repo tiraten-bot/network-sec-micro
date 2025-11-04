@@ -107,6 +107,23 @@ func ProcessKafkaMessage(message []byte) error {
         }
     }
 
+    // Try to unmarshal as armor.repair event
+    var armorRepair ArmorRepairEvent
+    if err := json.Unmarshal(message, &armorRepair); err == nil {
+        if armorRepair.Type == "armor.repair" && armorRepair.Cost > 0 {
+            if armorRepair.OwnerType == "warrior" && armorRepair.OwnerID != "" {
+                if id64, err := strconv.ParseUint(armorRepair.OwnerID, 10, 32); err == nil {
+                    ctx := context.Background()
+                    service := NewService()
+                    server := NewCoinServiceServer(service)
+                    _, err := server.DeductCoins(ctx, &pb.DeductCoinsRequest{WarriorId: uint32(id64), Amount: int64(armorRepair.Cost), Reason: "armor_repair"})
+                    if err != nil { log.Printf("Failed to deduct coins for armor repair: %v", err) }
+                }
+            }
+            return nil
+        }
+    }
+
     // Try to unmarshal as armor purchase event
     var armorEvent ArmorPurchaseEvent
     if err := json.Unmarshal(message, &armorEvent); err == nil {
