@@ -1,7 +1,6 @@
 package battle
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
