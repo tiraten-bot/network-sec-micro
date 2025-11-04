@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"network-sec-micro/internal/battle/dto"
 	pbWarrior "network-sec-micro/api/proto/warrior"
 )
 
