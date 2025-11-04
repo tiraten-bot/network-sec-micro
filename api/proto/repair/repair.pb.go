@@ -27,6 +27,7 @@ type RepairWeaponRequest struct {
 	OwnerType     string                 `protobuf:"bytes,1,opt,name=owner_type,json=ownerType,proto3" json:"owner_type,omitempty"` // warrior | enemy | dragon
 	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`       // username or id
 	WeaponId      string                 `protobuf:"bytes,3,opt,name=weapon_id,json=weaponId,proto3" json:"weapon_id,omitempty"`
+	OwnerRole     string                 `protobuf:"bytes,4,opt,name=owner_role,json=ownerRole,proto3" json:"owner_role,omitempty"` // Role for RBAC-based pricing (e.g., "light_emperor", "warrior")
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -78,6 +79,13 @@ func (x *RepairWeaponRequest) GetOwnerId() string {
 func (x *RepairWeaponRequest) GetWeaponId() string {
 	if x != nil {
 		return x.WeaponId
+	}
+	return ""
+}
+
+func (x *RepairWeaponRequest) GetOwnerRole() string {
+	if x != nil {
+		return x.OwnerRole
 	}
 	return ""
 }
@@ -150,6 +158,142 @@ func (x *RepairWeaponResponse) GetStatus() string {
 	return ""
 }
 
+type RepairArmorRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OwnerType     string                 `protobuf:"bytes,1,opt,name=owner_type,json=ownerType,proto3" json:"owner_type,omitempty"` // warrior | enemy | dragon
+	OwnerId       string                 `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`       // username or id
+	ArmorId       string                 `protobuf:"bytes,3,opt,name=armor_id,json=armorId,proto3" json:"armor_id,omitempty"`
+	OwnerRole     string                 `protobuf:"bytes,4,opt,name=owner_role,json=ownerRole,proto3" json:"owner_role,omitempty"` // Role for RBAC-based pricing (e.g., "light_emperor", "warrior")
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RepairArmorRequest) Reset() {
+	*x = RepairArmorRequest{}
+	mi := &file_api_proto_repair_repair_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RepairArmorRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RepairArmorRequest) ProtoMessage() {}
+
+func (x *RepairArmorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_repair_repair_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RepairArmorRequest.ProtoReflect.Descriptor instead.
+func (*RepairArmorRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RepairArmorRequest) GetOwnerType() string {
+	if x != nil {
+		return x.OwnerType
+	}
+	return ""
+}
+
+func (x *RepairArmorRequest) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *RepairArmorRequest) GetArmorId() string {
+	if x != nil {
+		return x.ArmorId
+	}
+	return ""
+}
+
+func (x *RepairArmorRequest) GetOwnerRole() string {
+	if x != nil {
+		return x.OwnerRole
+	}
+	return ""
+}
+
+type RepairArmorResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Accepted      bool                   `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"` // accepted for processing
+	OrderId       string                 `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	Cost          int32                  `protobuf:"varint,3,opt,name=cost,proto3" json:"cost,omitempty"`
+	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"` // pending | completed | failed
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RepairArmorResponse) Reset() {
+	*x = RepairArmorResponse{}
+	mi := &file_api_proto_repair_repair_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RepairArmorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RepairArmorResponse) ProtoMessage() {}
+
+func (x *RepairArmorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_repair_repair_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RepairArmorResponse.ProtoReflect.Descriptor instead.
+func (*RepairArmorResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RepairArmorResponse) GetAccepted() bool {
+	if x != nil {
+		return x.Accepted
+	}
+	return false
+}
+
+func (x *RepairArmorResponse) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
+}
+
+func (x *RepairArmorResponse) GetCost() int32 {
+	if x != nil {
+		return x.Cost
+	}
+	return 0
+}
+
+func (x *RepairArmorResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 type GetRepairHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OwnerType     string                 `protobuf:"bytes,1,opt,name=owner_type,json=ownerType,proto3" json:"owner_type,omitempty"`
@@ -160,7 +304,7 @@ type GetRepairHistoryRequest struct {
 
 func (x *GetRepairHistoryRequest) Reset() {
 	*x = GetRepairHistoryRequest{}
-	mi := &file_api_proto_repair_repair_proto_msgTypes[2]
+	mi := &file_api_proto_repair_repair_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -172,7 +316,7 @@ func (x *GetRepairHistoryRequest) String() string {
 func (*GetRepairHistoryRequest) ProtoMessage() {}
 
 func (x *GetRepairHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_repair_repair_proto_msgTypes[2]
+	mi := &file_api_proto_repair_repair_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -185,7 +329,7 @@ func (x *GetRepairHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRepairHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetRepairHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetRepairHistoryRequest) GetOwnerType() string {
@@ -207,18 +351,20 @@ type RepairOrderRecord struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	OwnerType     string                 `protobuf:"bytes,2,opt,name=owner_type,json=ownerType,proto3" json:"owner_type,omitempty"`
 	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
-	WeaponId      string                 `protobuf:"bytes,4,opt,name=weapon_id,json=weaponId,proto3" json:"weapon_id,omitempty"`
-	Cost          int32                  `protobuf:"varint,5,opt,name=cost,proto3" json:"cost,omitempty"`
-	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
+	WeaponId      string                 `protobuf:"bytes,4,opt,name=weapon_id,json=weaponId,proto3" json:"weapon_id,omitempty"` // For weapon repairs
+	ArmorId       string                 `protobuf:"bytes,5,opt,name=armor_id,json=armorId,proto3" json:"armor_id,omitempty"`    // For armor repairs
+	ItemType      string                 `protobuf:"bytes,6,opt,name=item_type,json=itemType,proto3" json:"item_type,omitempty"` // "weapon" | "armor"
+	Cost          int32                  `protobuf:"varint,7,opt,name=cost,proto3" json:"cost,omitempty"`
+	Status        string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RepairOrderRecord) Reset() {
 	*x = RepairOrderRecord{}
-	mi := &file_api_proto_repair_repair_proto_msgTypes[3]
+	mi := &file_api_proto_repair_repair_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -230,7 +376,7 @@ func (x *RepairOrderRecord) String() string {
 func (*RepairOrderRecord) ProtoMessage() {}
 
 func (x *RepairOrderRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_repair_repair_proto_msgTypes[3]
+	mi := &file_api_proto_repair_repair_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -243,7 +389,7 @@ func (x *RepairOrderRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepairOrderRecord.ProtoReflect.Descriptor instead.
 func (*RepairOrderRecord) Descriptor() ([]byte, []int) {
-	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RepairOrderRecord) GetId() string {
@@ -270,6 +416,20 @@ func (x *RepairOrderRecord) GetOwnerId() string {
 func (x *RepairOrderRecord) GetWeaponId() string {
 	if x != nil {
 		return x.WeaponId
+	}
+	return ""
+}
+
+func (x *RepairOrderRecord) GetArmorId() string {
+	if x != nil {
+		return x.ArmorId
+	}
+	return ""
+}
+
+func (x *RepairOrderRecord) GetItemType() string {
+	if x != nil {
+		return x.ItemType
 	}
 	return ""
 }
@@ -311,7 +471,7 @@ type GetRepairHistoryResponse struct {
 
 func (x *GetRepairHistoryResponse) Reset() {
 	*x = GetRepairHistoryResponse{}
-	mi := &file_api_proto_repair_repair_proto_msgTypes[4]
+	mi := &file_api_proto_repair_repair_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -323,7 +483,7 @@ func (x *GetRepairHistoryResponse) String() string {
 func (*GetRepairHistoryResponse) ProtoMessage() {}
 
 func (x *GetRepairHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_repair_repair_proto_msgTypes[4]
+	mi := &file_api_proto_repair_repair_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -336,7 +496,7 @@ func (x *GetRepairHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRepairHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetRepairHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_repair_repair_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetRepairHistoryResponse) GetOrders() []*RepairOrderRecord {
@@ -350,13 +510,27 @@ var File_api_proto_repair_repair_proto protoreflect.FileDescriptor
 
 const file_api_proto_repair_repair_proto_rawDesc = "" +
 	"\n" +
-	"\x1dapi/proto/repair/repair.proto\x12\x06repair\x1a\x1fgoogle/protobuf/timestamp.proto\"l\n" +
+	"\x1dapi/proto/repair/repair.proto\x12\x06repair\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x01\n" +
 	"\x13RepairWeaponRequest\x12\x1d\n" +
 	"\n" +
 	"owner_type\x18\x01 \x01(\tR\townerType\x12\x19\n" +
 	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12\x1b\n" +
-	"\tweapon_id\x18\x03 \x01(\tR\bweaponId\"y\n" +
+	"\tweapon_id\x18\x03 \x01(\tR\bweaponId\x12\x1d\n" +
+	"\n" +
+	"owner_role\x18\x04 \x01(\tR\townerRole\"y\n" +
 	"\x14RepairWeaponResponse\x12\x1a\n" +
+	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x19\n" +
+	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x12\n" +
+	"\x04cost\x18\x03 \x01(\x05R\x04cost\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\"\x88\x01\n" +
+	"\x12RepairArmorRequest\x12\x1d\n" +
+	"\n" +
+	"owner_type\x18\x01 \x01(\tR\townerType\x12\x19\n" +
+	"\bowner_id\x18\x02 \x01(\tR\aownerId\x12\x19\n" +
+	"\barmor_id\x18\x03 \x01(\tR\aarmorId\x12\x1d\n" +
+	"\n" +
+	"owner_role\x18\x04 \x01(\tR\townerRole\"x\n" +
+	"\x13RepairArmorResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x12\n" +
 	"\x04cost\x18\x03 \x01(\x05R\x04cost\x12\x16\n" +
@@ -364,22 +538,26 @@ const file_api_proto_repair_repair_proto_rawDesc = "" +
 	"\x17GetRepairHistoryRequest\x12\x1d\n" +
 	"\n" +
 	"owner_type\x18\x01 \x01(\tR\townerType\x12\x19\n" +
-	"\bowner_id\x18\x02 \x01(\tR\aownerId\"\xa0\x02\n" +
+	"\bowner_id\x18\x02 \x01(\tR\aownerId\"\xd8\x02\n" +
 	"\x11RepairOrderRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"owner_type\x18\x02 \x01(\tR\townerType\x12\x19\n" +
 	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12\x1b\n" +
-	"\tweapon_id\x18\x04 \x01(\tR\bweaponId\x12\x12\n" +
-	"\x04cost\x18\x05 \x01(\x05R\x04cost\x12\x16\n" +
-	"\x06status\x18\x06 \x01(\tR\x06status\x129\n" +
+	"\tweapon_id\x18\x04 \x01(\tR\bweaponId\x12\x19\n" +
+	"\barmor_id\x18\x05 \x01(\tR\aarmorId\x12\x1b\n" +
+	"\titem_type\x18\x06 \x01(\tR\bitemType\x12\x12\n" +
+	"\x04cost\x18\a \x01(\x05R\x04cost\x12\x16\n" +
+	"\x06status\x18\b \x01(\tR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12=\n" +
-	"\fcompleted_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\"M\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12=\n" +
+	"\fcompleted_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\"M\n" +
 	"\x18GetRepairHistoryResponse\x121\n" +
-	"\x06orders\x18\x01 \x03(\v2\x19.repair.RepairOrderRecordR\x06orders2\xb1\x01\n" +
+	"\x06orders\x18\x01 \x03(\v2\x19.repair.RepairOrderRecordR\x06orders2\xf9\x01\n" +
 	"\rRepairService\x12I\n" +
-	"\fRepairWeapon\x12\x1b.repair.RepairWeaponRequest\x1a\x1c.repair.RepairWeaponResponse\x12U\n" +
+	"\fRepairWeapon\x12\x1b.repair.RepairWeaponRequest\x1a\x1c.repair.RepairWeaponResponse\x12F\n" +
+	"\vRepairArmor\x12\x1a.repair.RepairArmorRequest\x1a\x1b.repair.RepairArmorResponse\x12U\n" +
 	"\x10GetRepairHistory\x12\x1f.repair.GetRepairHistoryRequest\x1a .repair.GetRepairHistoryResponseB$Z\"network-sec-micro/api/proto/repairb\x06proto3"
 
 var (
@@ -394,25 +572,29 @@ func file_api_proto_repair_repair_proto_rawDescGZIP() []byte {
 	return file_api_proto_repair_repair_proto_rawDescData
 }
 
-var file_api_proto_repair_repair_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_api_proto_repair_repair_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_api_proto_repair_repair_proto_goTypes = []any{
 	(*RepairWeaponRequest)(nil),      // 0: repair.RepairWeaponRequest
 	(*RepairWeaponResponse)(nil),     // 1: repair.RepairWeaponResponse
-	(*GetRepairHistoryRequest)(nil),  // 2: repair.GetRepairHistoryRequest
-	(*RepairOrderRecord)(nil),        // 3: repair.RepairOrderRecord
-	(*GetRepairHistoryResponse)(nil), // 4: repair.GetRepairHistoryResponse
-	(*timestamppb.Timestamp)(nil),    // 5: google.protobuf.Timestamp
+	(*RepairArmorRequest)(nil),       // 2: repair.RepairArmorRequest
+	(*RepairArmorResponse)(nil),      // 3: repair.RepairArmorResponse
+	(*GetRepairHistoryRequest)(nil),  // 4: repair.GetRepairHistoryRequest
+	(*RepairOrderRecord)(nil),        // 5: repair.RepairOrderRecord
+	(*GetRepairHistoryResponse)(nil), // 6: repair.GetRepairHistoryResponse
+	(*timestamppb.Timestamp)(nil),    // 7: google.protobuf.Timestamp
 }
 var file_api_proto_repair_repair_proto_depIdxs = []int32{
-	5, // 0: repair.RepairOrderRecord.created_at:type_name -> google.protobuf.Timestamp
-	5, // 1: repair.RepairOrderRecord.completed_at:type_name -> google.protobuf.Timestamp
-	3, // 2: repair.GetRepairHistoryResponse.orders:type_name -> repair.RepairOrderRecord
+	7, // 0: repair.RepairOrderRecord.created_at:type_name -> google.protobuf.Timestamp
+	7, // 1: repair.RepairOrderRecord.completed_at:type_name -> google.protobuf.Timestamp
+	5, // 2: repair.GetRepairHistoryResponse.orders:type_name -> repair.RepairOrderRecord
 	0, // 3: repair.RepairService.RepairWeapon:input_type -> repair.RepairWeaponRequest
-	2, // 4: repair.RepairService.GetRepairHistory:input_type -> repair.GetRepairHistoryRequest
-	1, // 5: repair.RepairService.RepairWeapon:output_type -> repair.RepairWeaponResponse
-	4, // 6: repair.RepairService.GetRepairHistory:output_type -> repair.GetRepairHistoryResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
+	2, // 4: repair.RepairService.RepairArmor:input_type -> repair.RepairArmorRequest
+	4, // 5: repair.RepairService.GetRepairHistory:input_type -> repair.GetRepairHistoryRequest
+	1, // 6: repair.RepairService.RepairWeapon:output_type -> repair.RepairWeaponResponse
+	3, // 7: repair.RepairService.RepairArmor:output_type -> repair.RepairArmorResponse
+	6, // 8: repair.RepairService.GetRepairHistory:output_type -> repair.GetRepairHistoryResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -429,7 +611,7 @@ func file_api_proto_repair_repair_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_repair_repair_proto_rawDesc), len(file_api_proto_repair_repair_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
