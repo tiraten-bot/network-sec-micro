@@ -31,6 +31,9 @@ type StartBattleCommand struct {
     WarriorName  string `json:"warrior_name,omitempty"`
     OpponentID   string `json:"opponent_id,omitempty"`
     OpponentName string `json:"opponent_name,omitempty"`
+    OpponentType string `json:"opponent_type,omitempty"`
+    OpponentHP   int    `json:"opponent_hp,omitempty"`
+    OpponentMaxHP int   `json:"opponent_max_hp,omitempty"`
 }
 
 // AttackCommand represents a command to perform an attack in battle
