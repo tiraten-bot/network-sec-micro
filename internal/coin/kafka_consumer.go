@@ -22,6 +22,16 @@ type WeaponPurchaseEvent struct {
 	WeaponPrice   int    `json:"weapon_price"`
 }
 
+// WeaponRepairEvent event to deduct coins for repair
+type WeaponRepairEvent struct {
+    Type      string `json:"type"`
+    OwnerType string `json:"owner_type"`
+    OwnerID   string `json:"owner_id"`
+    Cost      int    `json:"cost"`
+    WeaponID  string `json:"weapon_id"`
+    OrderID   string `json:"order_id"`
+}
+
 // HandleWeaponPurchase handles weapon purchase events from Kafka
 func (s *CoinServiceServer) HandleWeaponPurchase(event WeaponPurchaseEvent) error {
 	log.Printf("Received weapon purchase event: %+v", event)
@@ -55,6 +65,24 @@ func ProcessKafkaMessage(message []byte) error {
 			return server.HandleWeaponPurchase(weaponEvent)
 		}
 	}
+
+    // Try to unmarshal as weapon.repair event
+    var repair WeaponRepairEvent
+    if err := json.Unmarshal(message, &repair); err == nil {
+        if repair.Type == "weapon.repair" && repair.Cost > 0 {
+            // Only warriors have coin accounts directly; for dragons/enemies, you may map to creators/owners as needed.
+            if repair.OwnerType == "warrior" && repair.OwnerID != "" {
+                if id64, err := strconv.ParseUint(repair.OwnerID, 10, 32); err == nil {
+                    ctx := context.Background()
+                    service := NewService()
+                    server := NewCoinServiceServer(service)
+                    _, err := server.DeductCoins(ctx, &pb.DeductCoinsRequest{WarriorId: uint32(id64), Amount: int64(repair.Cost), Reason: "weapon_repair"})
+                    if err != nil { log.Printf("Failed to deduct coins for repair: %v", err) }
+                }
+            }
+            return nil
+        }
+    }
 
 	// Try to unmarshal as arena match completed
 	var arenaCompleted kafka.ArenaMatchCompletedEvent
