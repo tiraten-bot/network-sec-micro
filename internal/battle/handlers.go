@@ -25,34 +25,6 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
-// GetCurrentUser extracts current user from JWT token
-func GetCurrentUser(c *gin.Context) (*User, error) {
-	username := c.GetString("username")
-	if username == "" {
-		return nil, gin.Error{
-			Err:  nil,
-			Type: gin.ErrorTypePublic,
-			Meta: "username not found in token",
-		}
-	}
-
-	userIDStr := c.GetString("user_id")
-	userID, _ := strconv.ParseUint(userIDStr, 10, 32)
-
-	return &User{
-		Username: username,
-		UserID:   uint(userID),
-		Role:     c.GetString("role"),
-	}, nil
-}
-
-// User represents authenticated user
-type User struct {
-	Username string
-	UserID   uint
-	Role     string
-}
-
 // StartBattle godoc
 // @Summary Start a new team battle
 // @Description Start a team battle between Light and Dark sides. Light side can have warriors (knight, archer, mage, light_emperor, light_king). Dark side can have enemies, dragons, dark_king, dark_emperor.
