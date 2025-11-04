@@ -1,8 +1,7 @@
 package dto
 
 import (
-	"network-sec-micro/internal/battle"
-	"time"
+    "time"
 )
 
 // ParticipantResponse represents a battle participant response
@@ -24,30 +23,7 @@ type ParticipantResponse struct {
 }
 
 // ToParticipantResponse converts a BattleParticipant to ParticipantResponse
-func ToParticipantResponse(p *battle.BattleParticipant) *ParticipantResponse {
-	resp := &ParticipantResponse{
-		ID:            p.ID.Hex(),
-		BattleID:      p.BattleID.Hex(),
-		ParticipantID: p.ParticipantID,
-		Name:          p.Name,
-		Type:          string(p.Type),
-		Side:          string(p.Side),
-		HP:            p.HP,
-		MaxHP:         p.MaxHP,
-		AttackPower:   p.AttackPower,
-		Defense:       p.Defense,
-		IsAlive:       p.IsAlive,
-		IsDefeated:    p.IsDefeated,
-		CreatedAt:     p.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-
-	if p.DefeatedAt != nil {
-		defeatedStr := p.DefeatedAt.Format("2006-01-02T15:04:05Z07:00")
-		resp.DefeatedAt = &defeatedStr
-	}
-
-	return resp
-}
+// Mapping helpers are implemented in root battle package to avoid import cycles.
 
 // BattleResponse represents a battle response
 type BattleResponse struct {
@@ -72,54 +48,7 @@ type BattleResponse struct {
 }
 
 // ToBattleResponse converts a Battle model to BattleResponse
-func ToBattleResponse(b *battle.Battle, lightParticipants []*battle.BattleParticipant, darkParticipants []*battle.BattleParticipant) *BattleResponse {
-	resp := &BattleResponse{
-		ID:                    b.ID.Hex(),
-		BattleType:            string(b.BattleType),
-		LightSideName:         b.LightSideName,
-		DarkSideName:          b.DarkSideName,
-		CurrentTurn:           b.CurrentTurn,
-		CurrentParticipantIndex: b.CurrentParticipantIndex,
-		MaxTurns:              b.MaxTurns,
-		Status:                string(b.Status),
-		CreatedBy:             b.CreatedBy,
-		CreatedAt:             b.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-
-	if b.Result != "" {
-		resp.Result = string(b.Result)
-		resp.WinnerSide = string(b.WinnerSide)
-		resp.CoinsEarned = b.CoinsEarned
-		resp.ExperienceGained = b.ExperienceGained
-	}
-
-	if b.StartedAt != nil {
-		startedStr := b.StartedAt.Format("2006-01-02T15:04:05Z07:00")
-		resp.StartedAt = &startedStr
-	}
-
-	if b.CompletedAt != nil {
-		completedStr := b.CompletedAt.Format("2006-01-02T15:04:05Z07:00")
-		resp.CompletedAt = &completedStr
-	}
-
-	// Convert participants
-	if lightParticipants != nil {
-		resp.LightParticipants = make([]ParticipantResponse, len(lightParticipants))
-		for i, p := range lightParticipants {
-			resp.LightParticipants[i] = *ToParticipantResponse(p)
-		}
-	}
-
-	if darkParticipants != nil {
-		resp.DarkParticipants = make([]ParticipantResponse, len(darkParticipants))
-		for i, p := range darkParticipants {
-			resp.DarkParticipants[i] = *ToParticipantResponse(p)
-		}
-	}
-
-	return resp
-}
+// See internal/battle/response_mapper.go
 
 // BattleTurnResponse represents a battle turn response
 type BattleTurnResponse struct {
@@ -143,27 +72,7 @@ type BattleTurnResponse struct {
 }
 
 // ToBattleTurnResponse converts a BattleTurn to BattleTurnResponse
-func ToBattleTurnResponse(t *battle.BattleTurn) *BattleTurnResponse {
-	return &BattleTurnResponse{
-		ID:            t.ID.Hex(),
-		BattleID:      t.BattleID.Hex(),
-		TurnNumber:    t.TurnNumber,
-		AttackerID:    t.AttackerID,
-		AttackerName:  t.AttackerName,
-		AttackerType:  string(t.AttackerType),
-		AttackerSide:  string(t.AttackerSide),
-		TargetID:      t.TargetID,
-		TargetName:    t.TargetName,
-		TargetType:    string(t.TargetType),
-		TargetSide:    string(t.TargetSide),
-		DamageDealt:   t.DamageDealt,
-		CriticalHit:   t.CriticalHit,
-		TargetHPBefore: t.TargetHPBefore,
-		TargetHPAfter:  t.TargetHPAfter,
-		TargetDefeated: t.TargetDefeated,
-		CreatedAt:     t.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-}
+// See internal/battle/response_mapper.go
 
 // ErrorResponse represents an error response
 type ErrorResponse struct {
