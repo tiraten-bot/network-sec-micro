@@ -12,21 +12,21 @@ graph TB
     end
 
     subgraph "API Gateway Layer"
-        FG[Fiber Gateway<br/>(HTTP/gRPC h2c)]
+        FG["Fiber Gateway\nHTTP gRPC h2c"]
     end
 
     subgraph "Microservices Layer"
-        W[Warrior Service<br/>HTTP :8080]
-        WP[Weapon Service<br/>HTTP :8081]
-        C[Coin Service<br/>gRPC :50051]
-        E[Enemy Service<br/>HTTP :8083]
-        D[Dragon Service<br/>HTTP :8084]
-        B[Battle Service<br/>HTTP :8085]
-        BS[Battlespell Service<br/>HTTP :8086]
-        A[Arena Service<br/>HTTP :8087]
+        W["Warrior Service\nHTTP :8080"]
+        WP["Weapon Service\nHTTP :8081"]
+        C["Coin Service\ngRPC :50051"]
+        E["Enemy Service\nHTTP :8083"]
+        D["Dragon Service\nHTTP :8084"]
+        B["Battle Service\nHTTP :8085"]
+        BS["Battlespell Service\nHTTP :8086"]
+        A["Arena Service\nHTTP :8087"]
         AS[Arenaspell Service]
-        H[Heal Service<br/>gRPC :50058]
-        R[Repair Service<br/>gRPC :50061]
+        H["Heal Service\ngRPC :50058"]
+        R["Repair Service\ngRPC :50061"]
     end
 
     subgraph "Data Layer"
