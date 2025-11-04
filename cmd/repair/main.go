@@ -32,10 +32,17 @@ func main() {
     defer wconn.Close()
     wcli := pbWeapon.NewWeaponServiceClient(wconn)
 
+    // connect to armor service
+    aaddr := getEnv("ARMOR_GRPC_ADDR", "localhost:50059")
+    aconn, err := grpc.Dial(aaddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil { log.Fatalf("armor grpc dial error: %v", err) }
+    defer aconn.Close()
+    acli := pbArmor.NewArmorServiceClient(aconn)
+
     lis, err := net.Listen("tcp", ":50061")
     if err != nil { log.Fatalf("listen error: %v", err) }
     srv := grpc.NewServer()
-    pb.RegisterRepairServiceServer(srv, repair.NewGrpcServer(svc, wcli))
+    pb.RegisterRepairServiceServer(srv, repair.NewGrpcServer(svc, wcli, acli))
     log.Printf("repair service listening on %s", ":50061")
     if err := srv.Serve(lis); err != nil { log.Fatalf("serve error: %v", err) }
 }
