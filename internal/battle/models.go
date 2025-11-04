@@ -21,6 +21,9 @@ const (
 	BattleResultLightVictory BattleResult = "light_victory" // Light side won
 	BattleResultDarkVictory  BattleResult = "dark_victory"  // Dark side won
 	BattleResultDraw         BattleResult = "draw"          // Draw
+	// Legacy single battle results
+	BattleResultVictory BattleResult = "victory" // Warrior won (legacy)
+	BattleResultDefeat  BattleResult = "defeat"  // Warrior lost (legacy)
 )
 
 // BattleType represents the type of battle
