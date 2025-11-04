@@ -313,39 +313,57 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 	}
 
 	// Validate attacker
-	var attackerHP, attackerAttack *int
+    var attackerHP, attackerAttack *int
 	var defenderHP, defenderDefense *int
 	var defenderID uint
 	var attackerName, defenderName string
+    var ownerUsername string
 
 	if attackerID == match.Player1ID {
 		if match.CurrentAttacker != 1 && match.CurrentAttacker != 0 {
 			return nil, errors.New("not your turn")
 		}
-		attackerHP = &match.Player1HP
+        attackerHP = &match.Player1HP
 		attackerAttack = &match.Player1Attack
 		defenderHP = &match.Player2HP
 		defenderDefense = &match.Player2Defense
 		defenderID = match.Player2ID
 		attackerName = match.Player1Name
 		defenderName = match.Player2Name
+        ownerUsername = match.Player1Name
 	} else if attackerID == match.Player2ID {
 		if match.CurrentAttacker != 2 {
 			return nil, errors.New("not your turn")
 		}
-		attackerHP = &match.Player2HP
+        attackerHP = &match.Player2HP
 		attackerAttack = &match.Player2Attack
 		defenderHP = &match.Player1HP
 		defenderDefense = &match.Player1Defense
 		defenderID = match.Player1ID
 		attackerName = match.Player2Name
 		defenderName = match.Player1Name
+        ownerUsername = match.Player2Name
 	} else {
 		return nil, errors.New("you are not a participant in this match")
 	}
 
-	// Calculate damage
-	damage := *attackerAttack - *defenderDefense
+    // Include weapon bonus damage for warriors via weapon service
+    bonusDamage := 0
+    if ownerUsername != "" {
+        if ws, err := ListWeaponsByOwner(ctx, "warrior", ownerUsername); err == nil {
+            maxD := 0
+            var usedWeaponID string
+            for _, w := range ws {
+                if w.IsBroken { continue }
+                if int(w.Damage) > maxD { maxD = int(w.Damage); usedWeaponID = w.Id }
+            }
+            bonusDamage = maxD
+            if usedWeaponID != "" { _, _ = ApplyWeaponWear(ctx, usedWeaponID, 1) }
+        }
+    }
+
+    // Calculate damage
+    damage := (*attackerAttack + bonusDamage) - *defenderDefense
 	if damage < 10 {
 		damage = 10 // Minimum damage
 	}
