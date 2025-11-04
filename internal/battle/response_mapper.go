@@ -71,8 +71,8 @@ func ToBattleResponse(b *Battle, lightParticipants []*BattleParticipant, darkPar
 
 func ToBattleTurnResponse(t *BattleTurn) *dto.BattleTurnResponse {
     return &dto.BattleTurnResponse{
-        ID:             t.ID.Hex(),
-        BattleID:       t.BattleID.Hex(),
+        ID:             t.ID,
+        BattleID:       t.BattleID,
         TurnNumber:     t.TurnNumber,
         AttackerID:     t.AttackerID,
         AttackerName:   t.AttackerName,
