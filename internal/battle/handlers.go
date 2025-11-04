@@ -600,14 +600,12 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 			"count":     len(logsArray),
 		})
 		return
-	}
-
+    } else {
 		c.JSON(http.StatusOK, gin.H{
 			"battle_id": battleID,
 			"logs":      logs,
 			"count":     len(logs),
 		})
-	}
 }
 
 // ReviveDragon godoc
