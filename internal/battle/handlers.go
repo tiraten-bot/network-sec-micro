@@ -38,7 +38,7 @@ func NewHandler(service *Service) *Handler {
 // @Failure 401 {object} dto.ErrorResponse
 // @Router /battles [post]
 func (h *Handler) StartBattle(c *gin.Context) {
-	user, err := GetCurrentUser(c)
+    user, err := GetCurrentUser(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
 			Error:   "unauthorized",
