@@ -85,7 +85,16 @@ func (g *GrpcServer) GetRepairHistory(ctx context.Context, req *pb.GetRepairHist
     if err != nil { return nil, status.Errorf(codes.Internal, "query failed") }
     out := make([]*pb.RepairOrderRecord, 0, len(orders))
     for _, o := range orders {
-        rec := &pb.RepairOrderRecord{Id: fmt.Sprintf("%d", o.ID), OwnerType: o.OwnerType, OwnerId: o.OwnerID, WeaponId: o.WeaponID, Cost: int32(o.Cost), Status: string(o.Status)}
+        rec := &pb.RepairOrderRecord{
+            Id: fmt.Sprintf("%d", o.ID),
+            OwnerType: o.OwnerType,
+            OwnerId: o.OwnerID,
+            WeaponId: o.WeaponID,
+            ArmorId: o.ArmorID,
+            ItemType: o.ItemType,
+            Cost: int32(o.Cost),
+            Status: string(o.Status),
+        }
         rec.CreatedAt = timestamppb.New(o.CreatedAt)
         if o.CompletedAt != nil { rec.CompletedAt = timestamppb.New(*o.CompletedAt) }
         out = append(out, rec)
