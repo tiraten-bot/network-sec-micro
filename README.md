@@ -1996,3 +1996,52 @@ graph TB
     style D4 fill:#f39c12,stroke:#e67e22,color:#ffffff
     style D5 fill:#2ecc71,stroke:#27ae60,color:#ffffff
 ```
+
+## 🔧 Repair Service (gRPC)
+
+### Overview
+- Repairs damaged weapons by restoring durability to max after payment.
+- Stores repair orders in PostgreSQL (GORM).
+- Publishes `weapon.repair` events to Kafka. Coin service consumes and deducts balance.
+- gRPC endpoints exposed via gateway (`/repair.RepairService`).
+
+### Repair Flow (Event + gRPC)
+
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#2b2b2b',
+    'primaryTextColor': '#e0e0e0',
+    'primaryBorderColor': '#5a5a5a',
+    'lineColor': '#5a5a5a',
+    'tertiaryColor': '#3a3a3a',
+    'clusterBkg': '#2b2b2b',
+    'clusterBorder': '#5a5a5a'
+  }
+}}%%
+sequenceDiagram
+    participant Client
+    participant GW as API Gateway
+    participant Repair as Repair Service (gRPC)
+    participant Weapon as Weapon Service (gRPC)
+    participant Kafka as Kafka
+    participant Coin as Coin Service (gRPC)
+
+    Client->>GW: RepairWeapon(owner_type, owner_id, weapon_id)
+    GW->>Repair: gRPC RepairWeapon
+    Repair->>Weapon: GetWeapon(weapon_id)
+    Weapon-->>Repair: durability, max_durability
+    Repair->>Repair: compute cost = (max - cur) * 2
+    alt cost == 0
+        Repair-->>GW: accepted=false, status=completed
+    else cost > 0
+        Repair->>Repair: create order (Postgres)
+        Repair->>Kafka: publish weapon.repair {owner, weapon, cost, order}
+        Kafka->>Coin: consume weapon.repair
+        Coin->>Coin: DeductCoins(owner)
+        Coin-->>Kafka: ack
+        Repair->>Weapon: (async) set durability to max (impl option)
+        Repair-->>GW: accepted=true, status=pending/completed
+    end
+```
