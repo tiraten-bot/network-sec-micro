@@ -231,10 +231,10 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		TurnNumber:   battle.CurrentTurn,
 		AttackerID:   fmt.Sprintf("%d", battle.WarriorID),
 		AttackerName: battle.WarriorName,
-		AttackerType: "warrior",
+		AttackerType: ParticipantTypeWarrior,
 		TargetID:     battle.OpponentID,
 		TargetName:   battle.OpponentName,
-		TargetType:   battle.OpponentType,
+		TargetType:   ParticipantType(battle.OpponentType),
 		DamageDealt:  damage,
 		CriticalHit:  isCritical,
 		TargetHPAfter: battle.OpponentHP,
@@ -257,7 +257,9 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 	// Create a temp battle object with HP before attack for logging
 	tempBattle := battle
 	tempBattle.OpponentHP = targetHPBefore
-	if err := LogBattleTurn(ctx, battle.ID, turn, &tempBattle, eventType, message); err != nil {
+	// Convert battle.ID string to primitive.ObjectID for logging (legacy)
+	battleOID, _ := primitive.ObjectIDFromHex(battle.ID)
+	if err := LogBattleTurn(ctx, battleOID, turn, &tempBattle, eventType, message); err != nil {
 		log.Printf("Warning: failed to log battle turn to Redis: %v", err)
 	}
 
