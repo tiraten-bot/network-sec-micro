@@ -17,7 +17,12 @@ func getEnv(key, def string) string { if v := os.Getenv(key); v != "" { return v
 
 func main() {
     if err := repair.InitPostgres(); err != nil { log.Fatalf("db init error: %v", err) }
-    svc := repair.NewService()
+    // Wire DI for CQRS service
+    svc, err := InitializeRepair()
+    if err != nil {
+        log.Printf("wire init failed, falling back: %v", err)
+        svc = repair.NewService(repair.GetRepository())
+    }
 
     // connect to weapon service
     waddr := getEnv("WEAPON_GRPC_ADDR", "localhost:50057")
