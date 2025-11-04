@@ -411,30 +411,41 @@ func (s *Service) completeBattle(ctx context.Context, battle *Battle, result Bat
 		battle.WinnerID = fmt.Sprintf("%d", winnerID)
 	}
 
-	// Calculate rewards if warrior won
+	// Calculate rewards if warrior won (legacy battle - use map for compatibility)
+	coinsEarnedInt := 0
+	experienceGainedInt := 0
 	if result == BattleResultVictory {
 		// Base rewards
-		battle.CoinsEarned = 50 + (battle.CurrentTurn * 5)
-		battle.ExperienceGained = 100 + (int(battle.OpponentMaxHP) / 10)
+		coinsEarnedInt = 50 + (battle.CurrentTurn * 5)
+		experienceGainedInt = 100 + (int(battle.OpponentMaxHP) / 10)
+		
+		// Set map for legacy compatibility
+		battle.CoinsEarned = map[string]int{
+			fmt.Sprintf("%d", battle.WarriorID): coinsEarnedInt,
+		}
+		battle.ExperienceGained = map[string]int{
+			fmt.Sprintf("%d", battle.WarriorID): experienceGainedInt,
+		}
 
 		// Add coins to warrior via gRPC
-		ctx := context.Background()
 		go func() {
-			if err := AddCoins(ctx, battle.WarriorID, int64(battle.CoinsEarned), fmt.Sprintf("battle_victory_%s", battle.ID.Hex())); err != nil {
+			if err := AddCoins(ctx, battle.WarriorID, int64(coinsEarnedInt), fmt.Sprintf("battle_victory_%s", battle.ID)); err != nil {
 				log.Printf("Failed to add coins to warrior %d after battle victory: %v", battle.WarriorID, err)
 			}
 		}()
 	} else if result == BattleResultDefeat {
 		// Deduct coins from warrior if lost (penalty)
 		penalty := 25 // Base penalty
-		ctx := context.Background()
 		go func() {
-			if err := DeductCoins(ctx, battle.WarriorID, int64(penalty), fmt.Sprintf("battle_defeat_penalty_%s", battle.ID.Hex())); err != nil {
+			if err := DeductCoins(ctx, battle.WarriorID, int64(penalty), fmt.Sprintf("battle_defeat_penalty_%s", battle.ID)); err != nil {
 				// Log but don't fail - penalty might fail if insufficient balance
 				log.Printf("Failed to deduct penalty coins from warrior %d after battle defeat: %v", battle.WarriorID, err)
 			}
 		}()
-		battle.CoinsEarned = -penalty // Negative to indicate loss
+		battle.CoinsEarned = map[string]int{
+			fmt.Sprintf("%d", battle.WarriorID): -penalty, // Negative to indicate loss
+		}
+		experienceGainedInt = 0
 	}
 
 	updateData := bson.M{
@@ -448,7 +459,12 @@ func (s *Service) completeBattle(ctx context.Context, battle *Battle, result Bat
 		"updated_at":      time.Now(),
 	}
 
-	_, err := BattleColl.UpdateOne(ctx, bson.M{"_id": battle.ID}, bson.M{"$set": updateData})
+	// Convert battle.ID string to primitive.ObjectID for MongoDB update (legacy)
+	battleOID, err := primitive.ObjectIDFromHex(battle.ID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid battle ID format: %w", err)
+	}
+	_, err = BattleColl.UpdateOne(ctx, bson.M{"_id": battleOID}, bson.M{"$set": updateData})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to complete battle: %w", err)
 	}
@@ -463,14 +479,14 @@ func (s *Service) completeBattle(ctx context.Context, battle *Battle, result Bat
 
 	// Publish battle completed event
 	go PublishBattleCompletedEvent(
-		battle.ID.Hex(),
+		battle.ID,
 		battle.BattleType,
 		battle.WarriorID,
 		battle.WarriorName,
 		string(result),
 		battle.WinnerName,
-		battle.CoinsEarned,
-		battle.ExperienceGained,
+		coinsEarnedInt,
+		experienceGainedInt,
 		battle.CurrentTurn,
 	)
 
@@ -877,15 +893,13 @@ func (s *Service) GetBattleStats(query dto.GetBattleStatsQuery) (*dto.BattleStat
 			stats.Draws++
 		}
 
-		switch battle.BattleType {
-		case BattleTypeEnemy:
-			stats.EnemyBattles++
-		case BattleTypeDragon:
-			stats.DragonBattles++
+		// Calculate coins and experience from map (support both legacy and team battles)
+		for _, coins := range battle.CoinsEarned {
+			stats.TotalCoinsEarned += coins
 		}
-
-		stats.TotalCoinsEarned += battle.CoinsEarned
-		stats.TotalExperience += battle.ExperienceGained
+		for _, exp := range battle.ExperienceGained {
+			stats.TotalExperience += exp
+		}
 	}
 
 	// Calculate win rate
