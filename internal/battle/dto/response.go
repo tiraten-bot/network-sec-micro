@@ -1,8 +1,6 @@
 package dto
 
-import (
-    "time"
-)
+import ()
 
 // ParticipantResponse represents a battle participant response
 type ParticipantResponse struct {
