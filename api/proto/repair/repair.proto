@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package repair;
+
+option go_package = "network-sec-micro/api/proto/repair";
+
+import "google/protobuf/timestamp.proto";
+
+service RepairService {
+  // Request a repair for a weapon; performs coin deduction via Kafka asynchronously
+  rpc RepairWeapon(RepairWeaponRequest) returns (RepairWeaponResponse);
+
+  // Get repair orders for an owner
+  rpc GetRepairHistory(GetRepairHistoryRequest) returns (GetRepairHistoryResponse);
+}
+
+message RepairWeaponRequest {
+  string owner_type = 1; // warrior | enemy | dragon
+  string owner_id = 2;   // username or id
+  string weapon_id = 3;
+}
+
+message RepairWeaponResponse {
+  bool accepted = 1;       // accepted for processing
+  string order_id = 2;
+  int32 cost = 3;
+  string status = 4;       // pending | completed | failed
+}
+
+message GetRepairHistoryRequest {
+  string owner_type = 1;
+  string owner_id = 2;
+}
+
+message RepairOrderRecord {
+  string id = 1;
+  string owner_type = 2;
+  string owner_id = 3;
+  string weapon_id = 4;
+  int32 cost = 5;
+  string status = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+}
+
+message GetRepairHistoryResponse {
+  repeated RepairOrderRecord orders = 1;
+}
+
+
