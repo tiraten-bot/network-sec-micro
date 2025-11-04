@@ -11,6 +11,7 @@ wire:
 	cd cmd/arena && wire
 	cd cmd/arenaspell && wire
 	cd cmd/heal && wire || echo "Wire generation skipped for heal (dependency issue)"
+	cd cmd/repair && wire || echo "Wire generation skipped for repair (optional)"
 
 # Generate protobuf code
 proto:
