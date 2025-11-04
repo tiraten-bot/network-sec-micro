@@ -554,7 +554,7 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 	// If no turn range or if range query failed, get all logs (simplified)
 	if logs == nil {
 		limit, _ := strconv.ParseInt(c.DefaultQuery("limit", "100"), 10, 64)
-		simpleLogs, err := GetSimpleBattleLogs(ctx, objectID, limit)
+        simpleLogs, err := GetBattleLogs(ctx, objectID, limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 				Error:   "internal_error",
