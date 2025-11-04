@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repair
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: repair
+  template:
+    metadata:
+      labels:
+        app: repair
+    spec:
+      containers:
+        - name: repair
+          image: repair:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_HOST
+              value: postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: postgres
+            - name: DB_NAME_REPAIR
+              value: repair_db
+            - name: KAFKA_BROKERS
+              value: kafka:9092
+            - name: WEAPON_GRPC_ADDR
+              value: weapon:50057
+          ports:
+            - containerPort: 50061
+          readinessProbe:
+            tcpSocket:
+              port: 50061
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 50061
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: repair
+spec:
+  selector:
+    app: repair
+  ports:
+    - port: 50061
+      targetPort: 50061
+
+
