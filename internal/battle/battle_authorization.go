@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	pbWarrior "network-sec-micro/api/proto/warrior"
 )
 
 // ValidateBattleAuthorization validates if user can start a battle
