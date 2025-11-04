@@ -159,9 +159,54 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 		return nil, nil, fmt.Errorf("failed to get warrior info: %w", err)
 	}
 
+	// Get warrior's weapons for bonus damage
+	weaponBonus := 0
+	var usedWeaponID string
+	if ws, err := ListWeaponsByOwner(ctx, "warrior", cmd.WarriorName); err == nil {
+		maxD := 0
+		for _, w := range ws {
+			if w.IsBroken { continue }
+			if int(w.Damage) > maxD { 
+				maxD = int(w.Damage)
+				usedWeaponID = w.Id 
+			}
+		}
+		weaponBonus = maxD
+		if usedWeaponID != "" { 
+			_, _ = ApplyWeaponWear(ctx, usedWeaponID, 1) 
+		}
+	}
+
+	// Get opponent's armors for defense bonus (if opponent is warrior/enemy/dragon)
+	opponentDefenseBonus := 0
+	var usedArmorID string
+	if battle.BattleType == BattleTypeTeam {
+		// For team battles, get target participant's armor
+		// This will be handled in team battle attack logic
+	} else {
+		// For legacy single battles, check opponent type
+		if battle.OpponentType == "warrior" || battle.OpponentType == "enemy" || battle.OpponentType == "dragon" {
+			if armors, err := ListArmorsByOwner(ctx, battle.OpponentType, battle.OpponentID); err == nil {
+				maxDef := 0
+				for _, a := range armors {
+					if a.IsBroken { continue }
+					if int(a.Defense) > maxDef { 
+						maxDef = int(a.Defense)
+						usedArmorID = a.Id 
+					}
+				}
+				opponentDefenseBonus = maxDef
+				if usedArmorID != "" { 
+					_, _ = ApplyArmorWear(ctx, usedArmorID, 1) 
+				}
+			}
+		}
+	}
+
 	// Warrior attacks opponent
 	warriorPower := int(warrior.TotalPower)
-	damage := s.calculateDamage(warriorPower, battle.OpponentDefense())
+	targetDefense := battle.OpponentDefense() + opponentDefenseBonus
+	damage := s.calculateDamage(warriorPower + weaponBonus, targetDefense)
 	
 	// Critical hit chance (10%)
 	isCritical := rand.Float64() < 0.1
@@ -242,8 +287,33 @@ func (s *Service) Attack(cmd dto.AttackCommand) (*Battle, *BattleTurn, error) {
 			return
 		}
 
+		// Get warrior's armor for defense bonus
+		warriorDefenseBonus := 0
+		var warriorArmorID string
+		if armors, err := ListArmorsByOwner(ctx, "warrior", currentBattle.WarriorName); err == nil {
+			maxDef := 0
+			for _, a := range armors {
+				if a.IsBroken { continue }
+				if int(a.Defense) > maxDef { 
+					maxDef = int(a.Defense)
+					warriorArmorID = a.Id 
+				}
+			}
+			warriorDefenseBonus = maxDef
+			if warriorArmorID != "" { 
+				_, _ = ApplyArmorWear(ctx, warriorArmorID, 1) 
+			}
+		}
+
 		// Opponent attacks
 		opponentDamage := s.calculateOpponentDamage(&currentBattle)
+		// Apply warrior's armor defense bonus
+		if warriorDefenseBonus > 0 {
+			opponentDamage = opponentDamage - warriorDefenseBonus
+			if opponentDamage < 1 {
+				opponentDamage = 1 // Minimum 1 damage
+			}
+		}
 		opponentCritical := rand.Float64() < 0.05 // 5% crit for opponent
 		if opponentCritical {
 			opponentDamage = int(float64(opponentDamage) * 1.5)
