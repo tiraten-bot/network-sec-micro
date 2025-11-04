@@ -235,8 +235,6 @@ func (h *Handler) GetDragon(c *gin.Context) {
         Dragon:  dtoDragon,
     })
 }
-}
-}
 
 // GetDragonsByType godoc
 // @Summary Get dragons by type
