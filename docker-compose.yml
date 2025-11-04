@@ -112,8 +112,10 @@ services:
       PORT: 8081
       GIN_MODE: release
       KAFKA_BROKERS: kafka:9092
+      GRPC_PORT: 50057
     ports:
       - "8081:8081"
+      - "50057:50057"
     depends_on:
       mongodb:
         condition: service_healthy
