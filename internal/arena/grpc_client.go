@@ -149,6 +149,55 @@ func ApplyWeaponWear(ctx context.Context, weaponID string, wear int32) (*pbWeapo
     return weaponGrpcClient.ApplyWear(ctx, &pbWeapon.ApplyWearRequest{WeaponId: weaponID, Wear: wear})
 }
 
+// InitArmorClient initializes the gRPC client connection to armor service
+func InitArmorClient(addr string) error {
+    if addr == "" {
+        addr = os.Getenv("ARMOR_GRPC_ADDR")
+        if addr == "" {
+            addr = "localhost:50059"
+        }
+    }
+
+    conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        return fmt.Errorf("failed to connect to armor gRPC: %w", err)
+    }
+
+    armorGrpcClient = pbArmor.NewArmorServiceClient(conn)
+    armorGrpcConn = conn
+    log.Printf("Connected to Armor gRPC service at %s", addr)
+    return nil
+}
+
+func CloseArmorClient() {
+    if armorGrpcConn != nil { armorGrpcConn.Close() }
+}
+
+// ListArmorsByOwner fetches armors for any owner type
+func ListArmorsByOwner(ctx context.Context, ownerType, ownerID string) ([]*pbArmor.Armor, error) {
+    if armorGrpcClient == nil { return nil, fmt.Errorf("armor gRPC client not initialized") }
+    resp, err := armorGrpcClient.ListOwnerArmors(ctx, &pbArmor.ListOwnerArmorsRequest{OwnerType: ownerType, OwnerId: ownerID})
+    if err != nil { return nil, err }
+    return resp.Armors, nil
+}
+
+// CalculateDefenseViaArmor queries armor service to compute defense
+func CalculateDefenseViaArmor(ctx context.Context, ownerType, ownerID string) (totalDefense int32, armorCount int32, err error) {
+    if armorGrpcClient == nil {
+        return 0, 0, fmt.Errorf("armor gRPC client not initialized")
+    }
+    req := &pbArmor.CalculateDefenseRequest{OwnerType: ownerType, OwnerId: ownerID}
+    resp, err := armorGrpcClient.CalculateDefense(ctx, req)
+    if err != nil { return 0, 0, err }
+    return resp.TotalDefense, resp.ArmorCount, nil
+}
+
+// ApplyArmorWear reduces durability
+func ApplyArmorWear(ctx context.Context, armorID string, wear int32) (*pbArmor.ApplyWearResponse, error) {
+    if armorGrpcClient == nil { return nil, fmt.Errorf("armor gRPC client not initialized") }
+    return armorGrpcClient.ApplyWear(ctx, &pbArmor.ApplyWearRequest{ArmorId: armorID, Wear: wear})
+}
+
 // GetWarriorByUsername gets warrior info via gRPC
 func GetWarriorByUsername(ctx context.Context, username string) (*pbWarrior.Warrior, error) {
 	if warriorGrpcClient == nil {
