@@ -481,7 +481,7 @@ func (h *Handler) GetBattleLogs(c *gin.Context) {
 		BattleID: objectID,
 	}
 
-	battle, lightParts, darkParts, err := h.Service.GetBattle(query)
+    battle, err := h.Service.GetBattle(query)
 	if err != nil {
 		if err.Error() == "battle not found" {
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{
