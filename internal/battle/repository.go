@@ -23,13 +23,9 @@ var defaultRepo Repository
 // GetRepository returns a singleton repo based on env (BATTLE_STORE=redis|mongo)
 func GetRepository() Repository {
     if defaultRepo != nil { return defaultRepo }
-    switch os.Getenv("BATTLE_STORE") {
-    case "redis":
-        if getRedis() != nil { defaultRepo = &redisRepo{}; return defaultRepo }
-        defaultRepo = &mongoRepo{}
-    default:
-        defaultRepo = &mongoRepo{}
-    }
+    // For stability, use Mongo-backed repo by default
+    _ = os.Getenv("BATTLE_STORE")
+    defaultRepo = &mongoRepo{}
     return defaultRepo
 }
 
