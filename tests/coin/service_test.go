@@ -41,11 +41,16 @@ func TestAddCoins_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1000,
 	}
-	// Set coin.DB BEFORE creating warrior
+	// Set coin.DB BEFORE creating warrior and service
 	coin.DB = db
 	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
+	
+	// Verify table exists
+	var count int64
+	err = db.Table("warriors").Count(&count).Error
+	require.NoError(t, err, "warriors table should exist")
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -57,11 +62,12 @@ func TestAddCoins_Success(t *testing.T) {
 	}
 	
 	err = svc.AddCoins(ctx, cmd)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	
 	// Verify balance
 	var updatedW warrior.Warrior
-	db.First(&updatedW, 1)
+	err = db.First(&updatedW, 1).Error
+	require.NoError(t, err)
 	assert.Equal(t, 1500, updatedW.CoinBalance)
 }
 
