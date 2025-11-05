@@ -208,7 +208,7 @@ func TestTransferCoins_Success(t *testing.T) {
 }
 
 func TestTransferCoins_SelfTransfer(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -275,7 +275,7 @@ func TestGetBalance_Success(t *testing.T) {
 }
 
 func TestGetBalance_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
