@@ -14,7 +14,7 @@ import (
 // SetupRoutes configures all routes for the weapon service
 func SetupRoutes(r *gin.Engine, handler *Handler) {
 	// Health check endpoints
-	healthHandler := health.NewHandler(&health.DatabaseChecker{DB: DB, DBName: "mongodb"})
+	healthHandler := health.NewHandler(&health.MongoDBChecker{Client: Client, DBName: "mongodb"})
 	r.GET("/health", func(c *gin.Context) {
 		healthHandler.Health(c.Writer, c.Request)
 	})
