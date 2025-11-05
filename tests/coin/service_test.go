@@ -231,9 +231,9 @@ func TestTransferCoins_Success(t *testing.T) {
 }
 
 func TestTransferCoins_SelfTransfer(t *testing.T) {
-	_ = setupTestDB(t)
+	db := setupTestDB(t)
 	
-	svc := coin.NewService()
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.TransferCoinsCommand{
@@ -300,9 +300,9 @@ func TestGetBalance_Success(t *testing.T) {
 }
 
 func TestGetBalance_NotFound(t *testing.T) {
-	_ = setupTestDB(t)
+	db := setupTestDB(t)
 	
-	svc := coin.NewService()
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	query := dto.GetBalanceQuery{WarriorID: 999}
