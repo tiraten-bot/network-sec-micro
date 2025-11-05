@@ -137,32 +137,32 @@ func TestGetArmors_ByType(t *testing.T) {
 
 func TestArmor_CanBeBoughtBy(t *testing.T) {
 	// Test armor permission logic
-	lightArmor := armor.Armor{
-		Type: armor.ArmorTypeLight,
+	commonArmor := armor.Armor{
+		Type: armor.ArmorTypeCommon,
 	}
-	assert.True(t, lightArmor.CanBeBoughtBy("knight"))
-	assert.True(t, lightArmor.CanBeBoughtBy("light_king"))
-	assert.True(t, lightArmor.CanBeBoughtBy("light_emperor"))
+	assert.True(t, commonArmor.CanBeBoughtBy("knight"))
+	assert.True(t, commonArmor.CanBeBoughtBy("light_king"))
+	assert.True(t, commonArmor.CanBeBoughtBy("light_emperor"))
 	
-	mediumArmor := armor.Armor{
-		Type: armor.ArmorTypeMedium,
+	rareArmor := armor.Armor{
+		Type: armor.ArmorTypeRare,
 	}
-	assert.False(t, mediumArmor.CanBeBoughtBy("knight"))
-	assert.True(t, mediumArmor.CanBeBoughtBy("light_king"))
-	assert.True(t, mediumArmor.CanBeBoughtBy("light_emperor"))
+	assert.False(t, rareArmor.CanBeBoughtBy("knight"))
+	assert.True(t, rareArmor.CanBeBoughtBy("light_king"))
+	assert.True(t, rareArmor.CanBeBoughtBy("light_emperor"))
 	
-	heavyArmor := armor.Armor{
-		Type: armor.ArmorTypeHeavy,
+	legendaryArmor := armor.Armor{
+		Type: armor.ArmorTypeLegendary,
 	}
-	assert.False(t, heavyArmor.CanBeBoughtBy("knight"))
-	assert.False(t, heavyArmor.CanBeBoughtBy("light_king"))
-	assert.True(t, heavyArmor.CanBeBoughtBy("light_emperor"))
+	assert.False(t, legendaryArmor.CanBeBoughtBy("knight"))
+	assert.False(t, legendaryArmor.CanBeBoughtBy("light_king"))
+	assert.True(t, legendaryArmor.CanBeBoughtBy("light_emperor"))
 	
 	// Dark side cannot buy armors
-	assert.False(t, lightArmor.CanBeBoughtBy("dark_emperor"))
-	assert.False(t, lightArmor.CanBeBoughtBy("dark_king"))
-	assert.False(t, mediumArmor.CanBeBoughtBy("dark_emperor"))
-	assert.False(t, heavyArmor.CanBeBoughtBy("dark_emperor"))
+	assert.False(t, commonArmor.CanBeBoughtBy("dark_emperor"))
+	assert.False(t, commonArmor.CanBeBoughtBy("dark_king"))
+	assert.False(t, rareArmor.CanBeBoughtBy("dark_emperor"))
+	assert.False(t, legendaryArmor.CanBeBoughtBy("dark_emperor"))
 }
 
 func TestBuyArmor_Success(t *testing.T) {
