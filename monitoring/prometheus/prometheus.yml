@@ -41,11 +41,11 @@ scrape_configs:
           service: 'weapon'
           type: 'http'
 
-  # Coin Service (gRPC - will need HTTP metrics endpoint)
+  # Coin Service (gRPC with HTTP metrics)
   - job_name: 'coin'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['coin:50051']
+      - targets: ['coin:8091']
         labels:
           service: 'coin'
           type: 'grpc'
@@ -104,11 +104,11 @@ scrape_configs:
           service: 'arenaspell'
           type: 'http'
 
-  # Repair Service (gRPC - will need HTTP metrics endpoint)
+  # Repair Service (gRPC with HTTP metrics)
   - job_name: 'repair'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['repair:50061']
+      - targets: ['repair:8082']
         labels:
           service: 'repair'
           type: 'grpc'
