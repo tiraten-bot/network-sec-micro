@@ -2,6 +2,7 @@ package repair_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,8 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 // mockRepository is a simple in-memory repository for testing
@@ -34,7 +33,7 @@ func (m *mockRepository) CompleteOrder(ctx context.Context, orderID uint, comple
 			return nil
 		}
 	}
-	return gorm.ErrRecordNotFound
+	return fmt.Errorf("order not found")
 }
 
 func (m *mockRepository) ListOrders(ctx context.Context, ownerType, ownerID string) ([]repair.RepairOrder, error) {
