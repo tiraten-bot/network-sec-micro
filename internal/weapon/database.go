@@ -25,6 +25,7 @@ func InitDatabase() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	var err error
 	Client, err = mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return fmt.Errorf("failed to connect to MongoDB: %w", err)
