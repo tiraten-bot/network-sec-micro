@@ -33,7 +33,7 @@ func TestAddCoins_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
 	// Create initial warrior with coin balance
-	warrior := warrior.Warrior{
+	w := warrior.Warrior{
 		ID:          1,
 		Username:    "warrior1",
 		Email:       "warrior1@example.com",
@@ -41,7 +41,7 @@ func TestAddCoins_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1000,
 	}
-	err := db.Create(&warrior).Error
+	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -57,13 +57,13 @@ func TestAddCoins_Success(t *testing.T) {
 	assert.NoError(t, err)
 	
 	// Verify balance
-	var updatedWarrior warrior.Warrior
-	db.First(&updatedWarrior, 1)
-	assert.Equal(t, 1500, updatedWarrior.CoinBalance)
+	var updatedW warrior.Warrior
+	db.First(&updatedW, 1)
+	assert.Equal(t, 1500, updatedW.CoinBalance)
 }
 
 func TestAddCoins_InvalidAmount(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -80,7 +80,7 @@ func TestAddCoins_InvalidAmount(t *testing.T) {
 }
 
 func TestAddCoins_NegativeAmount(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -100,7 +100,7 @@ func TestDeductCoins_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
 	// Create initial warrior with coin balance
-	warrior := warrior.Warrior{
+	w := warrior.Warrior{
 		ID:          1,
 		Username:    "warrior1",
 		Email:       "warrior1@example.com",
@@ -108,7 +108,7 @@ func TestDeductCoins_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1000,
 	}
-	err := db.Create(&warrior).Error
+	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -124,16 +124,16 @@ func TestDeductCoins_Success(t *testing.T) {
 	assert.NoError(t, err)
 	
 	// Verify balance
-	var updatedWarrior warrior.Warrior
-	db.First(&updatedWarrior, 1)
-	assert.Equal(t, 700, updatedWarrior.CoinBalance)
+	var updatedW warrior.Warrior
+	db.First(&updatedW, 1)
+	assert.Equal(t, 700, updatedW.CoinBalance)
 }
 
 func TestDeductCoins_InsufficientBalance(t *testing.T) {
 	db := setupTestDB(t)
 	
 	// Create initial warrior with low coin balance
-	warrior := warrior.Warrior{
+	w := warrior.Warrior{
 		ID:          1,
 		Username:    "warrior1",
 		Email:       "warrior1@example.com",
@@ -141,7 +141,7 @@ func TestDeductCoins_InsufficientBalance(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 100,
 	}
-	err := db.Create(&warrior).Error
+	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -159,7 +159,7 @@ func TestDeductCoins_InsufficientBalance(t *testing.T) {
 }
 
 func TestDeductCoins_InvalidAmount(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -179,11 +179,11 @@ func TestTransferCoins_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
 	// Create two warriors with coin balances
-	warrior1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
-	warrior2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
-	err := db.Create(&warrior1).Error
+	w1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
+	w2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
+	err := db.Create(&w1).Error
 	require.NoError(t, err)
-	err = db.Create(&warrior2).Error
+	err = db.Create(&w2).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -228,11 +228,11 @@ func TestTransferCoins_SelfTransfer(t *testing.T) {
 func TestTransferCoins_InsufficientBalance(t *testing.T) {
 	db := setupTestDB(t)
 	
-	warrior1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 100}
-	warrior2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
-	err := db.Create(&warrior1).Error
+	w1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 100}
+	w2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
+	err := db.Create(&w1).Error
 	require.NoError(t, err)
-	err = db.Create(&warrior2).Error
+	err = db.Create(&w2).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -253,7 +253,7 @@ func TestTransferCoins_InsufficientBalance(t *testing.T) {
 func TestGetBalance_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
-	warrior := warrior.Warrior{
+	w := warrior.Warrior{
 		ID:          1,
 		Username:    "warrior1",
 		Email:       "warrior1@example.com",
@@ -261,7 +261,7 @@ func TestGetBalance_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1500,
 	}
-	err := db.Create(&warrior).Error
+	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -296,8 +296,8 @@ func TestGetTransactionHistory_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
 	// Create warrior with coin balance
-	warrior := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
-	err := db.Create(&warrior).Error
+	w := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
+	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
