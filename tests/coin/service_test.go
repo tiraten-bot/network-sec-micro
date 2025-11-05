@@ -47,11 +47,13 @@ func TestAddCoins_Success(t *testing.T) {
 	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
-	// Verify table exists
+	// Verify table exists and warrior was created
 	var count int64
 	err = db.Table("warriors").Count(&count).Error
 	require.NoError(t, err, "warriors table should exist")
+	assert.Equal(t, int64(1), count, "warrior should be created")
 	
+	// Create service AFTER DB is set
 	svc := coin.NewService()
 	ctx := context.Background()
 	
