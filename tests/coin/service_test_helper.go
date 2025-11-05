@@ -1,4 +1,4 @@
-package coin_test
+package coin
 
 import (
 	"network-sec-micro/internal/coin"
