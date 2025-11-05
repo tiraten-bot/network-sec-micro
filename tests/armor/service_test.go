@@ -125,13 +125,13 @@ func TestGetArmors_ByType(t *testing.T) {
 		require.NoError(t, err)
 	}
 	
-	query := dto.GetArmorsQuery{Type: "light"}
+	query := dto.GetArmorsQuery{Type: "common"}
 	result, err := svc.GetArmors(ctx, query)
 	
 	require.NoError(t, err)
 	assert.Len(t, result, 2)
 	for _, a := range result {
-		assert.Equal(t, armor.ArmorTypeLight, a.Type)
+		assert.Equal(t, armor.ArmorTypeCommon, a.Type)
 	}
 }
 
@@ -257,15 +257,15 @@ func TestBuyArmor_PermissionDenied(t *testing.T) {
 	svc := armor.NewService()
 	ctx := context.Background()
 	
-	// Create medium armor (only king/emperor can buy)
+	// Create rare armor (only king/emperor can buy)
 	createCmd := dto.CreateArmorCommand{
-		Name:        "Medium Armor",
-		Type:        "medium",
-		Defense:     50,
-		HPBonus:     30,
-		Price:       1500,
+		Name:         "Rare Armor",
+		Type:         "rare",
+		Defense:      50,
+		HPBonus:      30,
+		Price:        1500,
 		MaxDurability: 200,
-		CreatedBy:   "warrior1",
+		CreatedBy:    "warrior1",
 	}
 	created, err := svc.CreateArmor(ctx, createCmd)
 	require.NoError(t, err)
