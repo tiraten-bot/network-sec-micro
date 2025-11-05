@@ -61,8 +61,8 @@ func TestAddCoins_Success(t *testing.T) {
 	err = coin.DB.Table("warriors").Count(&testCount).Error
 	require.NoError(t, err, "coin.DB should access warriors table")
 	
-	// Create service - NewService uses coin.DB which we verified above
-	svc := coin.NewService()
+	// Create service using test helper that ensures correct DB
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.AddCoinsCommand{
@@ -164,13 +164,11 @@ func TestDeductCoins_InsufficientBalance(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 100,
 	}
-	// Set coin.DB BEFORE creating warrior
-	coin.DB = db
-	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
-	svc := coin.NewService()
+	// Create service using test helper
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.DeductCoinsCommand{
@@ -293,13 +291,11 @@ func TestGetBalance_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1500,
 	}
-	// Set coin.DB BEFORE creating warrior
-	coin.DB = db
-	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
-	svc := coin.NewService()
+	// Create service using test helper
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	query := dto.GetBalanceQuery{WarriorID: 1}
@@ -332,13 +328,11 @@ func TestGetTransactionHistory_Success(t *testing.T) {
 	
 	// Create warrior with coin balance
 	w := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
-	// Set coin.DB BEFORE creating warrior
-	coin.DB = db
-	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
-	svc := coin.NewService()
+	// Create service using test helper
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	// Create some transactions
