@@ -350,7 +350,7 @@ func TestCreateTransaction_Success(t *testing.T) {
 }
 
 func TestCreateTransaction_InvalidType(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
