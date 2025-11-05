@@ -253,11 +253,15 @@ func TestTransferCoins_InsufficientBalance(t *testing.T) {
 func TestGetBalance_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
-	balance := coin.WarriorBalance{
-		WarriorID: 1,
-		Balance:   1500,
+	warrior := warrior.Warrior{
+		ID:          1,
+		Username:    "warrior1",
+		Email:       "warrior1@example.com",
+		Password:    "password",
+		Role:        warrior.RoleKnight,
+		CoinBalance: 1500,
 	}
-	err := db.Create(&balance).Error
+	err := db.Create(&warrior).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -291,9 +295,9 @@ func TestGetBalance_NotFound(t *testing.T) {
 func TestGetTransactionHistory_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
-	// Create warrior balance
-	balance := coin.WarriorBalance{WarriorID: 1, Balance: 1000}
-	err := db.Create(&balance).Error
+	// Create warrior with coin balance
+	warrior := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
+	err := db.Create(&warrior).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
