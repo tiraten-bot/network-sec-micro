@@ -41,11 +41,11 @@ func TestAddCoins_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1000,
 	}
+	// Set coin.DB BEFORE creating warrior
+	coin.DB = db
+	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
-	
-	// Ensure DB is set for coin service
-	coin.DB = db
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -148,11 +148,11 @@ func TestDeductCoins_InsufficientBalance(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 100,
 	}
+	// Set coin.DB BEFORE creating warrior
+	coin.DB = db
+	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
-	
-	// Ensure DB is set for coin service
-	coin.DB = db
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -277,11 +277,11 @@ func TestGetBalance_Success(t *testing.T) {
 		Role:        warrior.RoleKnight,
 		CoinBalance: 1500,
 	}
+	// Set coin.DB BEFORE creating warrior
+	coin.DB = db
+	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
-	
-	// Ensure DB is set for coin service
-	coin.DB = db
 	
 	svc := coin.NewService()
 	ctx := context.Background()
@@ -316,11 +316,11 @@ func TestGetTransactionHistory_Success(t *testing.T) {
 	
 	// Create warrior with coin balance
 	w := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
+	// Set coin.DB BEFORE creating warrior
+	coin.DB = db
+	
 	err := db.Create(&w).Error
 	require.NoError(t, err)
-	
-	// Ensure DB is set for coin service
-	coin.DB = db
 	
 	svc := coin.NewService()
 	ctx := context.Background()
