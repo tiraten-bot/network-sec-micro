@@ -14,7 +14,17 @@ import (
 // SetupRoutes configures all routes for the battle service
 func SetupRoutes(r *gin.Engine, handler *Handler) {
 	// Health check endpoints
-	healthHandler := health.NewHandler(&health.DatabaseChecker{DB: DB, DBName: "postgres"})
+	var dbChecker health.Checker
+	if SQLDB.Enabled {
+		if gormDB, ok := SQLDB.DB.(*gorm.DB); ok {
+			dbChecker = &health.DatabaseChecker{DB: gormDB, DBName: "postgres"}
+		}
+	}
+	if dbChecker == nil {
+		// Fallback: create a simple checker that always returns healthy if SQL not enabled
+		dbChecker = &health.SimpleChecker{Name: "postgres", Status: health.StatusHealthy, Message: "PostgreSQL not enabled"}
+	}
+	healthHandler := health.NewHandler(dbChecker)
 	r.GET("/health", func(c *gin.Context) {
 		healthHandler.Health(c.Writer, c.Request)
 	})
