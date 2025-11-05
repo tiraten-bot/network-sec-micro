@@ -114,7 +114,7 @@ func TestDeductCoins_Success(t *testing.T) {
 	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
-	// Ensure DB is set for coin service
+	// Ensure DB is set for coin service BEFORE creating service
 	coin.DB = db
 	
 	svc := coin.NewService()
@@ -127,11 +127,12 @@ func TestDeductCoins_Success(t *testing.T) {
 	}
 	
 	err = svc.DeductCoins(ctx, cmd)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	
 	// Verify balance
 	var updatedW warrior.Warrior
-	db.First(&updatedW, 1)
+	err = db.First(&updatedW, 1).Error
+	require.NoError(t, err)
 	assert.Equal(t, 700, updatedW.CoinBalance)
 }
 
