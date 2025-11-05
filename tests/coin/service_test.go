@@ -228,11 +228,11 @@ func TestTransferCoins_SelfTransfer(t *testing.T) {
 func TestTransferCoins_InsufficientBalance(t *testing.T) {
 	db := setupTestDB(t)
 	
-	balance1 := coin.WarriorBalance{WarriorID: 1, Balance: 100}
-	balance2 := coin.WarriorBalance{WarriorID: 2, Balance: 500}
-	err := db.Create(&balance1).Error
+	warrior1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 100}
+	warrior2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
+	err := db.Create(&warrior1).Error
 	require.NoError(t, err)
-	err = db.Create(&balance2).Error
+	err = db.Create(&warrior2).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
