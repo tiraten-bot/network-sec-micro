@@ -178,12 +178,12 @@ func TestDeductCoins_InvalidAmount(t *testing.T) {
 func TestTransferCoins_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
-	// Create two warrior balances
-	balance1 := coin.WarriorBalance{WarriorID: 1, Balance: 1000}
-	balance2 := coin.WarriorBalance{WarriorID: 2, Balance: 500}
-	err := db.Create(&balance1).Error
+	// Create two warriors with coin balances
+	warrior1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
+	warrior2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
+	err := db.Create(&warrior1).Error
 	require.NoError(t, err)
-	err = db.Create(&balance2).Error
+	err = db.Create(&warrior2).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
@@ -200,11 +200,11 @@ func TestTransferCoins_Success(t *testing.T) {
 	assert.NoError(t, err)
 	
 	// Verify balances
-	var updated1, updated2 coin.WarriorBalance
+	var updated1, updated2 warrior.Warrior
 	db.First(&updated1, 1)
 	db.First(&updated2, 2)
-	assert.Equal(t, int64(700), updated1.Balance)
-	assert.Equal(t, int64(800), updated2.Balance)
+	assert.Equal(t, 700, updated1.CoinBalance)
+	assert.Equal(t, 800, updated2.CoinBalance)
 }
 
 func TestTransferCoins_SelfTransfer(t *testing.T) {
