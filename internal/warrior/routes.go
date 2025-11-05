@@ -1,11 +1,47 @@
 package warrior
 
 import (
+	"net/http"
+
+	"network-sec-micro/pkg/health"
+	"network-sec-micro/pkg/metrics"
+
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // SetupRoutes configures all routes for the warrior service
 func SetupRoutes(r *gin.Engine, handler *Handler) {
+	// Health check endpoints
+	healthHandler := health.NewHandler(&health.DatabaseChecker{DB: DB, DBName: "postgres"})
+	r.GET("/health", func(c *gin.Context) {
+		healthHandler.Health(c.Writer, c.Request)
+	})
+	r.GET("/ready", func(c *gin.Context) {
+		healthHandler.Ready(c.Writer, c.Request)
+	})
+	r.GET("/live", func(c *gin.Context) {
+		healthHandler.Live(c.Writer, c.Request)
+	})
+
+	// Metrics endpoint
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	// Metrics middleware
+	r.Use(func(c *gin.Context) {
+		start := time.Now()
+		path := c.FullPath()
+		method := c.Request.Method
+
+		c.Next()
+
+		status := c.Writer.Status()
+		duration := time.Since(start).Seconds()
+
+		metrics.HTTPRequestsTotal.WithLabelValues(method, path, http.StatusText(status)).Inc()
+		metrics.HTTPRequestDuration.WithLabelValues(method, path, http.StatusText(status)).Observe(duration)
+	})
+
 	api := r.Group("/api")
 	{
 		// Public routes
