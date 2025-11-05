@@ -14,8 +14,9 @@ func TestGetHealPackageByType_FullHeal(t *testing.T) {
 	
 	require.NoError(t, err)
 	assert.Equal(t, heal.HealTypeFull, packageInfo.Type)
-	assert.Equal(t, 100, packageInfo.HealPercentage)
 	assert.Equal(t, "warrior", packageInfo.RequiredRole)
+	assert.Equal(t, 100, packageInfo.Price)
+	assert.Equal(t, 300, packageInfo.Duration)
 }
 
 func TestGetHealPackageByType_PartialHeal(t *testing.T) {
@@ -23,8 +24,9 @@ func TestGetHealPackageByType_PartialHeal(t *testing.T) {
 	
 	require.NoError(t, err)
 	assert.Equal(t, heal.HealTypePartial, packageInfo.Type)
-	assert.Equal(t, 50, packageInfo.HealPercentage)
 	assert.Equal(t, "warrior", packageInfo.RequiredRole)
+	assert.Equal(t, 50, packageInfo.Price)
+	assert.Equal(t, 180, packageInfo.Duration)
 }
 
 func TestGetHealPackageByType_EmperorFullHeal(t *testing.T) {
@@ -32,8 +34,9 @@ func TestGetHealPackageByType_EmperorFullHeal(t *testing.T) {
 	
 	require.NoError(t, err)
 	assert.Equal(t, heal.HealTypeEmperorFull, packageInfo.Type)
-	assert.Equal(t, 100, packageInfo.HealPercentage)
 	assert.Equal(t, "emperor", packageInfo.RequiredRole)
+	assert.Equal(t, 20, packageInfo.Price)
+	assert.Equal(t, 30, packageInfo.Duration)
 }
 
 func TestGetHealPackageByType_EmperorPartialHeal(t *testing.T) {
@@ -41,8 +44,9 @@ func TestGetHealPackageByType_EmperorPartialHeal(t *testing.T) {
 	
 	require.NoError(t, err)
 	assert.Equal(t, heal.HealTypeEmperorPartial, packageInfo.Type)
-	assert.Equal(t, 50, packageInfo.HealPercentage)
 	assert.Equal(t, "emperor", packageInfo.RequiredRole)
+	assert.Equal(t, 10, packageInfo.Price)
+	assert.Equal(t, 15, packageInfo.Duration)
 }
 
 func TestGetHealPackageByType_DragonHeal(t *testing.T) {
