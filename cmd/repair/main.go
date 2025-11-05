@@ -1,17 +1,22 @@
 package main
 
 import (
-    "log"
-    "net"
-    "os"
+	"context"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
-    pb "network-sec-micro/api/proto/repair"
-    pbWeapon "network-sec-micro/api/proto/weapon"
-    pbArmor "network-sec-micro/api/proto/armor"
-    "network-sec-micro/internal/repair"
+	pb "network-sec-micro/api/proto/repair"
+	pbWeapon "network-sec-micro/api/proto/weapon"
+	pbArmor "network-sec-micro/api/proto/armor"
+	"network-sec-micro/internal/repair"
+	"network-sec-micro/pkg/health"
+	"network-sec-micro/pkg/metrics"
 
-    "google.golang.org/grpc"
-    "google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func getEnv(key, def string) string { if v := os.Getenv(key); v != "" { return v }; return def }
