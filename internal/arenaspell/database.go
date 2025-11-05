@@ -12,6 +12,7 @@ import (
 )
 
 var (
+    Client    *mongo.Client
     DB        *mongo.Database
     SpellColl *mongo.Collection
 )
@@ -24,16 +25,17 @@ func InitDatabase() error {
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
 
-    client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+    var err error
+    Client, err = mongo.Connect(ctx, options.Client().ApplyURI(uri))
     if err != nil {
         return fmt.Errorf("failed to connect to MongoDB: %w", err)
     }
 
-    if err := client.Ping(ctx, nil); err != nil {
+    if err := Client.Ping(ctx, nil); err != nil {
         return fmt.Errorf("failed to ping MongoDB: %w", err)
     }
 
-    DB = client.Database(dbName)
+    DB = Client.Database(dbName)
     SpellColl = DB.Collection((Spell{}).CollectionName())
 
     log.Println("ArenaSpell MongoDB connection established")
