@@ -130,10 +130,8 @@ func TestDeductCoins_Success(t *testing.T) {
 	err := db.Create(&w).Error
 	require.NoError(t, err)
 	
-	// Ensure DB is set for coin service BEFORE creating service
-	coin.DB = db
-	
-	svc := coin.NewService()
+	// Create service using test helper
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.DeductCoinsCommand{
@@ -183,9 +181,9 @@ func TestDeductCoins_InsufficientBalance(t *testing.T) {
 }
 
 func TestDeductCoins_InvalidAmount(t *testing.T) {
-	_ = setupTestDB(t)
+	db := setupTestDB(t)
 	
-	svc := coin.NewService()
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.DeductCoinsCommand{
