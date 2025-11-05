@@ -36,13 +36,14 @@ func TestCreateArmor_Success(t *testing.T) {
 	ctx := context.Background()
 	
 	cmd := dto.CreateArmorCommand{
-		Name:        "Steel Plate",
-		Description: "Heavy armor",
-		Type:        "heavy",
-		Defense:     80,
-		HpBonus:     50,
-		Price:       3000,
-		CreatedBy:   "warrior1",
+		Name:         "Steel Plate",
+		Description:  "Heavy armor",
+		Type:         "heavy",
+		Defense:      80,
+		HPBonus:      50,
+		Price:        3000,
+		MaxDurability: 300,
+		CreatedBy:    "warrior1",
 	}
 	
 	result, err := svc.CreateArmor(ctx, cmd)
@@ -256,14 +257,15 @@ func TestBuyArmor_PermissionDenied(t *testing.T) {
 	svc := armor.NewService()
 	ctx := context.Background()
 	
-	// Create heavy armor (only emperor can buy)
+	// Create medium armor (only king/emperor can buy)
 	createCmd := dto.CreateArmorCommand{
-		Name:      "Heavy Armor",
-		Type:      "heavy",
-		Defense:   80,
-		HpBonus:   50,
-		Price:     3000,
-		CreatedBy: "warrior1",
+		Name:        "Medium Armor",
+		Type:        "medium",
+		Defense:     50,
+		HPBonus:     30,
+		Price:       1500,
+		MaxDurability: 200,
+		CreatedBy:   "warrior1",
 	}
 	created, err := svc.CreateArmor(ctx, createCmd)
 	require.NoError(t, err)
