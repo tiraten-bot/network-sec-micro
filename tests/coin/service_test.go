@@ -99,9 +99,9 @@ func TestAddCoins_InvalidAmount(t *testing.T) {
 }
 
 func TestAddCoins_NegativeAmount(t *testing.T) {
-	_ = setupTestDB(t)
+	db := setupTestDB(t)
 	
-	svc := coin.NewService()
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.AddCoinsCommand{
