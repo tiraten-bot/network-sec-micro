@@ -90,9 +90,9 @@ func TestGetArmors_Success(t *testing.T) {
 	ctx := context.Background()
 	
 	armors := []dto.CreateArmorCommand{
-		{Name: "Light Armor", Type: "light", Defense: 20, HpBonus: 10, Price: 500, CreatedBy: "warrior1"},
-		{Name: "Medium Armor", Type: "medium", Defense: 50, HpBonus: 30, Price: 1500, CreatedBy: "warrior1"},
-		{Name: "Heavy Armor", Type: "heavy", Defense: 80, HpBonus: 50, Price: 3000, CreatedBy: "warrior2"},
+		{Name: "Light Armor", Type: "light", Defense: 20, HPBonus: 10, Price: 500, MaxDurability: 100, CreatedBy: "warrior1"},
+		{Name: "Medium Armor", Type: "medium", Defense: 50, HPBonus: 30, Price: 1500, MaxDurability: 200, CreatedBy: "warrior1"},
+		{Name: "Heavy Armor", Type: "heavy", Defense: 80, HPBonus: 50, Price: 3000, MaxDurability: 300, CreatedBy: "warrior2"},
 	}
 	
 	for _, cmd := range armors {
