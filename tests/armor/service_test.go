@@ -298,12 +298,13 @@ func TestArmor_Durability(t *testing.T) {
 	ctx := context.Background()
 	
 	cmd := dto.CreateArmorCommand{
-		Name:        "Test Armor",
-		Type:        "light",
-		Defense:     30,
-		HpBonus:     20,
-		Price:       500,
-		CreatedBy:   "warrior1",
+		Name:         "Test Armor",
+		Type:         "light",
+		Defense:      30,
+		HPBonus:      20,
+		Price:        500,
+		MaxDurability: 100,
+		CreatedBy:    "warrior1",
 	}
 	
 	result, err := svc.CreateArmor(ctx, cmd)
