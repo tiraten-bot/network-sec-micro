@@ -111,36 +111,49 @@ func TestHealPackage_Constants(t *testing.T) {
 	assert.Equal(t, heal.HealType("dragon"), heal.HealTypeDragon)
 }
 
-func TestHealPackage_HealPercentage(t *testing.T) {
-	// Full heal should be 100%
+func TestHealPackage_Pricing(t *testing.T) {
+	// Test that packages have prices
 	full, err := heal.GetHealPackageByType(heal.HealTypeFull, "knight")
 	require.NoError(t, err)
-	assert.Equal(t, 100, full.HealPercentage)
+	assert.Equal(t, 100, full.Price)
 	
-	// Partial heal should be 50%
 	partial, err := heal.GetHealPackageByType(heal.HealTypePartial, "knight")
 	require.NoError(t, err)
-	assert.Equal(t, 50, partial.HealPercentage)
+	assert.Equal(t, 50, partial.Price)
 	
-	// Emperor full should be 100%
 	emperorFull, err := heal.GetHealPackageByType(heal.HealTypeEmperorFull, "light_emperor")
 	require.NoError(t, err)
-	assert.Equal(t, 100, emperorFull.HealPercentage)
+	assert.Equal(t, 20, emperorFull.Price)
 	
-	// Emperor partial should be 50%
 	emperorPartial, err := heal.GetHealPackageByType(heal.HealTypeEmperorPartial, "light_emperor")
 	require.NoError(t, err)
-	assert.Equal(t, 50, emperorPartial.HealPercentage)
+	assert.Equal(t, 10, emperorPartial.Price)
+	
+	dragon, err := heal.GetHealPackageByType(heal.HealTypeDragon, "dragon")
+	require.NoError(t, err)
+	assert.Equal(t, 1000, dragon.Price)
 }
 
-func TestHealPackage_Pricing(t *testing.T) {
-	// Test that packages have prices (if defined in constants)
+func TestHealPackage_Duration(t *testing.T) {
+	// Test healing durations
 	full, err := heal.GetHealPackageByType(heal.HealTypeFull, "knight")
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, full.Price, 0)
+	assert.Equal(t, 300, full.Duration) // 5 minutes
 	
 	partial, err := heal.GetHealPackageByType(heal.HealTypePartial, "knight")
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, partial.Price, 0)
+	assert.Equal(t, 180, partial.Duration) // 3 minutes
+	
+	emperorFull, err := heal.GetHealPackageByType(heal.HealTypeEmperorFull, "light_emperor")
+	require.NoError(t, err)
+	assert.Equal(t, 30, emperorFull.Duration) // 30 seconds
+	
+	emperorPartial, err := heal.GetHealPackageByType(heal.HealTypeEmperorPartial, "light_emperor")
+	require.NoError(t, err)
+	assert.Equal(t, 15, emperorPartial.Duration) // 15 seconds
+	
+	dragon, err := heal.GetHealPackageByType(heal.HealTypeDragon, "dragon")
+	require.NoError(t, err)
+	assert.Equal(t, 3600, dragon.Duration) // 1 hour
 }
 
