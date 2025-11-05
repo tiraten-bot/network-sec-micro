@@ -9,6 +9,8 @@ import (
 
 	"network-sec-micro/internal/enemy"
 	pb "network-sec-micro/api/proto/enemy"
+	"network-sec-micro/pkg/health"
+	"network-sec-micro/pkg/metrics"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -55,8 +57,21 @@ func main() {
 	grpcSrv := grpc.NewServer()
 	pb.RegisterEnemyServiceServer(grpcSrv, grpcServer)
 
+	// Start metrics server
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "8092"
+	}
+	healthHandler := health.NewHandler(&health.MongoDBChecker{Client: enemy.Client, DBName: "mongodb"})
+	go func() {
+		if err := metrics.StartMetricsServer(metricsPort, healthHandler); err != nil {
+			log.Printf("Metrics server error: %v", err)
+		}
+	}()
+
 	go func() {
 		log.Printf("Enemy gRPC server starting on port %s", grpcPort)
+		log.Printf("Enemy metrics server starting on port %s", metricsPort)
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			log.Fatalf("Failed to serve gRPC: %v", err)
 		}
