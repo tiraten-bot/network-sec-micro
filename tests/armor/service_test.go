@@ -37,8 +37,8 @@ func TestCreateArmor_Success(t *testing.T) {
 	
 	cmd := dto.CreateArmorCommand{
 		Name:         "Steel Plate",
-		Description:  "Heavy armor",
-		Type:         "heavy",
+		Description:  "Legendary armor",
+		Type:         "legendary",
 		Defense:      80,
 		HPBonus:      50,
 		Price:        3000,
