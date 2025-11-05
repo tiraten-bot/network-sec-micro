@@ -205,15 +205,13 @@ func TestTransferCoins_Success(t *testing.T) {
 	// Create two warriors with coin balances
 	w1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 1000}
 	w2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
-	// Set coin.DB BEFORE creating warriors
-	coin.DB = db
-	
 	err := db.Create(&w1).Error
 	require.NoError(t, err)
 	err = db.Create(&w2).Error
 	require.NoError(t, err)
 	
-	svc := coin.NewService()
+	// Create service using test helper
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.TransferCoinsCommand{
@@ -257,15 +255,13 @@ func TestTransferCoins_InsufficientBalance(t *testing.T) {
 	
 	w1 := warrior.Warrior{ID: 1, Username: "warrior1", Email: "w1@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 100}
 	w2 := warrior.Warrior{ID: 2, Username: "warrior2", Email: "w2@example.com", Password: "pwd", Role: warrior.RoleKnight, CoinBalance: 500}
-	// Set coin.DB BEFORE creating warriors
-	coin.DB = db
-	
 	err := db.Create(&w1).Error
 	require.NoError(t, err)
 	err = db.Create(&w2).Error
 	require.NoError(t, err)
 	
-	svc := coin.NewService()
+	// Create service using test helper
+	svc := newTestService(db)
 	ctx := context.Background()
 	
 	cmd := dto.TransferCoinsCommand{
