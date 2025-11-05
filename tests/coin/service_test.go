@@ -61,8 +61,16 @@ func TestAddCoins_Success(t *testing.T) {
 	err = coin.DB.Table("warriors").Count(&testCount).Error
 	require.NoError(t, err, "coin.DB should access warriors table")
 	
-	// Create service AFTER DB is set and verified
-	svc := coin.NewService()
+	// Create service with custom repository using our test DB
+	repo := coin.NewRepository(db)
+	svc := &coin.Service{} // Create empty service
+	// Use reflection or create a test helper - for now, manually set repo
+	// Actually, we need to use NewService but ensure DB is set
+	// Since NewService uses coin.DB, we need to ensure it's set
+	svc = coin.NewService()
+	
+	// Verify service's repo uses correct DB
+	// We can't access private fields, so we test through behavior
 	ctx := context.Background()
 	
 	cmd := dto.AddCoinsCommand{
