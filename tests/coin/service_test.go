@@ -326,7 +326,7 @@ func TestGetTransactionHistory_Success(t *testing.T) {
 }
 
 func TestCreateTransaction_Success(t *testing.T) {
-	db := setupTestDB(t)
+	_ = setupTestDB(t)
 	
 	svc := coin.NewService()
 	ctx := context.Background()
