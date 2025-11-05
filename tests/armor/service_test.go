@@ -90,9 +90,9 @@ func TestGetArmors_Success(t *testing.T) {
 	ctx := context.Background()
 	
 	armors := []dto.CreateArmorCommand{
-		{Name: "Light Armor", Type: "light", Defense: 20, HPBonus: 10, Price: 500, MaxDurability: 100, CreatedBy: "warrior1"},
-		{Name: "Medium Armor", Type: "medium", Defense: 50, HPBonus: 30, Price: 1500, MaxDurability: 200, CreatedBy: "warrior1"},
-		{Name: "Heavy Armor", Type: "heavy", Defense: 80, HPBonus: 50, Price: 3000, MaxDurability: 300, CreatedBy: "warrior2"},
+		{Name: "Common Armor", Type: "common", Defense: 20, HPBonus: 10, Price: 500, MaxDurability: 100, CreatedBy: "warrior1"},
+		{Name: "Rare Armor", Type: "rare", Defense: 50, HPBonus: 30, Price: 1500, MaxDurability: 200, CreatedBy: "warrior1"},
+		{Name: "Legendary Armor", Type: "legendary", Defense: 80, HPBonus: 50, Price: 3000, MaxDurability: 300, CreatedBy: "warrior2"},
 	}
 	
 	for _, cmd := range armors {
@@ -115,9 +115,9 @@ func TestGetArmors_ByType(t *testing.T) {
 	ctx := context.Background()
 	
 	armors := []dto.CreateArmorCommand{
-		{Name: "Light Armor 1", Type: "light", Defense: 20, HPBonus: 10, Price: 500, MaxDurability: 100, CreatedBy: "warrior1"},
-		{Name: "Medium Armor", Type: "medium", Defense: 50, HPBonus: 30, Price: 1500, MaxDurability: 200, CreatedBy: "warrior1"},
-		{Name: "Light Armor 2", Type: "light", Defense: 25, HPBonus: 15, Price: 600, MaxDurability: 100, CreatedBy: "warrior2"},
+		{Name: "Common Armor 1", Type: "common", Defense: 20, HPBonus: 10, Price: 500, MaxDurability: 100, CreatedBy: "warrior1"},
+		{Name: "Rare Armor", Type: "rare", Defense: 50, HPBonus: 30, Price: 1500, MaxDurability: 200, CreatedBy: "warrior1"},
+		{Name: "Common Armor 2", Type: "common", Defense: 25, HPBonus: 15, Price: 600, MaxDurability: 100, CreatedBy: "warrior2"},
 	}
 	
 	for _, cmd := range armors {
