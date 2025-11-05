@@ -11,7 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var SpellColl *mongo.Collection
+var (
+	Client    *mongo.Client
+	SpellColl *mongo.Collection
+)
 
 // InitDatabase initializes the MongoDB database connection
 func InitDatabase() error {
@@ -21,19 +24,20 @@ func InitDatabase() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
+	var err error
+	Client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		return fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
 
 	// Verify connection
-	if err := client.Ping(ctx, nil); err != nil {
+	if err := Client.Ping(ctx, nil); err != nil {
 		return fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
 	log.Println("MongoDB connection established for battlespell service")
 
-	db := client.Database(dbName)
+	db := Client.Database(dbName)
 	SpellColl = db.Collection((&Spell{}).CollectionName())
 
 	// Create indexes
