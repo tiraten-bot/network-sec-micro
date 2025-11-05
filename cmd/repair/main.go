@@ -44,12 +44,45 @@ func main() {
     defer aconn.Close()
     acli := pbArmor.NewArmorServiceClient(aconn)
 
-    lis, err := net.Listen("tcp", ":50061")
-    if err != nil { log.Fatalf("listen error: %v", err) }
-    srv := grpc.NewServer()
-    pb.RegisterRepairServiceServer(srv, repair.NewGrpcServer(svc, wcli, acli))
-    log.Printf("repair service listening on %s", ":50061")
-    if err := srv.Serve(lis); err != nil { log.Fatalf("serve error: %v", err) }
+	// Setup graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Start metrics server
+	metricsPort := getEnv("METRICS_PORT", "8082")
+	healthHandler := health.NewHandler(&health.DatabaseChecker{DB: repair.GetDB(), DBName: "postgres"})
+	go func() {
+		if err := metrics.StartMetricsServerWithContext(ctx, metricsPort, healthHandler); err != nil {
+			log.Printf("Metrics server error: %v", err)
+		}
+	}()
+
+	lis, err := net.Listen("tcp", ":50061")
+	if err != nil {
+		log.Fatalf("listen error: %v", err)
+	}
+	srv := grpc.NewServer()
+	pb.RegisterRepairServiceServer(srv, repair.NewGrpcServer(svc, wcli, acli))
+
+	log.Printf("repair service listening on %s", ":50061")
+	log.Printf("repair metrics server listening on %s", metricsPort)
+
+	// Start gRPC server in goroutine
+	go func() {
+		if err := srv.Serve(lis); err != nil {
+			log.Fatalf("serve error: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-sigChan
+	log.Println("Shutdown signal received, gracefully shutting down...")
+	cancel()
+	srv.GracefulStop()
+	log.Println("Repair service stopped")
 }
 
 
