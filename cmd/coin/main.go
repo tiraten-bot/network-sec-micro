@@ -4,10 +4,14 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	pb "network-sec-micro/api/proto/coin"
 	"network-sec-micro/internal/coin"
+	"network-sec-micro/pkg/health"
+	"network-sec-micro/pkg/metrics"
 	kafkaLib "network-sec-micro/pkg/kafka"
 
 	"google.golang.org/grpc"
@@ -62,15 +66,42 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
+	// Setup graceful shutdown
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	// Start metrics server
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "8091"
+	}
+	healthHandler := health.NewHandler(&health.DatabaseChecker{DB: coin.DB, DBName: "mysql"})
+	go func() {
+		if err := metrics.StartMetricsServer(metricsPort, healthHandler); err != nil {
+			log.Printf("Metrics server error: %v", err)
+		}
+	}()
+
 	s := grpc.NewServer()
 	
 	// Register coin service
 	pb.RegisterCoinServiceServer(s, grpcServer)
 
 	log.Printf("Coin gRPC service starting on port %s", port)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+	log.Printf("Coin metrics server starting on port %s", metricsPort)
+
+	// Start gRPC server in goroutine
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-shutdown
+	log.Println("Shutdown signal received, gracefully shutting down...")
+	s.GracefulStop()
+	log.Println("Coin service stopped")
 }
 
 func getEnvSlice(key, defaultValue string) []string {
