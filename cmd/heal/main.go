@@ -9,8 +9,11 @@ import (
 
 	pb "network-sec-micro/api/proto/heal"
 	"network-sec-micro/internal/heal"
+	"network-sec-micro/pkg/health"
+	"network-sec-micro/pkg/metrics"
 
 	"google.golang.org/grpc"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -86,6 +89,29 @@ func main() {
 		}
 	}()
 
+	// Start metrics server
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "8089"
+	}
+	
+	var dbChecker health.Checker
+	if heal.SQLDB.Enabled {
+		if gormDB, ok := heal.SQLDB.DB.(*gorm.DB); ok {
+			dbChecker = &health.DatabaseChecker{DB: gormDB, DBName: "postgres"}
+		}
+	}
+	if dbChecker == nil {
+		dbChecker = &health.SimpleChecker{Name: "postgres", Status: health.StatusHealthy, Message: "PostgreSQL not enabled"}
+	}
+	healthHandler := health.NewHandler(dbChecker)
+	
+	go func() {
+		if err := metrics.StartMetricsServer(metricsPort, healthHandler); err != nil {
+			log.Printf("Metrics server error: %v", err)
+		}
+	}()
+
 	// Start gRPC server
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
@@ -101,6 +127,7 @@ func main() {
 	pb.RegisterHealServiceServer(s, grpcServer)
 
 	log.Printf("Heal gRPC service starting on port %s", grpcPort)
+	log.Printf("Heal metrics server starting on port %s", metricsPort)
 
 	// Start gRPC server in goroutine
 	go func() {
