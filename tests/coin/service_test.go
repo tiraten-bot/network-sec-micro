@@ -124,20 +124,24 @@ func TestDeductCoins_Success(t *testing.T) {
 	assert.NoError(t, err)
 	
 	// Verify balance
-	var updatedBalance coin.WarriorBalance
-	db.First(&updatedBalance, 1)
-	assert.Equal(t, int64(700), updatedBalance.Balance)
+	var updatedWarrior warrior.Warrior
+	db.First(&updatedWarrior, 1)
+	assert.Equal(t, 700, updatedWarrior.CoinBalance)
 }
 
 func TestDeductCoins_InsufficientBalance(t *testing.T) {
 	db := setupTestDB(t)
 	
-	// Create initial warrior balance with low amount
-	balance := coin.WarriorBalance{
-		WarriorID: 1,
-		Balance:   100,
+	// Create initial warrior with low coin balance
+	warrior := warrior.Warrior{
+		ID:          1,
+		Username:    "warrior1",
+		Email:       "warrior1@example.com",
+		Password:    "password",
+		Role:        warrior.RoleKnight,
+		CoinBalance: 100,
 	}
-	err := db.Create(&balance).Error
+	err := db.Create(&warrior).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
