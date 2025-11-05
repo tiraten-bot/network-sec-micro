@@ -174,12 +174,13 @@ func TestBuyArmor_Success(t *testing.T) {
 	
 	// Create armor
 	createCmd := dto.CreateArmorCommand{
-		Name:      "Light Armor",
-		Type:      "light",
-		Defense:   30,
-		HpBonus:   20,
-		Price:     500,
-		CreatedBy: "warrior1",
+		Name:         "Common Armor",
+		Type:         "common",
+		Defense:      30,
+		HPBonus:      20,
+		Price:        500,
+		MaxDurability: 100,
+		CreatedBy:    "warrior1",
 	}
 	created, err := svc.CreateArmor(ctx, createCmd)
 	require.NoError(t, err)
@@ -223,12 +224,13 @@ func TestBuyArmor_AlreadyOwned(t *testing.T) {
 	
 	// Create armor
 	createCmd := dto.CreateArmorCommand{
-		Name:      "Light Armor",
-		Type:      "light",
-		Defense:   30,
-		HpBonus:   20,
-		Price:     500,
-		CreatedBy: "warrior1",
+		Name:         "Common Armor",
+		Type:         "common",
+		Defense:      30,
+		HPBonus:      20,
+		Price:        500,
+		MaxDurability: 100,
+		CreatedBy:    "warrior1",
 	}
 	created, err := svc.CreateArmor(ctx, createCmd)
 	require.NoError(t, err)
