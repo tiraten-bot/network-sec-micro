@@ -113,11 +113,11 @@ scrape_configs:
           service: 'repair'
           type: 'grpc'
 
-  # Heal Service (gRPC - will need HTTP metrics endpoint)
+  # Heal Service (gRPC with HTTP metrics)
   - job_name: 'heal'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['heal:50058']
+      - targets: ['heal:8089']
         labels:
           service: 'heal'
           type: 'grpc'
@@ -130,6 +130,15 @@ scrape_configs:
         labels:
           service: 'armor'
           type: 'http'
+
+  # Enemy Service (gRPC with HTTP metrics)
+  - job_name: 'enemy'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['enemy:8092']
+        labels:
+          service: 'enemy'
+          type: 'grpc'
 
   # Fiber Gateway
   - job_name: 'fiber-gateway'
