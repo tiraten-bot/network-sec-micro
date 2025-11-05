@@ -1,7 +1,6 @@
 package warrior_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
