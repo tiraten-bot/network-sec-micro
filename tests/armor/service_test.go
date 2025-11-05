@@ -285,9 +285,9 @@ func TestBuyArmor_PermissionDenied(t *testing.T) {
 }
 
 func TestArmorType_Constants(t *testing.T) {
-	assert.Equal(t, armor.ArmorType("light"), armor.ArmorTypeLight)
-	assert.Equal(t, armor.ArmorType("medium"), armor.ArmorTypeMedium)
-	assert.Equal(t, armor.ArmorType("heavy"), armor.ArmorTypeHeavy)
+	assert.Equal(t, armor.ArmorType("common"), armor.ArmorTypeCommon)
+	assert.Equal(t, armor.ArmorType("rare"), armor.ArmorTypeRare)
+	assert.Equal(t, armor.ArmorType("legendary"), armor.ArmorTypeLegendary)
 }
 
 func TestArmor_Durability(t *testing.T) {
@@ -299,7 +299,7 @@ func TestArmor_Durability(t *testing.T) {
 	
 	cmd := dto.CreateArmorCommand{
 		Name:         "Test Armor",
-		Type:         "light",
+		Type:         "common",
 		Defense:      30,
 		HPBonus:      20,
 		Price:        500,
