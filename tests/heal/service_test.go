@@ -6,6 +6,7 @@ import (
 	"network-sec-micro/internal/heal"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetHealPackageByType_FullHeal(t *testing.T) {
