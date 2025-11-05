@@ -6,6 +6,7 @@ import (
 
 	"network-sec-micro/internal/coin"
 	"network-sec-micro/internal/coin/dto"
+	"network-sec-micro/internal/warrior"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,8 +19,8 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 	
-	// Auto migrate
-	err = db.AutoMigrate(&coin.WarriorBalance{}, &coin.Transaction{})
+	// Auto migrate - warriors table has coin_balance column
+	err = db.AutoMigrate(&warrior.Warrior{}, &coin.Transaction{})
 	require.NoError(t, err)
 	
 	// Set global DB
@@ -31,12 +32,16 @@ func setupTestDB(t *testing.T) *gorm.DB {
 func TestAddCoins_Success(t *testing.T) {
 	db := setupTestDB(t)
 	
-	// Create initial warrior balance
-	balance := coin.WarriorBalance{
-		WarriorID: 1,
-		Balance:   1000,
+	// Create initial warrior with coin balance
+	warrior := warrior.Warrior{
+		ID:          1,
+		Username:    "warrior1",
+		Email:       "warrior1@example.com",
+		Password:    "password",
+		Role:        warrior.RoleKnight,
+		CoinBalance: 1000,
 	}
-	err := db.Create(&balance).Error
+	err := db.Create(&warrior).Error
 	require.NoError(t, err)
 	
 	svc := coin.NewService()
