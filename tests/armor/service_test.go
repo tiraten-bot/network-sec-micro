@@ -115,9 +115,9 @@ func TestGetArmors_ByType(t *testing.T) {
 	ctx := context.Background()
 	
 	armors := []dto.CreateArmorCommand{
-		{Name: "Light Armor 1", Type: "light", Defense: 20, HpBonus: 10, Price: 500, CreatedBy: "warrior1"},
-		{Name: "Medium Armor", Type: "medium", Defense: 50, HpBonus: 30, Price: 1500, CreatedBy: "warrior1"},
-		{Name: "Light Armor 2", Type: "light", Defense: 25, HpBonus: 15, Price: 600, CreatedBy: "warrior2"},
+		{Name: "Light Armor 1", Type: "light", Defense: 20, HPBonus: 10, Price: 500, MaxDurability: 100, CreatedBy: "warrior1"},
+		{Name: "Medium Armor", Type: "medium", Defense: 50, HPBonus: 30, Price: 1500, MaxDurability: 200, CreatedBy: "warrior1"},
+		{Name: "Light Armor 2", Type: "light", Defense: 25, HPBonus: 15, Price: 600, MaxDurability: 100, CreatedBy: "warrior2"},
 	}
 	
 	for _, cmd := range armors {
