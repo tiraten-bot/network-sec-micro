@@ -2,7 +2,8 @@ package repair
 
 import (
     "fmt"
-    "os"
+
+    "network-sec-micro/pkg/secrets"
 
     "gorm.io/driver/postgres"
     "gorm.io/gorm"
@@ -11,12 +12,11 @@ import (
 var db *gorm.DB
 
 func InitPostgres() error {
-    host := os.Getenv("DB_HOST"); port := os.Getenv("DB_PORT"); user := os.Getenv("DB_USER"); pass := os.Getenv("DB_PASSWORD"); name := os.Getenv("DB_NAME_REPAIR")
-    if host == "" { host = "localhost" }
-    if port == "" { port = "5432" }
-    if user == "" { user = "postgres" }
-    if pass == "" { pass = "postgres" }
-    if name == "" { name = "repair_db" }
+    host := secrets.GetOrDefault("DB_HOST", "localhost")
+    port := secrets.GetOrDefault("DB_PORT", "5432")
+    user := secrets.GetOrDefault("DB_USER", "postgres")
+    pass := secrets.GetOrDefault("DB_PASSWORD", "postgres")
+    name := secrets.GetOrDefault("DB_NAME_REPAIR", "repair_db")
     dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, pass, name)
     var err error
     db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
