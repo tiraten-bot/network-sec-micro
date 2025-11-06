@@ -13,6 +13,7 @@ import (
 	"network-sec-micro/pkg/health"
 	"network-sec-micro/pkg/metrics"
 	kafkaLib "network-sec-micro/pkg/kafka"
+	"network-sec-micro/pkg/secrets"
 
 	"google.golang.org/grpc"
 )
@@ -56,10 +57,7 @@ func main() {
 	// }
 
 	// Start gRPC server
-	port := os.Getenv("GRPC_PORT")
-	if port == "" {
-		port = "50051"
-	}
+	port := secrets.GetOrDefault("GRPC_PORT", "50051")
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -71,10 +69,7 @@ func main() {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	// Start metrics server
-	metricsPort := os.Getenv("METRICS_PORT")
-	if metricsPort == "" {
-		metricsPort = "8091"
-	}
+	metricsPort := secrets.GetOrDefault("METRICS_PORT", "8091")
 	healthHandler := health.NewHandler(&health.DatabaseChecker{DB: coin.DB, DBName: "mysql"})
 	go func() {
 		if err := metrics.StartMetricsServer(metricsPort, healthHandler); err != nil {
@@ -105,9 +100,19 @@ func main() {
 }
 
 func getEnvSlice(key, defaultValue string) []string {
-	value := os.Getenv(key)
+	value := secrets.GetOrDefault(key, "")
 	if value == "" {
 		return []string{defaultValue}
 	}
-	return strings.Split(value, ",")
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	if len(out) == 0 {
+		return []string{defaultValue}
+	}
+	return out
 }
