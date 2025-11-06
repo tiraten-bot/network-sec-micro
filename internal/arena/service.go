@@ -10,6 +10,9 @@ import (
 	pbWarrior "network-sec-micro/api/proto/warrior"
 	"network-sec-micro/internal/arena/dto"
 	"network-sec-micro/pkg/secrets"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Service handles arena business logic with CQRS pattern
@@ -817,8 +820,4 @@ func (s *Service) GetMyMatches(ctx context.Context, query dto.GetMyMatchesQuery)
 	}
 
 	return matches, nil
-}
-
-func getEnv(key, defaultValue string) string {
-	return secrets.GetOrDefault(key, defaultValue)
 }
