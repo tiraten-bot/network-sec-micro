@@ -2248,14 +2248,14 @@ sequenceDiagram
 }}%%
 graph TB
     subgraph "Health Check Endpoints"
-        HEALTH[/health<br/>Full Health Check<br/>with Components]
-        READY[/ready<br/>Readiness Probe<br/>K8s Ready]
-        LIVE[/live<br/>Liveness Probe<br/>K8s Alive]
+        HEALTH["/health<br/>Full Health Check<br/>with Components"]
+        READY["/ready<br/>Readiness Probe<br/>K8s Ready"]
+        LIVE["/live<br/>Liveness Probe<br/>K8s Alive"]
     end
 
     subgraph "Health Checkers"
-        DB[Database Checker<br/>PostgreSQL/MySQL/MongoDB]
-        SIMPLE[Simple Checker<br/>Always Healthy]
+        DB["Database Checker<br/>PostgreSQL/MySQL/MongoDB"]
+        SIMPLE["Simple Checker<br/>Always Healthy"]
     end
 
     subgraph "Components"
@@ -2299,11 +2299,11 @@ sequenceDiagram
     participant Prom as Prometheus
     participant Rules as Alert Rules
     participant AM as Alertmanager
-    participant Critical as Critical Receiver
-    participant Warning as Warning Receiver
+    participant CriticalReceiver as Critical Receiver
+    participant WarningReceiver as Warning Receiver
     participant Notify as Notification Channels
 
-    Prom->>Rules: Evaluate Rules<br/>(every 15s)
+    Prom->>Rules: Evaluate Rules (every 15s)
     Rules->>Rules: Check Conditions<br/>(ServiceDown, HighErrorRate, etc.)
     
     alt Alert Fired
@@ -2311,11 +2311,11 @@ sequenceDiagram
         AM->>AM: Group & Route
         
         alt Critical Alert
-            AM->>Critical: Route to Critical
-            Critical->>Notify: Email/Webhook
+            AM->>CriticalReceiver: Route to Critical
+            CriticalReceiver->>Notify: Email/Webhook
         else Warning Alert
-            AM->>Warning: Route to Warning
-            Warning->>Notify: Webhook
+            AM->>WarningReceiver: Route to Warning
+            WarningReceiver->>Notify: Webhook
         end
         
         Notify->>Notify: Send Notification
@@ -2514,31 +2514,31 @@ sequenceDiagram
     "clusterBorder": "#212121"
   }
 }}%%
-graph LR
+graph TB
     subgraph "Tested Services"
-        W[Warrior<br/>✅ Unit Tests]
-        WP[Weapon<br/>✅ Unit Tests]
-        C[Coin<br/>✅ Unit Tests]
-        E[Enemy<br/>✅ Unit Tests]
-        D[Dragon<br/>✅ Unit Tests]
-        R[Repair<br/>✅ Unit Tests]
-        H[Heal<br/>✅ Unit Tests]
-        AR[Armor<br/>✅ Unit Tests]
+        W["Warrior<br/>✅ Unit Tests"]
+        WP["Weapon<br/>✅ Unit Tests"]
+        C["Coin<br/>✅ Unit Tests"]
+        E["Enemy<br/>✅ Unit Tests"]
+        D["Dragon<br/>✅ Unit Tests"]
+        R["Repair<br/>✅ Unit Tests"]
+        H["Heal<br/>✅ Unit Tests"]
+        AR["Armor<br/>✅ Unit Tests"]
     end
 
     subgraph "Integration Tests"
-        I1[Weapon Battle<br/>Repair Flow]
-        I2[Arena Flow]
-        I3[Battle Flow]
+        I1["Weapon Battle<br/>Repair Flow"]
+        I2["Arena Flow"]
+        I3["Battle Flow"]
     end
 
     subgraph "Test Types"
-        T1[Unit Tests<br/>In-Memory DB]
-        T2[Integration Tests<br/>Service Integration]
-        T3[E2E Tests<br/>Complete Workflows]
-        T4[Performance Tests<br/>Load & Concurrency]
-        T5[Edge Cases<br/>Boundary Conditions]
-        T6[Error Handling<br/>Invalid Inputs]
+        T1["Unit Tests<br/>In-Memory DB"]
+        T2["Integration Tests<br/>Service Integration"]
+        T3["E2E Tests<br/>Complete Workflows"]
+        T4["Performance Tests<br/>Load & Concurrency"]
+        T5["Edge Cases<br/>Boundary Conditions"]
+        T6["Error Handling<br/>Invalid Inputs"]
     end
 
     W --> T1
@@ -2596,22 +2596,22 @@ graph LR
 }}%%
 graph TB
     subgraph "Development"
-        TEST[Test Execution]
-        COV[Code Coverage]
+        TEST["Test Execution"]
+        COV["Code Coverage"]
     end
 
     subgraph "Monitoring"
-        METRICS[Metrics Collection]
-        HEALTH[Health Checks]
-        ALERTS[Alerting]
+        METRICS["Metrics Collection"]
+        HEALTH["Health Checks"]
+        ALERTS["Alerting"]
     end
 
     subgraph "Quality Gates"
-        Q1[Unit Test Coverage >80%]
-        Q2[Integration Tests Pass]
-        Q3[E2E Tests Pass]
-        Q4[No Critical Alerts]
-        Q5[Health Checks Green]
+        Q1["Unit Test Coverage >80%"]
+        Q2["Integration Tests Pass"]
+        Q3["E2E Tests Pass"]
+        Q4["No Critical Alerts"]
+        Q5["Health Checks Green"]
     end
 
     TEST --> COV
@@ -2624,7 +2624,7 @@ graph TB
     ALERTS --> Q4
     HEALTH --> Q5
 
-    Q1 --> DEPLOY[Deploy to Production]
+    Q1 --> DEPLOY["Deploy to Production"]
     Q2 --> DEPLOY
     Q3 --> DEPLOY
     Q4 --> DEPLOY
