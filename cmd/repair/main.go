@@ -14,12 +14,13 @@ import (
 	"network-sec-micro/internal/repair"
 	"network-sec-micro/pkg/health"
 	"network-sec-micro/pkg/metrics"
+	"network-sec-micro/pkg/secrets"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func getEnv(key, def string) string { if v := os.Getenv(key); v != "" { return v }; return def }
+func getEnv(key, def string) string { return secrets.GetOrDefault(key, def) }
 
 func main() {
     if err := repair.InitPostgres(); err != nil { log.Fatalf("db init error: %v", err) }
