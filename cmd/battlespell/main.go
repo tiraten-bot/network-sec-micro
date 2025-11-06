@@ -93,15 +93,7 @@ func main() {
 		c.Next()
 	})
 
-	// Setup health check
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "healthy",
-			"service": "battlespell",
-		})
-	})
-
-	// Setup routes
+	// Setup routes (includes health check and metrics)
 	battlespell.SetupRoutes(r, handler)
 
 	// Swagger docs
