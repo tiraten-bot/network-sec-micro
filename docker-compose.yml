@@ -394,8 +394,10 @@ services:
       KAFKA_BROKERS: kafka:9092
       REDIS_ADDR: redis:6379
       GRPC_PORT: 50058
+      METRICS_PORT: 8089
     ports:
       - "50058:50058"
+      - "8089:8089"
     depends_on:
       postgres:
         condition: service_healthy
