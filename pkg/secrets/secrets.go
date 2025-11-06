@@ -16,15 +16,12 @@ import (
 var ErrNotFound = errors.New("secret not found")
 
 var (
-	clientOnce sync.Once
-	client     *vault.Client
-	clientErr  error
+	clientMu sync.Mutex
+	client   *vault.Client
 
-	cacheOnce sync.Once
-	cache     map[string]string
-	cacheErr  error
-
-	cacheLock sync.RWMutex
+	cacheMu     sync.RWMutex
+	cache       map[string]string
+	cacheLoaded bool
 )
 
 // Get retrieves a secret value by key. It first checks environment variables,
@@ -108,53 +105,63 @@ func vaultEnabled() bool {
 }
 
 func ensureVaultClient() error {
-	clientOnce.Do(func() {
-		config := vault.DefaultConfig()
+	clientMu.Lock()
+	defer clientMu.Unlock()
 
-		if addr := strings.TrimSpace(os.Getenv("VAULT_ADDR")); addr != "" {
-			config.Address = addr
-		}
+	if client != nil {
+		return nil
+	}
 
-		if err := configureVaultTLS(config); err != nil {
-			clientErr = fmt.Errorf("configure TLS: %w", err)
-			return
-		}
+	config := vault.DefaultConfig()
 
-		cli, err := vault.NewClient(config)
-		if err != nil {
-			clientErr = fmt.Errorf("create vault client: %w", err)
-			return
-		}
+	if addr := strings.TrimSpace(os.Getenv("VAULT_ADDR")); addr != "" {
+		config.Address = addr
+	}
 
-		if ns := strings.TrimSpace(os.Getenv("VAULT_NAMESPACE")); ns != "" {
-			cli.SetNamespace(ns)
-		}
+	if err := configureVaultTLS(config); err != nil {
+		return fmt.Errorf("configure TLS: %w", err)
+	}
 
-		if err := authenticateVaultClient(cli); err != nil {
-			clientErr = err
-			return
-		}
+	cli, err := vault.NewClient(config)
+	if err != nil {
+		return fmt.Errorf("create vault client: %w", err)
+	}
 
-		client = cli
-	})
+	if ns := strings.TrimSpace(os.Getenv("VAULT_NAMESPACE")); ns != "" {
+		cli.SetNamespace(ns)
+	}
 
-	return clientErr
+	if err := authenticateVaultClient(cli); err != nil {
+		return err
+	}
+
+	client = cli
+	return nil
 }
 
 func ensureCache() error {
-	cacheOnce.Do(func() {
-		cacheLock.Lock()
-		defer cacheLock.Unlock()
+	cacheMu.RLock()
+	if cacheLoaded {
+		cacheMu.RUnlock()
+		return nil
+	}
+	cacheMu.RUnlock()
 
-		data, err := loadVaultSecrets()
-		if err != nil {
-			cacheErr = err
-			return
-		}
-		cache = data
-	})
+	cacheMu.Lock()
+	defer cacheMu.Unlock()
 
-	return cacheErr
+	if cacheLoaded {
+		return nil
+	}
+
+	data, err := loadVaultSecrets()
+	if err != nil {
+		return err
+	}
+
+	cache = data
+	cacheLoaded = true
+	return nil
 }
 
 func loadVaultSecrets() (map[string]string, error) {
@@ -282,8 +289,8 @@ func Refresh() error {
 		return err
 	}
 
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
+	cacheMu.Lock()
+	defer cacheMu.Unlock()
 
 	data, err := loadVaultSecrets()
 	if err != nil {
@@ -291,9 +298,7 @@ func Refresh() error {
 	}
 
 	cache = data
-	cacheErr = nil
-	cacheOnce = sync.Once{}
-	cacheOnce.Do(func() {})
+	cacheLoaded = true
 
 	return nil
 }
