@@ -7,6 +7,7 @@ commonLabels:
 resources:
   - namespace.yaml
   - secrets.yaml
+  - network-policies.yaml
   - postgres.yaml
   - mysql.yaml
   - mongodb.yaml
