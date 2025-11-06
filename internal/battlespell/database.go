@@ -78,4 +78,3 @@ func createIndexes() error {
 func getEnv(key, defaultValue string) string {
 	return secrets.GetOrDefault(key, defaultValue)
 }
-
