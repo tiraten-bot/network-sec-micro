@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
+
+	"network-sec-micro/pkg/secrets"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -112,8 +113,5 @@ func seedDatabase() error {
 
 // getEnv gets environment variable or returns default value
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
+	return secrets.GetOrDefault(key, defaultValue)
 }
