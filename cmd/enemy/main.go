@@ -7,10 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"network-sec-micro/internal/enemy"
 	pb "network-sec-micro/api/proto/enemy"
+	"network-sec-micro/internal/enemy"
 	"network-sec-micro/pkg/health"
 	"network-sec-micro/pkg/metrics"
+	"network-sec-micro/pkg/secrets"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -23,17 +24,14 @@ func main() {
 	}
 
 	// Initialize Warrior gRPC client
-	warriorAddr := os.Getenv("WARRIOR_GRPC_ADDR")
-	if warriorAddr == "" {
-		warriorAddr = "localhost:50052"
-	}
+	warriorAddr := secrets.GetOrDefault("WARRIOR_GRPC_ADDR", "localhost:50052")
 
 	if err := enemy.InitWarriorClient(warriorAddr); err != nil {
 		log.Fatalf("Failed to connect to Warrior gRPC: %v", err)
 	}
 
 	// Set Gin to release mode
-	if os.Getenv("GIN_MODE") == "release" {
+	if secrets.GetOrDefault("GIN_MODE", "") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -46,10 +44,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	// Start gRPC server
-	grpcPort := os.Getenv("GRPC_PORT")
-	if grpcPort == "" {
-		grpcPort = "50060"
-	}
+	grpcPort := secrets.GetOrDefault("GRPC_PORT", "50060")
 	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		log.Fatalf("Failed to listen on gRPC port %s: %v", grpcPort, err)
@@ -58,10 +53,7 @@ func main() {
 	pb.RegisterEnemyServiceServer(grpcSrv, grpcServer)
 
 	// Start metrics server
-	metricsPort := os.Getenv("METRICS_PORT")
-	if metricsPort == "" {
-		metricsPort = "8092"
-	}
+	metricsPort := secrets.GetOrDefault("METRICS_PORT", "8092")
 	healthHandler := health.NewHandler(&health.MongoDBChecker{Client: enemy.Client, DBName: "mongodb"})
 	go func() {
 		if err := metrics.StartMetricsServer(metricsPort, healthHandler); err != nil {
