@@ -1,15 +1,15 @@
 package arena
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "log"
-    "time"
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"time"
 
-    pbWarrior "network-sec-micro/api/proto/warrior"
-    "network-sec-micro/internal/arena/dto"
-    "network-sec-micro/pkg/secrets"
+	pbWarrior "network-sec-micro/api/proto/warrior"
+	"network-sec-micro/internal/arena/dto"
+	"network-sec-micro/pkg/secrets"
 )
 
 // Service handles arena business logic with CQRS pattern
@@ -41,17 +41,17 @@ func (s *Service) SendInvitation(ctx context.Context, cmd dto.SendInvitationComm
 
 	opponentID := uint(opponent.Id)
 
-    // Check if there's already a pending invitation between these two (both directions)
-    if inv, err := GetRepository().FindPendingInvitationBetween(ctx, cmd.ChallengerID, opponentID); err == nil && inv != nil {
-        if inv.IsExpired() {
-            s.markInvitationAsExpired(ctx, inv.ID)
-        } else {
-            return nil, fmt.Errorf("invitation already sent to %s", cmd.OpponentName)
-        }
-    }
-    if inv, err := GetRepository().FindPendingInvitationBetween(ctx, opponentID, cmd.ChallengerID); err == nil && inv != nil && !inv.IsExpired() {
-        return nil, fmt.Errorf("%s has already sent you an invitation. Please accept or reject it first", cmd.OpponentName)
-    }
+	// Check if there's already a pending invitation between these two (both directions)
+	if inv, err := GetRepository().FindPendingInvitationBetween(ctx, cmd.ChallengerID, opponentID); err == nil && inv != nil {
+		if inv.IsExpired() {
+			s.markInvitationAsExpired(ctx, inv.ID)
+		} else {
+			return nil, fmt.Errorf("invitation already sent to %s", cmd.OpponentName)
+		}
+	}
+	if inv, err := GetRepository().FindPendingInvitationBetween(ctx, opponentID, cmd.ChallengerID); err == nil && inv != nil && !inv.IsExpired() {
+		return nil, fmt.Errorf("%s has already sent you an invitation. Please accept or reject it first", cmd.OpponentName)
+	}
 
 	// Create invitation
 	now := time.Now()
@@ -62,20 +62,22 @@ func (s *Service) SendInvitation(ctx context.Context, cmd dto.SendInvitationComm
 		ChallengerName: cmd.ChallengerName,
 		OpponentID:     opponentID,
 		OpponentName:   cmd.OpponentName,
-		Status:          InvitationStatusPending,
-		ExpiresAt:       expiresAt,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		Status:         InvitationStatusPending,
+		ExpiresAt:      expiresAt,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
-    invID, err := GetRepository().InsertInvitation(ctx, invitation)
-    if err != nil { return nil, fmt.Errorf("failed to create invitation: %w", err) }
-    invitation.ID = invID
+	invID, err := GetRepository().InsertInvitation(ctx, invitation)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create invitation: %w", err)
+	}
+	invitation.ID = invID
 
 	// Publish Kafka event
 	go func() {
 		expiresAtStr := expiresAt.Format(time.RFC3339)
-        if err := PublishInvitationSent(invitation.ID, cmd.ChallengerID, cmd.ChallengerName, opponentID, cmd.OpponentName, expiresAtStr); err != nil {
+		if err := PublishInvitationSent(invitation.ID, cmd.ChallengerID, cmd.ChallengerName, opponentID, cmd.OpponentName, expiresAtStr); err != nil {
 			log.Printf("Failed to publish invitation sent event: %v", err)
 		}
 	}()
@@ -86,9 +88,13 @@ func (s *Service) SendInvitation(ctx context.Context, cmd dto.SendInvitationComm
 
 // AcceptInvitation accepts an arena invitation and starts the match
 func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitationCommand) (*ArenaMatch, error) {
-    if cmd.InvitationID == "" { return nil, errors.New("invalid invitation ID") }
-    invitation, err := GetRepository().GetInvitationByID(ctx, cmd.InvitationID)
-    if err != nil { return nil, fmt.Errorf("failed to get invitation: %w", err) }
+	if cmd.InvitationID == "" {
+		return nil, errors.New("invalid invitation ID")
+	}
+	invitation, err := GetRepository().GetInvitationByID(ctx, cmd.InvitationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get invitation: %w", err)
+	}
 
 	// Validate: only opponent can accept
 	if invitation.OpponentID != cmd.OpponentID {
@@ -131,25 +137,25 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		}
 	}
 
-    // Optionally recalc power via weapon service
-    if secrets.GetOrDefault("ARENA_USE_WEAPON_POWER", "") != "" {
-        if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, challenger.Username); err == nil {
-            challenger.TotalPower = tp
-            challenger.WeaponCount = wc
-        }
-        if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, opponent.Username); err == nil {
-            opponent.TotalPower = tp
-            opponent.WeaponCount = wc
-        }
-    }
+	// Optionally recalc power via weapon service
+	if secrets.GetOrDefault("ARENA_USE_WEAPON_POWER", "") != "" {
+		if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, challenger.Username); err == nil {
+			challenger.TotalPower = tp
+			challenger.WeaponCount = wc
+		}
+		if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, opponent.Username); err == nil {
+			opponent.TotalPower = tp
+			opponent.WeaponCount = wc
+		}
+	}
 
-    // Calculate HP based on total power
-    challengerMaxHP := int(challenger.TotalPower) * 10
+	// Calculate HP based on total power
+	challengerMaxHP := int(challenger.TotalPower) * 10
 	if challengerMaxHP < 100 {
 		challengerMaxHP = 100
 	}
 
-    opponentMaxHP := int(opponent.TotalPower) * 10
+	opponentMaxHP := int(opponent.TotalPower) * 10
 	if opponentMaxHP < 100 {
 		opponentMaxHP = 100
 	}
@@ -157,19 +163,19 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 	// Create arena match directly (no battle service dependency)
 	now := time.Now()
 	match := &ArenaMatch{
-		Player1ID:      invitation.ChallengerID,
-		Player1Name:    invitation.ChallengerName,
-		Player1HP:      challengerMaxHP,
-		Player1MaxHP:   challengerMaxHP,
-		Player1Attack:  int(challenger.AttackPower),
-		Player1Defense: int(challenger.Defense),
-		Player2ID:      invitation.OpponentID,
-		Player2Name:    invitation.OpponentName,
-		Player2HP:      opponentMaxHP,
-		Player2MaxHP:   opponentMaxHP,
-		Player2Attack:  int(opponent.AttackPower),
-		Player2Defense: int(opponent.Defense),
-		CurrentTurn:    0,
+		Player1ID:       invitation.ChallengerID,
+		Player1Name:     invitation.ChallengerName,
+		Player1HP:       challengerMaxHP,
+		Player1MaxHP:    challengerMaxHP,
+		Player1Attack:   int(challenger.AttackPower),
+		Player1Defense:  int(challenger.Defense),
+		Player2ID:       invitation.OpponentID,
+		Player2Name:     invitation.OpponentName,
+		Player2HP:       opponentMaxHP,
+		Player2MaxHP:    opponentMaxHP,
+		Player2Attack:   int(opponent.AttackPower),
+		Player2Defense:  int(opponent.Defense),
+		CurrentTurn:     0,
 		MaxTurns:        50, // Default for arena battles
 		CurrentAttacker: 1,  // Player1 starts first
 		Status:          MatchStatusInProgress,
@@ -178,23 +184,27 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		UpdatedAt:       now,
 	}
 
-    matchID, err := GetRepository().CreateMatch(ctx, match)
-    if err != nil { return nil, fmt.Errorf("failed to create match: %w", err) }
-    match.ID = matchID
+	matchID, err := GetRepository().CreateMatch(ctx, match)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create match: %w", err)
+	}
+	match.ID = matchID
 
 	// Update invitation
-    updateData := map[string]interface{}{
-        "status":       InvitationStatusAccepted,
-        "responded_at": now,
-        "battle_id":    match.ID,
-        "updated_at":   now,
-    }
-    if err := GetRepository().UpdateInvitationFields(ctx, cmd.InvitationID, updateData); err != nil { return nil, fmt.Errorf("failed to update invitation: %w", err) }
+	updateData := map[string]interface{}{
+		"status":       InvitationStatusAccepted,
+		"responded_at": now,
+		"battle_id":    match.ID,
+		"updated_at":   now,
+	}
+	if err := GetRepository().UpdateInvitationFields(ctx, cmd.InvitationID, updateData); err != nil {
+		return nil, fmt.Errorf("failed to update invitation: %w", err)
+	}
 
 	// Publish Kafka events
 	go func() {
-        matchID := match.ID
-        if err := PublishInvitationAccepted(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName, matchID); err != nil {
+		matchID := match.ID
+		if err := PublishInvitationAccepted(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName, matchID); err != nil {
 			log.Printf("Failed to publish invitation accepted event: %v", err)
 		}
 		if err := PublishMatchStarted(matchID, match.Player1ID, match.Player1Name, match.Player2ID, match.Player2Name, matchID); err != nil {
@@ -202,7 +212,7 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 		}
 	}()
 
-    log.Printf("Arena invitation accepted: %s vs %s, match: %s", invitation.ChallengerName, invitation.OpponentName, match.ID)
+	log.Printf("Arena invitation accepted: %s vs %s, match: %s", invitation.ChallengerName, invitation.OpponentName, match.ID)
 	return match, nil
 }
 
@@ -247,7 +257,7 @@ func (s *Service) RejectInvitation(ctx context.Context, cmd dto.RejectInvitation
 
 	// Publish Kafka event
 	go func() {
-        if err := PublishInvitationRejected(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
+		if err := PublishInvitationRejected(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
 			log.Printf("Failed to publish invitation rejected event: %v", err)
 		}
 	}()
@@ -300,98 +310,109 @@ func (s *Service) CancelInvitation(ctx context.Context, cmd dto.CancelInvitation
 
 // PerformAttack performs an attack in an arena match
 func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID, attackerID uint) (*ArenaMatch, error) {
-    var match ArenaMatch
-    repo := GetRepository()
-    m, err := repo.GetMatchByID(ctx, matchID)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get match: %v", err)
-    }
-    match = *m
+	var match ArenaMatch
+	repo := GetRepository()
+	m, err := repo.GetMatchByID(ctx, matchID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get match: %v", err)
+	}
+	match = *m
 
 	if match.Status != MatchStatusInProgress {
 		return nil, errors.New("match is not in progress")
 	}
 
 	// Validate attacker
-    var attackerHP, attackerAttack *int
+	var attackerHP, attackerAttack *int
 	var defenderHP, defenderDefense *int
 	var defenderID uint
 	var attackerName, defenderName string
-    var ownerUsername string
+	var ownerUsername string
 
 	if attackerID == match.Player1ID {
 		if match.CurrentAttacker != 1 && match.CurrentAttacker != 0 {
 			return nil, errors.New("not your turn")
 		}
-        attackerHP = &match.Player1HP
+		attackerHP = &match.Player1HP
 		attackerAttack = &match.Player1Attack
 		defenderHP = &match.Player2HP
 		defenderDefense = &match.Player2Defense
 		defenderID = match.Player2ID
 		attackerName = match.Player1Name
 		defenderName = match.Player2Name
-        ownerUsername = match.Player1Name
+		ownerUsername = match.Player1Name
 	} else if attackerID == match.Player2ID {
 		if match.CurrentAttacker != 2 {
 			return nil, errors.New("not your turn")
 		}
-        attackerHP = &match.Player2HP
+		attackerHP = &match.Player2HP
 		attackerAttack = &match.Player2Attack
 		defenderHP = &match.Player1HP
 		defenderDefense = &match.Player1Defense
 		defenderID = match.Player1ID
 		attackerName = match.Player2Name
 		defenderName = match.Player1Name
-        ownerUsername = match.Player2Name
+		ownerUsername = match.Player2Name
 	} else {
 		return nil, errors.New("you are not a participant in this match")
 	}
 
-    // Include weapon bonus damage for warriors via weapon service
-    bonusDamage := 0
-    if ownerUsername != "" {
-        if ws, err := ListWeaponsByOwner(ctx, "warrior", ownerUsername); err == nil {
-            maxD := 0
-            var usedWeaponID string
-            for _, w := range ws {
-                if w.IsBroken { continue }
-                if int(w.Damage) > maxD { maxD = int(w.Damage); usedWeaponID = w.Id }
-            }
-            bonusDamage = maxD
-            if usedWeaponID != "" { _, _ = ApplyWeaponWear(ctx, usedWeaponID, 1) }
-        }
-    }
+	// Include weapon bonus damage for warriors via weapon service
+	bonusDamage := 0
+	if ownerUsername != "" {
+		if ws, err := ListWeaponsByOwner(ctx, "warrior", ownerUsername); err == nil {
+			maxD := 0
+			var usedWeaponID string
+			for _, w := range ws {
+				if w.IsBroken {
+					continue
+				}
+				if int(w.Damage) > maxD {
+					maxD = int(w.Damage)
+					usedWeaponID = w.Id
+				}
+			}
+			bonusDamage = maxD
+			if usedWeaponID != "" {
+				_, _ = ApplyWeaponWear(ctx, usedWeaponID, 1)
+			}
+		}
+	}
 
-    // Include armor bonus defense and HP for defender
-    armorDefenseBonus := 0
-    armorHPBonus := 0
-    var defenderUsername string
-    if defenderID == match.Player1ID {
-        defenderUsername = match.Player1Name
-    } else {
-        defenderUsername = match.Player2Name
-    }
-    if defenderUsername != "" {
-        if armors, err := ListArmorsByOwner(ctx, "warrior", defenderUsername); err == nil {
-            maxDef := 0
-            totalHPBonus := 0
-            var usedArmorID string
-            for _, a := range armors {
-                if a.IsBroken { continue }
-                if int(a.Defense) > maxDef { 
-                    maxDef = int(a.Defense)
-                    totalHPBonus = int(a.HpBonus)
-                    usedArmorID = a.Id 
-                }
-            }
-            armorDefenseBonus = maxDef
-            armorHPBonus = totalHPBonus
-            if usedArmorID != "" { _, _ = ApplyArmorWear(ctx, usedArmorID, 1) }
-        }
-    }
+	// Include armor bonus defense and HP for defender
+	armorDefenseBonus := 0
+	armorHPBonus := 0
+	var defenderUsername string
+	if defenderID == match.Player1ID {
+		defenderUsername = match.Player1Name
+	} else {
+		defenderUsername = match.Player2Name
+	}
+	if defenderUsername != "" {
+		if armors, err := ListArmorsByOwner(ctx, "warrior", defenderUsername); err == nil {
+			maxDef := 0
+			totalHPBonus := 0
+			var usedArmorID string
+			for _, a := range armors {
+				if a.IsBroken {
+					continue
+				}
+				if int(a.Defense) > maxDef {
+					maxDef = int(a.Defense)
+					totalHPBonus = int(a.HpBonus)
+					usedArmorID = a.Id
+				}
+			}
+			armorDefenseBonus = maxDef
+			armorHPBonus = totalHPBonus
+			if usedArmorID != "" {
+				_, _ = ApplyArmorWear(ctx, usedArmorID, 1)
+			}
+		}
+	}
 
-    // Calculate damage (defender gets armor defense bonus)
-    damage := (*attackerAttack + bonusDamage) - (*defenderDefense + armorDefenseBonus)
+	// Calculate damage (defender gets armor defense bonus)
+	damage := (*attackerAttack + bonusDamage) - (*defenderDefense + armorDefenseBonus)
 	if damage < 10 {
 		damage = 10 // Minimum damage
 	}
@@ -418,29 +439,29 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 		match.Player1HP = *defenderHP
 	}
 
-    // Threshold events (first time HP <= 50%)
-    checkAndPublish := func(pHP, pMax int, announced *bool, pid uint, pname string) {
-        if pMax > 0 && !*announced && (pHP*100 <= pMax*50) {
-            percent := float64(pHP) / float64(pMax) * 100.0
-            _ = PublishSpellWindowOpened(match.ID, pid, pname, percent)
-            *announced = true
-        }
-    }
-    checkAndPublish(match.Player1HP, match.Player1MaxHP, &match.P1Below50Announced, match.Player1ID, match.Player1Name)
-    checkAndPublish(match.Player2HP, match.Player2MaxHP, &match.P2Below50Announced, match.Player2ID, match.Player2Name)
+	// Threshold events (first time HP <= 50%)
+	checkAndPublish := func(pHP, pMax int, announced *bool, pid uint, pname string) {
+		if pMax > 0 && !*announced && (pHP*100 <= pMax*50) {
+			percent := float64(pHP) / float64(pMax) * 100.0
+			_ = PublishSpellWindowOpened(match.ID, pid, pname, percent)
+			*announced = true
+		}
+	}
+	checkAndPublish(match.Player1HP, match.Player1MaxHP, &match.P1Below50Announced, match.Player1ID, match.Player1Name)
+	checkAndPublish(match.Player2HP, match.Player2MaxHP, &match.P2Below50Announced, match.Player2ID, match.Player2Name)
 
-    // Crisis threshold (<=10%)
-    checkAndPublishCrisis := func(pHP, pMax int, announced *bool, pid uint, pname string) {
-        if pMax > 0 && !*announced && (pHP*100 <= pMax*10) {
-            percent := float64(pHP) / float64(pMax) * 100.0
-            _ = PublishCrisisWindowOpened(match.ID, pid, pname, percent)
-            *announced = true
-        }
-    }
-    checkAndPublishCrisis(match.Player1HP, match.Player1MaxHP, &match.P1Below10Announced, match.Player1ID, match.Player1Name)
-    checkAndPublishCrisis(match.Player2HP, match.Player2MaxHP, &match.P2Below10Announced, match.Player2ID, match.Player2Name)
+	// Crisis threshold (<=10%)
+	checkAndPublishCrisis := func(pHP, pMax int, announced *bool, pid uint, pname string) {
+		if pMax > 0 && !*announced && (pHP*100 <= pMax*10) {
+			percent := float64(pHP) / float64(pMax) * 100.0
+			_ = PublishCrisisWindowOpened(match.ID, pid, pname, percent)
+			*announced = true
+		}
+	}
+	checkAndPublishCrisis(match.Player1HP, match.Player1MaxHP, &match.P1Below10Announced, match.Player1ID, match.Player1Name)
+	checkAndPublishCrisis(match.Player2HP, match.Player2MaxHP, &match.P2Below10Announced, match.Player2ID, match.Player2Name)
 
-    // Check if match is over
+	// Check if match is over
 	if *defenderHP <= 0 {
 		// Defender is defeated
 		match.Status = MatchStatusCompleted
@@ -461,14 +482,14 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 		// Publish match completed event
 		go func() {
 			if err := PublishMatchCompleted(
-                match.ID,
+				match.ID,
 				match.Player1ID,
 				match.Player1Name,
 				match.Player2ID,
 				match.Player2Name,
 				match.WinnerID,
 				match.WinnerName,
-                match.ID,
+				match.ID,
 			); err != nil {
 				log.Printf("Failed to publish match completed event: %v", err)
 			}
@@ -492,14 +513,14 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 
 		go func() {
 			if err := PublishMatchCompleted(
-                match.ID,
+				match.ID,
 				match.Player1ID,
 				match.Player1Name,
 				match.Player2ID,
 				match.Player2Name,
 				match.WinnerID,
 				match.WinnerName,
-                match.ID,
+				match.ID,
 			); err != nil {
 				log.Printf("Failed to publish match completed event: %v", err)
 			}
@@ -508,24 +529,24 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 
 	match.UpdatedAt = time.Now()
 
-    updateData := map[string]interface{}{
-        "player1_hp":      match.Player1HP,
-        "player2_hp":      match.Player2HP,
-        "current_turn":    match.CurrentTurn,
-        "current_attacker": match.CurrentAttacker,
-        "status":          string(match.Status),
-        "updated_at":      match.UpdatedAt,
-    }
+	updateData := map[string]interface{}{
+		"player1_hp":       match.Player1HP,
+		"player2_hp":       match.Player2HP,
+		"current_turn":     match.CurrentTurn,
+		"current_attacker": match.CurrentAttacker,
+		"status":           string(match.Status),
+		"updated_at":       match.UpdatedAt,
+	}
 
-    if match.CompletedAt != nil {
-        updateData["completed_at"] = match.CompletedAt
-    }
-    if match.WinnerID != nil {
-        updateData["winner_id"] = *match.WinnerID
-        updateData["winner_name"] = match.WinnerName
-    }
+	if match.CompletedAt != nil {
+		updateData["completed_at"] = match.CompletedAt
+	}
+	if match.WinnerID != nil {
+		updateData["winner_id"] = *match.WinnerID
+		updateData["winner_name"] = match.WinnerName
+	}
 
-    err = repo.UpdateMatchFields(ctx, match.ID, updateData)
+	err = repo.UpdateMatchFields(ctx, match.ID, updateData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update match: %w", err)
 	}
@@ -536,123 +557,153 @@ func (s *Service) PerformAttack(ctx context.Context, matchID primitive.ObjectID,
 
 // ApplySpellEffect applies a 1v1 arenaspell's immediate effect to the match
 func (s *Service) ApplySpellEffect(ctx context.Context, matchID primitive.ObjectID, casterID uint, spellType string) (*ArenaMatch, error) {
-    var match ArenaMatch
-    repo := GetRepository()
-    m, err := repo.GetMatchByID(ctx, matchID)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get match: %v", err)
-    }
-    match = *m
+	var match ArenaMatch
+	repo := GetRepository()
+	m, err := repo.GetMatchByID(ctx, matchID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get match: %v", err)
+	}
+	match = *m
 
-    if match.Status != MatchStatusInProgress {
-        return nil, errors.New("match is not in progress")
-    }
+	if match.Status != MatchStatusInProgress {
+		return nil, errors.New("match is not in progress")
+	}
 
-    // Resolve caster/opponent pointers
-    var casterAttack, casterDefense, casterHP, casterMaxHP *int
-    var opponentAttack, opponentDefense *int
-    var casterName, opponentName string
+	// Resolve caster/opponent pointers
+	var casterAttack, casterDefense, casterHP, casterMaxHP *int
+	var opponentAttack, opponentDefense *int
+	var casterName, opponentName string
 
-    if casterID == match.Player1ID {
-        casterAttack = &match.Player1Attack
-        casterDefense = &match.Player1Defense
-        casterHP = &match.Player1HP
-        casterMaxHP = &match.Player1MaxHP
-        opponentAttack = &match.Player2Attack
-        opponentDefense = &match.Player2Defense
-        casterName = match.Player1Name
-        opponentName = match.Player2Name
-    } else if casterID == match.Player2ID {
-        casterAttack = &match.Player2Attack
-        casterDefense = &match.Player2Defense
-        casterHP = &match.Player2HP
-        casterMaxHP = &match.Player2MaxHP
-        opponentAttack = &match.Player1Attack
-        opponentDefense = &match.Player1Defense
-        casterName = match.Player2Name
-        opponentName = match.Player1Name
-    } else {
-        return nil, errors.New("caster is not a participant in this match")
-    }
+	if casterID == match.Player1ID {
+		casterAttack = &match.Player1Attack
+		casterDefense = &match.Player1Defense
+		casterHP = &match.Player1HP
+		casterMaxHP = &match.Player1MaxHP
+		opponentAttack = &match.Player2Attack
+		opponentDefense = &match.Player2Defense
+		casterName = match.Player1Name
+		opponentName = match.Player2Name
+	} else if casterID == match.Player2ID {
+		casterAttack = &match.Player2Attack
+		casterDefense = &match.Player2Defense
+		casterHP = &match.Player2HP
+		casterMaxHP = &match.Player2MaxHP
+		opponentAttack = &match.Player1Attack
+		opponentDefense = &match.Player1Defense
+		casterName = match.Player2Name
+		opponentName = match.Player1Name
+	} else {
+		return nil, errors.New("caster is not a participant in this match")
+	}
 
-    // Enforce windows by spell type
-    allow50 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
-    allow10 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*10) }
-    switch spellType {
-    case "light_crisis", "dark_crisis":
-        if !(allow10(match.Player1HP, match.Player1MaxHP) || allow10(match.Player2HP, match.Player2MaxHP)) {
-            return nil, errors.New("crisis window not open (no player below or equal to 10% HP)")
-        }
-    default:
-        if !(allow50(match.Player1HP, match.Player1MaxHP) || allow50(match.Player2HP, match.Player2MaxHP)) {
-            return nil, errors.New("spell window not open (no player below or equal to 50% HP)")
-        }
-    }
+	// Enforce windows by spell type
+	allow50 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*50) }
+	allow10 := func(hp, max int) bool { return max > 0 && (hp*100 <= max*10) }
+	switch spellType {
+	case "light_crisis", "dark_crisis":
+		if !(allow10(match.Player1HP, match.Player1MaxHP) || allow10(match.Player2HP, match.Player2MaxHP)) {
+			return nil, errors.New("crisis window not open (no player below or equal to 10% HP)")
+		}
+	default:
+		if !(allow50(match.Player1HP, match.Player1MaxHP) || allow50(match.Player2HP, match.Player2MaxHP)) {
+			return nil, errors.New("spell window not open (no player below or equal to 50% HP)")
+		}
+	}
 
-    // Apply effect
-    switch spellType {
-    case "call_of_the_light_king":
-        *casterAttack = *casterAttack * 2
-    case "resistance":
-        *casterDefense = *casterDefense * 2
-    case "rebirth":
-        if *casterHP == 0 {
-            half := (*casterMaxHP) / 2
-            if half < 1 { half = 1 }
-            *casterHP = half
-        }
-    case "destroy_the_light":
-        // reduce opponent stats by 30% (stack enforcement handled by arenaspell)
-        reduce := func(v int) int { nv := int(float64(v) * 0.7); if nv < 1 { nv = 1 }; return nv }
-        *opponentAttack = reduce(*opponentAttack)
-        *opponentDefense = reduce(*opponentDefense)
-    case "light_crisis":
-        // Strong emergency buff: 3x attack, 2x defense, heal +25% max HP (cap max)
-        *casterAttack = *casterAttack * 3
-        *casterDefense = *casterDefense * 2
-        if *casterMaxHP > 0 {
-            heal := (*casterMaxHP) / 4
-            *casterHP += heal
-            if *casterHP > *casterMaxHP { *casterHP = *casterMaxHP }
-        }
-    case "dark_crisis":
-        // Strong emergency debuff: 50% attack/defense, and -20% opponent max HP
-        halve := func(v int) int { nv := v / 2; if nv < 1 { nv = 1 }; return nv }
-        *opponentAttack = halve(*opponentAttack)
-        *opponentDefense = halve(*opponentDefense)
-        if *casterIDPtr := &casterID; casterIDPtr != nil { /* placeholder to avoid unused var warnings in some editors */ }
-        if *opponentDefense >= 0 && *opponentAttack >= 0 { /* noop to keep linters calm */ }
-        if *casterMaxHP > 0 { /* no-op */ }
-        if *defenderHP != 0 { /* no-op */ }
-        // Apply HP damage to opponent
-        if opponentMax := func() int { if casterID == match.Player1ID { return match.Player2MaxHP } else { return match.Player1MaxHP } }(); opponentMax > 0 {
-            dmg := opponentMax / 5
-            if dmg < 1 { dmg = 1 }
-            *defenderHP -= dmg
-            if *defenderHP < 0 { *defenderHP = 0 }
-        }
-    default:
-        return nil, fmt.Errorf("unsupported spell type: %s", spellType)
-    }
+	// Apply effect
+	switch spellType {
+	case "call_of_the_light_king":
+		*casterAttack = *casterAttack * 2
+	case "resistance":
+		*casterDefense = *casterDefense * 2
+	case "rebirth":
+		if *casterHP == 0 {
+			half := (*casterMaxHP) / 2
+			if half < 1 {
+				half = 1
+			}
+			*casterHP = half
+		}
+	case "destroy_the_light":
+		// reduce opponent stats by 30% (stack enforcement handled by arenaspell)
+		reduce := func(v int) int {
+			nv := int(float64(v) * 0.7)
+			if nv < 1 {
+				nv = 1
+			}
+			return nv
+		}
+		*opponentAttack = reduce(*opponentAttack)
+		*opponentDefense = reduce(*opponentDefense)
+	case "light_crisis":
+		// Strong emergency buff: 3x attack, 2x defense, heal +25% max HP (cap max)
+		*casterAttack = *casterAttack * 3
+		*casterDefense = *casterDefense * 2
+		if *casterMaxHP > 0 {
+			heal := (*casterMaxHP) / 4
+			*casterHP += heal
+			if *casterHP > *casterMaxHP {
+				*casterHP = *casterMaxHP
+			}
+		}
+	case "dark_crisis":
+		// Strong emergency debuff: 50% attack/defense, and -20% opponent max HP
+		halve := func(v int) int {
+			nv := v / 2
+			if nv < 1 {
+				nv = 1
+			}
+			return nv
+		}
+		*opponentAttack = halve(*opponentAttack)
+		*opponentDefense = halve(*opponentDefense)
+		if *casterIDPtr := &casterID; casterIDPtr != nil { /* placeholder to avoid unused var warnings in some editors */
+		}
+		if *opponentDefense >= 0 && *opponentAttack >= 0 { /* noop to keep linters calm */
+		}
+		if *casterMaxHP > 0 { /* no-op */
+		}
+		if *defenderHP != 0 { /* no-op */
+		}
+		// Apply HP damage to opponent
+		if opponentMax := func() int {
+			if casterID == match.Player1ID {
+				return match.Player2MaxHP
+			} else {
+				return match.Player1MaxHP
+			}
+		}(); opponentMax > 0 {
+			dmg := opponentMax / 5
+			if dmg < 1 {
+				dmg = 1
+			}
+			*defenderHP -= dmg
+			if *defenderHP < 0 {
+				*defenderHP = 0
+			}
+		}
+	default:
+		return nil, fmt.Errorf("unsupported spell type: %s", spellType)
+	}
 
-    match.UpdatedAt = time.Now()
-    update := map[string]interface{}{
-        "player1_hp":      match.Player1HP,
-        "player1_attack":  match.Player1Attack,
-        "player1_defense": match.Player1Defense,
-        "player2_hp":      match.Player2HP,
-        "player2_attack":  match.Player2Attack,
-        "player2_defense": match.Player2Defense,
-        "updated_at":      match.UpdatedAt,
-    }
+	match.UpdatedAt = time.Now()
+	update := map[string]interface{}{
+		"player1_hp":      match.Player1HP,
+		"player1_attack":  match.Player1Attack,
+		"player1_defense": match.Player1Defense,
+		"player2_hp":      match.Player2HP,
+		"player2_attack":  match.Player2Attack,
+		"player2_defense": match.Player2Defense,
+		"updated_at":      match.UpdatedAt,
+	}
 
-    err = repo.UpdateMatchFields(ctx, match.ID, update)
-    if err != nil {
-        return nil, fmt.Errorf("failed to update match: %w", err)
-    }
+	err = repo.UpdateMatchFields(ctx, match.ID, update)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update match: %w", err)
+	}
 
-    log.Printf("Arena spell applied: %s by %s on %s", spellType, casterName, opponentName)
-    return &match, nil
+	log.Printf("Arena spell applied: %s by %s on %s", spellType, casterName, opponentName)
+	return &match, nil
 }
 
 // markInvitationAsExpired marks an invitation as expired
@@ -672,7 +723,7 @@ func (s *Service) markInvitationAsExpired(ctx context.Context, invitationID prim
 
 		// Publish event
 		go func() {
-            if err := PublishInvitationExpired(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
+			if err := PublishInvitationExpired(invitation.ID, invitation.ChallengerID, invitation.ChallengerName, invitation.OpponentID, invitation.OpponentName); err != nil {
 				log.Printf("Failed to publish invitation expired event: %v", err)
 			}
 		}()
@@ -771,4 +822,3 @@ func (s *Service) GetMyMatches(ctx context.Context, query dto.GetMyMatchesQuery)
 func getEnv(key, defaultValue string) string {
 	return secrets.GetOrDefault(key, defaultValue)
 }
-
