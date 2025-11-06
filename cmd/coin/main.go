@@ -11,8 +11,8 @@ import (
 	pb "network-sec-micro/api/proto/coin"
 	"network-sec-micro/internal/coin"
 	"network-sec-micro/pkg/health"
-	"network-sec-micro/pkg/metrics"
 	kafkaLib "network-sec-micro/pkg/kafka"
+	"network-sec-micro/pkg/metrics"
 	"network-sec-micro/pkg/secrets"
 
 	"google.golang.org/grpc"
@@ -49,7 +49,7 @@ func main() {
 	// Initialize service and gRPC server (Wire will be added later)
 	service := coin.NewService()
 	grpcServer := coin.NewCoinServiceServer(service)
-	
+
 	// TODO: Wire integration when wire issue is resolved
 	// service, grpcServer, err := InitializeCoinApp()
 	// if err != nil {
@@ -78,7 +78,7 @@ func main() {
 	}()
 
 	s := grpc.NewServer()
-	
+
 	// Register coin service
 	pb.RegisterCoinServiceServer(s, grpcServer)
 
