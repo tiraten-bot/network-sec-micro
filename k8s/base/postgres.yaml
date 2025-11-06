@@ -28,11 +28,20 @@ spec:
           image: postgres:15-alpine
           env:
             - name: POSTGRES_USER
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_USER
             - name: POSTGRES_PASSWORD
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_PASSWORD
             - name: POSTGRES_DB
-              value: warrior_db
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_NAME_WARRIOR
           ports:
             - containerPort: 5432
           volumeMounts:
