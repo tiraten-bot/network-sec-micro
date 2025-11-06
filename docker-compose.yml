@@ -360,8 +360,10 @@ services:
       DB_NAME_REPAIR: repair_db
       KAFKA_BROKERS: kafka:9092
       WEAPON_GRPC_ADDR: weapon:50057
+      METRICS_PORT: 8082
     ports:
       - "50061:50061"
+      - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
