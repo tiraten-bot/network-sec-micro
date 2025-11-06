@@ -14,8 +14,8 @@ import (
 
 var (
 	Client    *mongo.Client
-	DB         *mongo.Database
-	EnemyColl  *mongo.Collection
+	DB        *mongo.Database
+	EnemyColl *mongo.Collection
 )
 
 func InitDatabase() error {
