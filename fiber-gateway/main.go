@@ -274,7 +274,15 @@ func main() {
                             target := toWS(base) + targetPath
                             st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
                             err := proxy.Do(c, target)
-                            st.lbMu.Lock(); st.active[base]--; if err != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                            st.lbMu.Lock()
+                            st.active[base]--
+                            if err != nil {
+                                st.fail[base]++
+                                maybeEject(cr.cfg, st, base)
+                            } else {
+                                st.fail[base] = 0
+                            }
+                            st.lbMu.Unlock()
                             return err
                         }
 
@@ -287,14 +295,30 @@ func main() {
                             if st.cb == nil {
                                 st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
                                 err := adaptor.HTTPHandler(h)(c)
-                                st.lbMu.Lock(); st.active[base]--; if err != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                                st.lbMu.Lock()
+                                st.active[base]--
+                                if err != nil {
+                                    st.fail[base]++
+                                    maybeEject(cr.cfg, st, base)
+                                } else {
+                                    st.fail[base] = 0
+                                }
+                                st.lbMu.Unlock()
                                 return err
                             }
                             // run via breaker
                             _, err := st.cb.Execute(func() (interface{}, error) {
                                 st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
                                 e := adaptor.HTTPHandler(h)(c)
-                                st.lbMu.Lock(); st.active[base]--; if e != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                                st.lbMu.Lock()
+                                st.active[base]--
+                                if e != nil {
+                                    st.fail[base]++
+                                    maybeEject(cr.cfg, st, base)
+                                } else {
+                                    st.fail[base] = 0
+                                }
+                                st.lbMu.Unlock()
                                 return nil, e
                             })
                             return err
@@ -305,13 +329,29 @@ func main() {
                         if st.cb == nil {
                             st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
                             err := proxy.Do(c, target)
-                            st.lbMu.Lock(); st.active[base]--; if err != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                            st.lbMu.Lock()
+                            st.active[base]--
+                            if err != nil {
+                                st.fail[base]++
+                                maybeEject(cr.cfg, st, base)
+                            } else {
+                                st.fail[base] = 0
+                            }
+                            st.lbMu.Unlock()
                             return err
                         }
                         _, err := st.cb.Execute(func() (interface{}, error) {
                             st.lbMu.Lock(); st.active[base]++; st.lbMu.Unlock()
                             e := proxy.Do(c, target)
-                            st.lbMu.Lock(); st.active[base]--; if e != nil { st.fail[base]++; maybeEject(cr.cfg, st, base) } else { st.fail[base] = 0 } st.lbMu.Unlock()
+                            st.lbMu.Lock()
+                            st.active[base]--
+                            if e != nil {
+                                st.fail[base]++
+                                maybeEject(cr.cfg, st, base)
+                            } else {
+                                st.fail[base] = 0
+                            }
+                            st.lbMu.Unlock()
                             return nil, e
                         })
                         return err
