@@ -1,0 +1,247 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: gateway
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: network-sec
+          podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - warrior
+                  - weapon
+                  - enemy
+                  - dragon
+                  - coin
+                  - battle
+                  - battlespell
+                  - arena
+                  - heal
+                  - repair
+                  - armor
+      ports:
+        - port: 8080
+        - port: 8081
+        - port: 8082
+        - port: 8083
+        - port: 8084
+        - port: 8085
+        - port: 8086
+        - port: 8087
+        - port: 8088
+        - port: 8089
+        - port: 50051
+        - port: 50052
+        - port: 50053
+        - port: 50054
+        - port: 50055
+        - port: 50056
+        - port: 50057
+        - port: 50058
+        - port: 50059
+        - port: 50060
+        - port: 50061
+        - port: 50062
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: services-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - warrior
+          - weapon
+          - enemy
+          - dragon
+          - coin
+          - battle
+          - battlespell
+          - arena
+          - heal
+          - repair
+          - armor
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 8080
+        - port: 8081
+        - port: 8082
+        - port: 8083
+        - port: 8084
+        - port: 8085
+        - port: 8086
+        - port: 8087
+        - port: 8088
+        - port: 8089
+        - port: 50051
+        - port: 50052
+        - port: 50053
+        - port: 50054
+        - port: 50055
+        - port: 50056
+        - port: 50057
+        - port: 50058
+        - port: 50059
+        - port: 50060
+        - port: 50061
+        - port: 50062
+    - from:
+        - podSelector:
+            matchLabels:
+              app: warrior
+        - podSelector:
+            matchLabels:
+              app: battle
+        - podSelector:
+            matchLabels:
+              app: arena
+      # allow intra-service health checks and gRPC calls
+      ports:
+        - port: 50051
+        - port: 50052
+        - port: 50057
+        - port: 50060
+        - port: 50061
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: datastore-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - postgres
+          - mysql
+          - mongodb
+          - redis
+          - kafka
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: network-sec
+          podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - warrior
+                  - weapon
+                  - enemy
+                  - dragon
+                  - coin
+                  - battle
+                  - battlespell
+                  - arena
+                  - heal
+                  - repair
+                  - armor
+      ports:
+        - port: 5432
+        - port: 3306
+        - port: 27017
+        - port: 6379
+        - port: 9092
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: services-egress-datastores
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - warrior
+          - weapon
+          - enemy
+          - dragon
+          - coin
+          - battle
+          - battlespell
+          - arena
+          - heal
+          - repair
+          - armor
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - postgres
+                  - mysql
+                  - mongodb
+                  - redis
+                  - kafka
+      ports:
+        - port: 5432
+        - port: 3306
+        - port: 27017
+        - port: 6379
+        - port: 9092
+*** End Patch
+
