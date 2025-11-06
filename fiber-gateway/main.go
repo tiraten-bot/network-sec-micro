@@ -2,20 +2,22 @@ package main
 
 import (
     "log"
-    "os"
+    "sync"
     "time"
 
+    "network-sec-micro/pkg/secrets"
+
+    "github.com/gofiber/adaptor/v2"
     "github.com/gofiber/fiber/v2"
     "github.com/gofiber/fiber/v2/middleware/cors"
     "github.com/gofiber/fiber/v2/middleware/logger"
     redis "github.com/redis/go-redis/v9"
+    "github.com/sony/gobreaker"
+    "golang.org/x/time/rate"
 )
 
 func getEnv(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
+    return secrets.GetOrDefault(key, def)
 }
 
 func main() {
@@ -61,15 +63,15 @@ func main() {
     })
 
     // Try declarative config first
-    if cfgPath := os.Getenv("GW_CONFIG"); cfgPath != "" {
+    if cfgPath := secrets.GetOrDefault("GW_CONFIG", ""); cfgPath != "" {
         if cfg, err := loadConfig(cfgPath); err == nil {
             if croutes, err := compileRoutes(cfg); err == nil {
                 // Redis client (optional)
                 var rdb *redis.Client
-                if addr := os.Getenv("REDIS_ADDR"); addr != "" {
+                if addr := secrets.GetOrDefault("REDIS_ADDR", ""); addr != "" {
                     rdb = redis.NewClient(&redis.Options{
                         Addr:     addr,
-                        Password: os.Getenv("REDIS_PASSWORD"),
+                        Password: secrets.GetOrDefault("REDIS_PASSWORD", ""),
                         DB:       0,
                     })
                 }
@@ -326,7 +328,7 @@ func main() {
     })
 
     // Fallback routes when no config is provided
-    if os.Getenv("GW_CONFIG") == "" {
+    if secrets.GetOrDefault("GW_CONFIG", "") == "" {
         attachDefaultRoutes(app)
     }
 
