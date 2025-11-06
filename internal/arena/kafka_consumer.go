@@ -22,7 +22,7 @@ func InitKafkaConsumer() error {
 	var err error
 	kafkaConsumerOnce.Do(func() {
 		brokers := getKafkaBrokers()
-		
+
 		config := sarama.NewConfig()
 		config.Version = sarama.V2_8_0_0
 		config.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin()
@@ -137,15 +137,15 @@ func (h *arenaEventHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 func (h *arenaEventHandler) handleBattleCompleted(data []byte) error {
 	// Parse battle completed event
 	type BattleCompletedEvent struct {
-		EventType      string `json:"event_type"`
-		BattleID       string `json:"battle_id"`
-		BattleType     string `json:"battle_type"`
-		Result         string `json:"result"`
-		WinnerName     string `json:"winner_name"`
-		WinnerSide     string `json:"winner_side,omitempty"` // For team battles
-		CoinsEarned    interface{} `json:"coins_earned"`
+		EventType        string      `json:"event_type"`
+		BattleID         string      `json:"battle_id"`
+		BattleType       string      `json:"battle_type"`
+		Result           string      `json:"result"`
+		WinnerName       string      `json:"winner_name"`
+		WinnerSide       string      `json:"winner_side,omitempty"` // For team battles
+		CoinsEarned      interface{} `json:"coins_earned"`
 		ExperienceGained interface{} `json:"experience_gained"`
-		TotalTurns     int    `json:"total_turns"`
+		TotalTurns       int         `json:"total_turns"`
 	}
 
 	var event BattleCompletedEvent
@@ -162,4 +162,3 @@ func (h *arenaEventHandler) handleBattleCompleted(data []byte) error {
 func getEnv(key, defaultValue string) string {
 	return secrets.GetOrDefault(key, defaultValue)
 }
-
