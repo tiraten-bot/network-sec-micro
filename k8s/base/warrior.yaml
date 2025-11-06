@@ -18,23 +18,44 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOST
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_HOST
             - name: DB_PORT
-              value: "5432"
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_PORT
             - name: DB_USER
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_USER
             - name: DB_PASSWORD
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_PASSWORD
             - name: DB_NAME
-              value: warrior_db
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_NAME_WARRIOR
             - name: DB_SSLMODE
               value: disable
             - name: PORT
               value: "8080"
             - name: GIN_MODE
-              value: release
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: GIN_MODE
             - name: KAFKA_BROKERS
-              value: kafka:9092
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: KAFKA_BROKERS
           ports:
             - containerPort: 8080
           readinessProbe:
