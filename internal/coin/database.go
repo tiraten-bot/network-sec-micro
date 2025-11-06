@@ -3,7 +3,8 @@ package coin
 import (
 	"fmt"
 	"log"
-	"os"
+
+	"network-sec-micro/pkg/secrets"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -49,8 +50,5 @@ func InitDatabase() error {
 
 // getEnv gets environment variable or returns default value
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
+	return secrets.GetOrDefault(key, defaultValue)
 }
