@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 	"time"
 
 	"network-sec-micro/pkg/kafka"
+	"network-sec-micro/pkg/secrets"
 
 	"github.com/IBM/sarama"
 )
@@ -160,9 +160,6 @@ func (h *arenaEventHandler) handleBattleCompleted(data []byte) error {
 }
 
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
+	return secrets.GetOrDefault(key, defaultValue)
 }
 
