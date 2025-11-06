@@ -3,7 +3,8 @@ package warrior
 import (
 	"fmt"
 	"log"
-	"os"
+
+	"network-sec-micro/pkg/secrets"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -109,8 +110,5 @@ func seedDatabase() error {
 
 // getEnv gets environment variable or returns default value
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
+	return secrets.GetOrDefault(key, defaultValue)
 }
