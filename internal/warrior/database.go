@@ -37,7 +37,7 @@ func InitDatabase() error {
 	log.Println("Database connection established")
 
 	// Auto migrate the schema
-    if err := DB.AutoMigrate(&Warrior{}, &KilledMonster{}); err != nil {
+	if err := DB.AutoMigrate(&Warrior{}, &KilledMonster{}); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
@@ -55,7 +55,7 @@ func InitDatabase() error {
 func seedDatabase() error {
 	var count int64
 	DB.Model(&Warrior{}).Count(&count)
-	
+
 	if count > 0 {
 		return nil // Database already seeded
 	}
