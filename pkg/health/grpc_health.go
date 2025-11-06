@@ -1,9 +1,6 @@
 package health
 
-import (
-	"context"
-	"time"
-)
+import "time"
 
 // GRPCHealthChecker is a simple checker for gRPC services
 type GRPCHealthChecker struct {
@@ -21,4 +18,3 @@ func (c *GRPCHealthChecker) Check() Component {
 		Timestamp: time.Now(),
 	}
 }
-
