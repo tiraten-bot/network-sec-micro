@@ -33,7 +33,7 @@ func main() {
 
     if os.Getenv("GIN_MODE") == "release" { gin.SetMode(gin.ReleaseMode) }
     r := gin.Default()
-    r.GET("/health", func(c *gin.Context){ c.JSON(200, gin.H{"status":"healthy","service":"armor"}) })
+    // Setup routes (includes health check and metrics)
     armor.SetupRoutes(r, handler)
 
     httpPort := os.Getenv("PORT"); if httpPort == "" { httpPort = "8089" }
