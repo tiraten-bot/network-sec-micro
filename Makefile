@@ -1,4 +1,4 @@
-.PHONY: run install build wire clean proto
+.PHONY: run install build wire clean proto security-scan
 
 install:
 	go mod download
@@ -52,3 +52,6 @@ clean:
 	rm -rf bin/
 	rm -f api/proto/**/*.pb.go
 	@echo "🧹 Cleaned binaries and generated protobuf files"
+
+security-scan:
+	@./scripts/security-scan.sh
