@@ -324,4 +324,3 @@ func WaitForVault(timeout time.Duration) error {
 		time.Sleep(2 * time.Second)
 	}
 }
-
