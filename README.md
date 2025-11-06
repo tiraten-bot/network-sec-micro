@@ -2119,3 +2119,526 @@ sequenceDiagram
         Repair-->>GW: accepted=true, status=pending/completed
     end
 ```
+
+## 📊 Monitoring & Observability Architecture
+
+### Monitoring Stack Overview
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+graph TB
+    subgraph "Monitoring Stack"
+        PRO[Prometheus<br/>:9090<br/>Metrics Collection]
+        GRA[Grafana<br/>:3000<br/>Visualization]
+        ALM[Alertmanager<br/>:9093<br/>Alert Routing]
+    end
+
+    subgraph "Microservices"
+        W[Warrior<br/>/metrics :8080]
+        WP[Weapon<br/>/metrics :8081]
+        C[Coin<br/>/metrics :8091]
+        E[Enemy<br/>/metrics :8092]
+        D[Dragon<br/>/metrics :8084]
+        B[Battle<br/>/metrics :8085]
+        BS[Battlespell<br/>/metrics :8086]
+        A[Arena<br/>/metrics :8087]
+        AS[Arenaspell<br/>/metrics :8088]
+        R[Repair<br/>/metrics :8082]
+        H[Heal<br/>/metrics :8089]
+        AR[Armor<br/>/metrics :8082]
+    end
+
+    W -->|Scrape| PRO
+    WP -->|Scrape| PRO
+    C -->|Scrape| PRO
+    E -->|Scrape| PRO
+    D -->|Scrape| PRO
+    B -->|Scrape| PRO
+    BS -->|Scrape| PRO
+    A -->|Scrape| PRO
+    AS -->|Scrape| PRO
+    R -->|Scrape| PRO
+    H -->|Scrape| PRO
+    AR -->|Scrape| PRO
+
+    PRO -->|Query| GRA
+    PRO -->|Alerts| ALM
+    ALM -->|Notify| NOTIFY[Email/Webhook<br/>Notifications]
+
+    style PRO fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style GRA fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style ALM fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style W fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style WP fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style C fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style E fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style D fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style B fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style BS fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style A fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style AS fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style R fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style H fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style AR fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+```
+
+### Metrics Collection Flow
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+sequenceDiagram
+    participant Client
+    participant Service as Microservice
+    participant Metrics as Metrics Exporter
+    participant Prom as Prometheus
+    participant Grafana as Grafana
+
+    Client->>Service: HTTP/gRPC Request
+    Service->>Metrics: Record HTTP Request<br/>(method, endpoint, status)
+    Service->>Metrics: Record Duration<br/>(histogram)
+    Service->>Service: Process Request
+    Service-->>Client: Response
+    
+    Note over Service,Metrics: Metrics Continuously Exposed
+    Metrics->>Prom: GET /metrics<br/>(scrape interval: 15s)
+    Prom->>Prom: Store in TSDB
+    
+    Note over Prom,Grafana: Visualization
+    Grafana->>Prom: PromQL Query
+    Prom-->>Grafana: Metrics Data
+    Grafana-->>Grafana: Render Dashboard
+```
+
+### Health Check Architecture
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+graph TB
+    subgraph "Health Check Endpoints"
+        HEALTH[/health<br/>Full Health Check<br/>with Components]
+        READY[/ready<br/>Readiness Probe<br/>K8s Ready]
+        LIVE[/live<br/>Liveness Probe<br/>K8s Alive]
+    end
+
+    subgraph "Health Checkers"
+        DB[Database Checker<br/>PostgreSQL/MySQL/MongoDB]
+        SIMPLE[Simple Checker<br/>Always Healthy]
+    end
+
+    subgraph "Components"
+        PG[(PostgreSQL)]
+        MY[(MySQL)]
+        MG[(MongoDB)]
+    end
+
+    HEALTH -->|Checks| DB
+    HEALTH -->|Checks| SIMPLE
+    READY -->|Quick Check| SIMPLE
+    LIVE -->|Quick Check| SIMPLE
+
+    DB -->|Ping| PG
+    DB -->|Ping| MY
+    DB -->|Ping| MG
+
+    style HEALTH fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style READY fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style LIVE fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style DB fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style SIMPLE fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+```
+
+### Alerting Flow
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+sequenceDiagram
+    participant Prom as Prometheus
+    participant Rules as Alert Rules
+    participant AM as Alertmanager
+    participant Critical as Critical Receiver
+    participant Warning as Warning Receiver
+    participant Notify as Notification Channels
+
+    Prom->>Rules: Evaluate Rules<br/>(every 15s)
+    Rules->>Rules: Check Conditions<br/>(ServiceDown, HighErrorRate, etc.)
+    
+    alt Alert Fired
+        Rules->>AM: Send Alert
+        AM->>AM: Group & Route
+        
+        alt Critical Alert
+            AM->>Critical: Route to Critical
+            Critical->>Notify: Email/Webhook
+        else Warning Alert
+            AM->>Warning: Route to Warning
+            Warning->>Notify: Webhook
+        end
+        
+        Notify->>Notify: Send Notification
+    end
+```
+
+### Metrics Types
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+graph TB
+    subgraph "HTTP Metrics"
+        H1[http_requests_total<br/>Counter<br/>method, endpoint, status]
+        H2[http_request_duration_seconds<br/>Histogram<br/>method, endpoint, status]
+    end
+
+    subgraph "gRPC Metrics"
+        G1[grpc_requests_total<br/>Counter<br/>method, status]
+        G2[grpc_request_duration_seconds<br/>Histogram<br/>method, status]
+    end
+
+    subgraph "Database Metrics"
+        D1[database_connections<br/>Gauge<br/>database, status]
+        D2[database_query_duration_seconds<br/>Histogram<br/>database, query_type]
+        D3[database_connection_status<br/>Gauge<br/>database]
+    end
+
+    subgraph "Kafka Metrics"
+        K1[kafka_messages_produced_total<br/>Counter<br/>topic]
+        K2[kafka_messages_consumed_total<br/>Counter<br/>topic]
+        K3[kafka_processing_duration_seconds<br/>Histogram<br/>topic]
+    end
+
+    subgraph "Business Metrics"
+        B1[business_operations_total<br/>Counter<br/>operation, status]
+        B2[business_operation_duration_seconds<br/>Histogram<br/>operation]
+    end
+
+    style H1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style H2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style G1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style G2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style D1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style D2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style D3 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style K1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style K2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style K3 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style B1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style B2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+```
+
+## 🧪 Testing Architecture
+
+### Testing Pyramid
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+graph TB
+    subgraph "Unit Tests"
+        U1[Service Logic Tests]
+        U2[Repository Tests]
+        U3[Business Logic Tests]
+    end
+
+    subgraph "Integration Tests"
+        I1[Database Integration]
+        I2[gRPC Client Integration]
+        I3[Kafka Integration]
+        I4[Service-to-Service]
+    end
+
+    subgraph "E2E Tests"
+        E1[Complete Workflows]
+        E2[Battle Flow]
+        E3[Arena Flow]
+        E4[Weapon/Armor Purchase & Repair]
+    end
+
+    subgraph "Performance Tests"
+        P1[Load Tests]
+        P2[Concurrency Tests]
+        P3[Race Condition Tests]
+    end
+
+    U1 --> I1
+    U2 --> I2
+    U3 --> I3
+    I1 --> E1
+    I2 --> E2
+    I3 --> E3
+    I4 --> E4
+    E1 --> P1
+    E2 --> P2
+    E3 --> P3
+
+    style U1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style U2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style U3 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I3 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I4 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style E1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style E2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style E3 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style E4 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style P1 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style P2 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style P3 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+```
+
+### Test Execution Flow
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+sequenceDiagram
+    participant Dev as Developer
+    participant TestRunner as Test Runner
+    participant UnitTests as Unit Tests
+    participant IntTests as Integration Tests
+    participant E2ETests as E2E Tests
+    participant TestDB as In-Memory DB
+    participant MockServices as Mock Services
+
+    Dev->>TestRunner: go test ./tests/...
+    
+    Note over TestRunner,UnitTests: Unit Tests Phase
+    TestRunner->>UnitTests: Execute Unit Tests
+    UnitTests->>TestDB: Setup In-Memory SQLite/MongoDB
+    UnitTests->>UnitTests: Test Service Logic
+    UnitTests->>UnitTests: Test Repository
+    UnitTests-->>TestRunner: Unit Test Results
+    
+    Note over TestRunner,IntTests: Integration Tests Phase
+    TestRunner->>IntTests: Execute Integration Tests
+    IntTests->>TestDB: Setup Test Databases
+    IntTests->>MockServices: Setup Mock gRPC Clients
+    IntTests->>IntTests: Test Service Integration
+    IntTests-->>TestRunner: Integration Test Results
+    
+    Note over TestRunner,E2ETests: E2E Tests Phase
+    TestRunner->>E2ETests: Execute E2E Tests
+    E2ETests->>TestDB: Setup Full Test Environment
+    E2ETests->>E2ETests: Test Complete Workflows
+    E2ETests-->>TestRunner: E2E Test Results
+    
+    TestRunner-->>Dev: Final Test Report
+```
+
+### Test Coverage by Service
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+graph LR
+    subgraph "Tested Services"
+        W[Warrior<br/>✅ Unit Tests]
+        WP[Weapon<br/>✅ Unit Tests]
+        C[Coin<br/>✅ Unit Tests]
+        E[Enemy<br/>✅ Unit Tests]
+        D[Dragon<br/>✅ Unit Tests]
+        R[Repair<br/>✅ Unit Tests]
+        H[Heal<br/>✅ Unit Tests]
+        AR[Armor<br/>✅ Unit Tests]
+    end
+
+    subgraph "Integration Tests"
+        I1[Weapon Battle<br/>Repair Flow]
+        I2[Arena Flow]
+        I3[Battle Flow]
+    end
+
+    subgraph "Test Types"
+        T1[Unit Tests<br/>In-Memory DB]
+        T2[Integration Tests<br/>Service Integration]
+        T3[E2E Tests<br/>Complete Workflows]
+        T4[Performance Tests<br/>Load & Concurrency]
+        T5[Edge Cases<br/>Boundary Conditions]
+        T6[Error Handling<br/>Invalid Inputs]
+    end
+
+    W --> T1
+    WP --> T1
+    C --> T1
+    E --> T1
+    D --> T1
+    R --> T1
+    H --> T1
+    AR --> T1
+
+    WP --> I1
+    I1 --> T2
+    I2 --> T2
+    I3 --> T2
+
+    T2 --> T3
+    T3 --> T4
+    T4 --> T5
+    T5 --> T6
+
+    style W fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style WP fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style C fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style E fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style D fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style R fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style H fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style AR fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I1 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I2 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style I3 fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style T1 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style T2 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style T3 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style T4 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style T5 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style T6 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+```
+
+### Monitoring & Testing Integration
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#36454F",
+    "primaryTextColor": "#E0E0E0",
+    "primaryBorderColor": "#212121",
+    "lineColor": "#424242",
+    "tertiaryColor": "#616161",
+    "clusterBkg": "#424242",
+    "clusterBorder": "#212121"
+  }
+}}%%
+graph TB
+    subgraph "Development"
+        TEST[Test Execution]
+        COV[Code Coverage]
+    end
+
+    subgraph "Monitoring"
+        METRICS[Metrics Collection]
+        HEALTH[Health Checks]
+        ALERTS[Alerting]
+    end
+
+    subgraph "Quality Gates"
+        Q1[Unit Test Coverage >80%]
+        Q2[Integration Tests Pass]
+        Q3[E2E Tests Pass]
+        Q4[No Critical Alerts]
+        Q5[Health Checks Green]
+    end
+
+    TEST --> COV
+    COV --> Q1
+    TEST --> Q2
+    TEST --> Q3
+
+    METRICS --> ALERTS
+    HEALTH --> ALERTS
+    ALERTS --> Q4
+    HEALTH --> Q5
+
+    Q1 --> DEPLOY[Deploy to Production]
+    Q2 --> DEPLOY
+    Q3 --> DEPLOY
+    Q4 --> DEPLOY
+    Q5 --> DEPLOY
+
+    style TEST fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style COV fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style METRICS fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style HEALTH fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style ALERTS fill:#616161,stroke:#212121,stroke-width:2px,color:#E0E0E0
+    style Q1 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style Q2 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style Q3 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style Q4 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style Q5 fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+    style DEPLOY fill:#36454F,stroke:#212121,stroke-width:3px,color:#E0E0E0
+```
