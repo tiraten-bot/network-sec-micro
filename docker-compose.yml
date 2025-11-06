@@ -164,9 +164,11 @@ services:
       DB_PARSE_TIME: true
       DB_LOC: Local
       GRPC_PORT: 50051
+      METRICS_PORT: 8091
       KAFKA_BROKERS: kafka:9092
     ports:
       - "50051:50051"
+      - "8091:8091"
     depends_on:
       mysql:
         condition: service_healthy
@@ -176,7 +178,7 @@ services:
       - warrior-network
     restart: unless-stopped
 
-  # Enemy Service (HTTP API)
+  # Enemy Service (gRPC)
   enemy:
     build:
       context: .
@@ -187,12 +189,13 @@ services:
       MONGODB_DATABASE: enemy_db
       WARRIOR_GRPC_HOST: warrior:50052
       KAFKA_BROKERS: kafka:9092
-      GIN_MODE: release
-      PORT: 8083
+      GRPC_PORT: 50060
+      METRICS_PORT: 8092
       WEAPON_GRPC_ADDR: weapon:50057
       REPAIR_GRPC_ADDR: repair:50061
     ports:
-      - "8083:8083"
+      - "50060:50060"
+      - "8092:8092"
     depends_on:
       mongodb:
         condition: service_healthy
