@@ -46,8 +46,8 @@ func Get(key string) (string, error) {
 		return "", err
 	}
 
-	cacheLock.RLock()
-	defer cacheLock.RUnlock()
+	cacheMu.RLock()
+	defer cacheMu.RUnlock()
 
 	if value, ok := cache[normalized]; ok && value != "" {
 		return value, nil
