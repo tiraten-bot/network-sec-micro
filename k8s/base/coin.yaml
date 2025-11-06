@@ -18,15 +18,27 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOST
-              value: mysql
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_HOST
             - name: DB_PORT
               value: "3306"
             - name: DB_USER
-              value: coin_user
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: MYSQL_USER
             - name: DB_PASSWORD
-              value: coin_password
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: MYSQL_PASSWORD
             - name: DB_NAME
-              value: coin_db
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: DB_NAME_COIN
             - name: DB_CHARSET
               value: utf8mb4
             - name: DB_PARSE_TIME
@@ -36,7 +48,10 @@ spec:
             - name: GRPC_PORT
               value: "50051"
             - name: KAFKA_BROKERS
-              value: kafka:9092
+              valueFrom:
+                secretKeyRef:
+                  name: network-sec-shared-secrets
+                  key: KAFKA_BROKERS
           ports:
             - containerPort: 50051
           readinessProbe:
