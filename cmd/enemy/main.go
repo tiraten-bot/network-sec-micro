@@ -78,4 +78,3 @@ func main() {
 	enemy.CloseKafkaPublisher()
 	log.Println("Enemy service stopped")
 }
-
