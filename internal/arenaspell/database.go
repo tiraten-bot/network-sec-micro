@@ -4,8 +4,9 @@ import (
     "context"
     "fmt"
     "log"
-    "os"
     "time"
+
+    "network-sec-micro/pkg/secrets"
 
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
@@ -43,10 +44,7 @@ func InitDatabase() error {
 }
 
 func getEnv(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
+    return secrets.GetOrDefault(key, def)
 }
 
 
