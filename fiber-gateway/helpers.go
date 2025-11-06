@@ -5,19 +5,18 @@ import (
     "net"
     "net/http"
     "net/http/httputil"
-    "os"
     "strconv"
+    "sync"
     "time"
+
+    "network-sec-micro/pkg/secrets"
 
     "github.com/gofiber/fiber/v2"
     "golang.org/x/net/http2"
 )
 
 func getEnv(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
+    return secrets.GetOrDefault(key, def)
 }
 
 func parsePercent(s string) (int, error) {
