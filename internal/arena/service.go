@@ -5,11 +5,11 @@ import (
     "errors"
     "fmt"
     "log"
-    "os"
     "time"
 
     pbWarrior "network-sec-micro/api/proto/warrior"
     "network-sec-micro/internal/arena/dto"
+    "network-sec-micro/pkg/secrets"
 )
 
 // Service handles arena business logic with CQRS pattern
@@ -132,7 +132,7 @@ func (s *Service) AcceptInvitation(ctx context.Context, cmd dto.AcceptInvitation
 	}
 
     // Optionally recalc power via weapon service
-    if os.Getenv("ARENA_USE_WEAPON_POWER") != "" {
+    if secrets.GetOrDefault("ARENA_USE_WEAPON_POWER", "") != "" {
         if tp, wc, err := CalculateWarriorPowerViaWeapon(ctx, challenger.Username); err == nil {
             challenger.TotalPower = tp
             challenger.WeaponCount = wc
@@ -769,10 +769,6 @@ func (s *Service) GetMyMatches(ctx context.Context, query dto.GetMyMatchesQuery)
 }
 
 func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
+	return secrets.GetOrDefault(key, defaultValue)
 }
 
