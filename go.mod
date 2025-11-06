@@ -6,6 +6,7 @@ toolchain go1.24.9
 
 require (
 	github.com/IBM/sarama v1.46.3
+	github.com/hashicorp/vault/api v1.16.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/gofiber/adaptor/v2 v2.2.1
