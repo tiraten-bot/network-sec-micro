@@ -2,4 +2,6 @@
 
 account_id             = "123456789012"
 grafana_admin_password = "super-secure-password"
+database_password      = "postgres-password"
+mongo_password         = "mongo-password"
 
