@@ -1,0 +1,56 @@
+name: terraform
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/**"
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: infra
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Generate Plan (dev)
+        run: |
+          cd environments/dev
+          terraform init
+          terraform plan -out=tfplan.binary
+          terraform show -json tfplan.binary > tfplan.json
+
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.11
+        with:
+          working_directory: infra
+
+      - name: Conftest (OPA policies)
+        uses: instrumenta/conftest-action@v0.3.0
+        with:
+          policy: policies
+          args: test environments/dev/tfplan.json
+
